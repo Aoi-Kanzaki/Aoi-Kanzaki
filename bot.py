@@ -6,6 +6,7 @@ import datetime
 import aiosqlite
 import random
 from colr import color
+from pymongo import MongoClient
 from discord.ext import commands
 from discord import app_commands
 
@@ -20,20 +21,24 @@ load_cogs = [
 load_utils = [
 	'utils.errorhandler',
 	'utils.leveling',
-	'utils.help'
+	'utils.help',
+	'utils.support_join'
 ]
 
 starttime = datetime.datetime.now()
-MY_GUILD = discord.Object(id=678226695190347797)
+
+with open('config.json', 'r') as config:
+	_config = json.load(config)
 
 async def _prefix(bot, msg):
 	with open('./data/prefixes.json', 'r') as f:
 		prefixes = json.load(f)
 	if msg.guild is None:
-		return "f?"
+		return _config['prefix']
 	else:
 		return prefixes[str(msg.guild.id)]
 
+MY_GUILD = discord.Object(id=_config['guildid'])
 class Fresh(commands.AutoShardedBot):
 	def __init__(self):
 		super().__init__(command_prefix=_prefix, description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
@@ -88,12 +93,17 @@ class Fresh(commands.AutoShardedBot):
 		print(color("Connected to       :", fore=self.colors["cyan"]), color(f"{len(self.guilds)} guilds and {channels} channels", fore=self.colors["purple"]))
 		print(color("Python version     :", fore=self.colors["cyan"]), color("{}.{}.{}".format(*os.sys.version_info[:3]), fore=self.colors["purple"]))
 		print(color("Discord.py version :", fore=self.colors["cyan"]), color(f"{discord.__version__}", fore=self.colors["purple"]))
+		if _config['mongoURI'] != "":
+			self.database = MongoClient(_config['mongoURI'])
+			print(color("Database Status    :", fore=self.colors['cyan']), color("Should be connected!", fore=self.colors['purple']))
+		else:
+			print(color("Database Status    :", fore=self.colors['cyan']), color("Not Enabled.", fore=self.colors['purple']))
 		print(color("-----------------------------------------------------------------", fore=self.colors["blue"]))
 		try:
 			await self.load_extension("jishaku")
 			print(color("Loaded JSK on first try!", fore=self.colors["green"]))
 		except Exception as e:
-			print(color("Failed to load JSK!", fore=self.colors["red"]))
+			print(color(f"Failed to load JSK! Reason:\n{e}", fore=self.colors["red"]))
 		for module in load_cogs:
 			try:
 				await self.load_extension(module)
@@ -152,16 +162,8 @@ class Fresh(commands.AutoShardedBot):
 
 	def run(self):
 		try:
-			super().run('')
+			super().run(_config['token'])
 		except Exception as e:
 			print(color(f'Failed to login:\n{e}', fore=self.colors["red"]))
-
-
-@app_commands.context_menu(name="Retrieve Avatar")
-async def user_avatar(interaction: discord.Interaction, member: discord.Member) -> None:
-    e = discord.Embed(color=discord.Color.blurple())
-    e.title = f"{member.name}'s Avatar:"
-    e.set_image(url=member.avatar.url)
-    await interaction.response.send_message(embed=e)
 
 Fresh().run()

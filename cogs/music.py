@@ -94,7 +94,7 @@ class np_msg_buttons(discord.ui.View):
         await self.player.skip()
         return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
 
-    @discord.ui.button(label="Quit", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.queue.clear()
         await self.player.stop()
@@ -149,7 +149,7 @@ class event_hook_buttons(discord.ui.View):
         await self.player.skip()
         return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
 
-    @discord.ui.button(label="Quit", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.queue.clear()
         await self.player.stop()
@@ -300,11 +300,11 @@ class Music(commands.Cog):
         """Changes volume of the player."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not volume:
-            return await ctx.send(f'🔈 | {player.volume}%')
+            return await ctx.send(f'🔈 | {player.volume}%', delete_after=5)
         if volume > 100:
             volume = 100
         await player.set_volume(volume)
-        return await ctx.send(f'🔈 | Set to {player.volume}%')
+        return await ctx.send(f'🔈 | Set to {player.volume}%', delete_after=5)
 
     @commands.hybrid_command()
     @commands.cooldown(1, 5, commands.BucketType.guild)

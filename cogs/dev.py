@@ -3,8 +3,11 @@ import os
 import glob
 import datetime
 import typing
+import time
+import asyncio
 from utils import checks
 from discord.ext import commands
+from asyncio.subprocess import PIPE
 
 class Dev(commands.Cog):
     def __init__(self, bot):
@@ -26,20 +29,47 @@ class Dev(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.command()
-    @commands.guild_only()
-    async def clean(self, ctx):
-        """Clean bot messages and command messages."""
-        can_mass_purge = ctx.channel.permissions_for(ctx.guild.me).manage_messages
-        await ctx.channel.purge(limit=100, check=lambda m: m.author == ctx.bot.user, before=ctx.message, after=datetime.datetime.now() - datetime.timedelta(days=14), bulk=can_mass_purge)
-        try:
-            await ctx.channel.purge(limit=100, check=lambda m: (m.content.startswith("f?") or m.content.startswith("F?")), before=ctx.message, after=datetime.datetime.now() - datetime.timedelta(days=14), bulk=can_mass_purge)
-        except:
-            pass
-        await ctx.message.add_reaction('\u2705')
+    async def network(self, ctx, *, args=None):
+        """Network information."""
+        if not args:
+            proc = await asyncio.create_subprocess_shell("vnstati -s -i enp1s0  -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            out = await proc.stdout.read()
+            await ctx.send(file=discord.File('vnstati.png'))
+        elif args == "hourly":
+            proc = await asyncio.create_subprocess_shell("vnstati -h -i enp1s0 -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            out = await proc.stdout.read()
+            await ctx.send(file=discord.File('vnstati.png'))
+        elif args == "monthly":
+            proc = await asyncio.create_subprocess_shell("vnstati -m -i enp1s0 -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            out = await proc.stdout.read()
+            await ctx.send(file=discord.File('vnstati.png'))
 
-    def _list_modules(self):
-        modules = [os.path.basename(f) for f in glob.glob("cogs/*.py")]
-        return ["cogs." + os.path.splitext(f)[0] for f in modules]
+    @commands.command()
+    async def ping(self, ctx):
+        """ Pong! """
+        pings = []
+        number = 0
+        typings = time.monotonic()
+        await ctx.typing()
+        typinge = time.monotonic()
+        typingms = round((typinge - typings) * 1000)
+        pings.append(typingms)
+        latencyms = round(self.bot.latency * 1000)
+        pings.append(latencyms)
+        discords = time.monotonic()
+        url = "https://discordapp.com/"
+        async with self.bot.session.get(url) as resp:
+            if resp.status == 200:
+                discorde = time.monotonic()
+                discordms = round((discorde-discords)*1000)
+                pings.append(discordms)
+                discordms = f"{discordms}ms"
+            else:
+                discordms = "Failed"
+        for ms in pings:
+            number += ms
+        average = round(number / len(pings))
+        await ctx.send(f"__**Ping Times:**__\nTyping: `{typingms}ms`  |  Latency: `{latencyms}ms`\nDiscord: `{discordms}`  |  Average: `{average}ms`")
 
 async def setup(bot):
    await bot.add_cog(Dev(bot))
