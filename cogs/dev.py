@@ -32,15 +32,19 @@ class Dev(commands.Cog):
     async def network(self, ctx, *, args=None):
         """Network information."""
         if not args:
-            proc = await asyncio.create_subprocess_shell("vnstati -s -i enp1s0  -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            proc = await asyncio.create_subprocess_shell("vnstati -s -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            out = await proc.stdout.read()
+            await ctx.send(file=discord.File('vnstati.png'))
+        elif args == "daily":
+            proc = await asyncio.create_subprocess_shell("vnstati -d -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File('vnstati.png'))
         elif args == "hourly":
-            proc = await asyncio.create_subprocess_shell("vnstati -h -i enp1s0 -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            proc = await asyncio.create_subprocess_shell("vnstati -h -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File('vnstati.png'))
         elif args == "monthly":
-            proc = await asyncio.create_subprocess_shell("vnstati -m -i enp1s0 -o -t vnstati.png", stdin=None, stderr=None, stdout=PIPE)
+            proc = await asyncio.create_subprocess_shell("vnstati -m -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File('vnstati.png'))
 
