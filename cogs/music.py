@@ -98,7 +98,11 @@ class np_msg_buttons(discord.ui.View):
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.queue.clear()
         await self.player.stop()
-        return await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+        await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+        try:
+            return await interaction.delete_original_message()
+        except:
+            return
 
 class event_hook_buttons(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
@@ -153,7 +157,11 @@ class event_hook_buttons(discord.ui.View):
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.queue.clear()
         await self.player.stop()
-        return await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+        await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+        try:
+            return await interaction.delete_original_message()
+        except:
+            return
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -246,7 +254,7 @@ class Music(commands.Cog):
         query = query.strip('<>')
         if "open.spotify.com" in query:
             query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
-            return await self.queue_spotify(ctx, player, query)
+            await self.queue_spotify(ctx, player, query)
         if not re.compile(r'https?://(?:www\.)?.+').match(query):
             query = f'ytsearch:{query}'
         results = await player.node.get_tracks(query)
@@ -263,15 +271,18 @@ class Music(commands.Cog):
                 player.add(requester=ctx.author.id, track=track)
             embed.title = 'Playlist Enqueued!'
             embed.description = f'{results["playlistInfo"]["name"]} - {len(tracks)} tracks'
+            if not player.is_playing:
+                await player.play()
+            await ctx.send(embed=embed)
         else:
             track = results['tracks'][0]
             embed.title = 'Track Enqueued'
             embed.description = f'[{track["info"]["title"]}]({track["info"]["uri"]})'
-            await ctx.send(embed=embed, delete_after=5)
             track = AudioTrack(track, ctx.author.id, recommended=True)
             player.add(requester=ctx.author.id, track=track)
-        if not player.is_playing:
-            await player.play()
+            if not player.is_playing:
+                await player.play()
+            await ctx.send(embed=embed, delete_after=5)
 
     @commands.hybrid_command(aliases=["prev"])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -547,17 +558,17 @@ class Music(commands.Cog):
     #All spotify request functions below
     async def queue_spotify(self, ctx, player, query):
         """Let's not make the play command look like fucking hell anymore....."""
-        msg = await ctx.send("<a:loading:697759686509985814> Loading Spotify info...")
         parts = query.split(":")
         if "track" in parts:
             res = await self.make_spotify_req("https://api.spotify.com/v1/tracks/{0}".format(parts[-1]))
             results = await player.node.get_tracks("ytsearch:{} {}".format(res["artists"][0]["name"], res["name"]))
             if results:
-                enqueuemsg = f'<:tickYes:697759553626046546> Track Enqueued: {results["tracks"][0]["info"]["title"]}'
                 track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                 player.add(requester=ctx.author.id, track=track)
+                if not player.is_playing: await player.play()
+                await ctx.send(f'<:tickYes:697759553626046546> Track Enqueued: {results["tracks"][0]["info"]["title"]}', delete_after=5)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "album" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/albums/{0}".format(query))
@@ -586,9 +597,10 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["name"], i["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                enqueuemsg = f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**"
+                if not player.is_playing: await player.play()
+                await ctx.send(f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**", delete_after=5)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "playlist" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/playlists/{0}/tracks".format(query))
@@ -617,15 +629,13 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["track"]["name"], i["track"]["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                enqueuemsg = f"<:tickYes:697759553626046546> Loaded playlist **{playlistName}!**"
+                if not player.is_playing: await player.play()
+                await ctx.send(f"<:tickYes:697759553626046546> Loaded playlist **{playlistName}!**", delete_after=5)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         player.store('channel', ctx.channel.id)
         if not player.is_playing:
             await player.play()
-        msg =  await msg.edit(content=enqueuemsg)
-        await asyncio.sleep(10)
-        return await msg.delete()
 
     async def make_spotify_req(self, url):
         if self.spotify_token and not self.spotify_token["expires_at"] - int(time.time()) < 60:

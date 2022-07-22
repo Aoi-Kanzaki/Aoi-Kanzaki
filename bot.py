@@ -43,8 +43,8 @@ class Fresh(commands.AutoShardedBot):
 	def __init__(self):
 		super().__init__(command_prefix=_prefix, description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
 		self.version = "v1.0.0"
-		self.spotify_id = ""
-		self.spotify_secret = ""
+		self.spotify_id = _config['spotify_id']
+		self.spotify_secret = _config['spotify_secret']
 		self.stats = {}
 		self.sniped = []
 		self.uptime = datetime.datetime.utcnow()
