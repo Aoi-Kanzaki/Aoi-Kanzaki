@@ -45,6 +45,56 @@ class LavalinkVoiceClient(discord.VoiceClient):
         player.store("requester", None)
         self.cleanup()
 
+class queue_msg_buttons(discord.ui.View):
+    def __init__(self, bot, guild_id, page) -> None:
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.page = page
+        self.guild_id = guild_id
+        self.player = bot.lavalink.player_manager.get(self.guild_id)
+
+    @discord.ui.button(label="Prev Page", style=discord.ButtonStyle.blurple)
+    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page = self.page-1
+        if self.page < 1:
+            self.page = math.ceil(len(self.player.queue) / 10)
+        pos = format_time(self.player.position)
+        if self.player.current.stream:
+            dur = 'LIVE'
+        else:
+            dur = format_time(self.player.current.duration)
+        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
+        draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, self.page)
+        e = discord.Embed(colour=discord.Color.blurple())
+        e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
+        e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
+        e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
+        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+        return await interaction.response.edit_message(embed=e)
+
+    @discord.ui.button(label="Next Page", style=discord.ButtonStyle.blurple)
+    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.page = self.page+1
+        if self.page > math.ceil(len(self.player.queue) / 10):
+            self.page = 1
+        pos = format_time(self.player.position)
+        if self.player.current.stream:
+            dur = 'LIVE'
+        else:
+            dur = format_time(self.player.current.duration)
+        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
+        draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, self.page)
+        e = discord.Embed(colour=discord.Color.blurple())
+        e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
+        e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
+        e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
+        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+        return await interaction.response.edit_message(embed=e)
+
+    @discord.ui.button(label="Done", style=discord.ButtonStyle.red)
+    async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
+        return await interaction.message.delete()
+
 class np_msg_buttons(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
@@ -66,43 +116,52 @@ class np_msg_buttons(discord.ui.View):
         draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, 1)
         e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
         e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
+        e.set_footer(text=f'Page 1/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
+        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
         if len(self.player.queue) > 10:
-            e.set_footer(text=f'Not showing {len(self.player.queue)-10} tracks')
-        return await interaction.response.edit_message(embed=e)
+            return await interaction.response.edit_message(embed=e, view=queue_msg_buttons(self.bot, self.guild_id, 1))
+        else:
+            return await interaction.response.edit_message(embed=e, view=None)
 
     @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.player.set_pause(not self.player.paused)
-        e = discord.Embed(colour=discord.Color.blurple())
-        if self.player.current.stream:
-            dur = 'LIVE'
+        if self.player.is_playing:
+            await self.player.set_pause(not self.player.paused)
+            e = discord.Embed(colour=discord.Color.blurple())
+            if self.player.current.stream:
+                dur = 'LIVE'
+            else:
+                dur = format_time(self.player.current.duration)
+            if self.player.paused is True:
+                e.title = "Paused:"
+            else:
+                e.title = "Now Playing:"
+            draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
+            e.description = f"{self.player.current.title}\n"
+            e.description += f"{draw_time} `[{format_time(self.player.position)}/{dur}]`\n"
+            e.description += f"{self.player.current.uri}\n"
+            e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+            return await interaction.response.edit_message(embed=e)
         else:
-            dur = format_time(self.player.current.duration)
-        if self.player.paused is True:
-            e.title = "Paused:"
-        else:
-            e.title = "Now Playing:"
-        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
-        e.description = f"{self.player.current.title}\n"
-        e.description += f"{draw_time} `[{format_time(self.player.position)}/{dur}]`\n"
-        e.description += f"{self.player.current.uri}\n"
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-        return await interaction.response.edit_message(embed=e)
+            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.player.skip()
-        return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
+        if self.player.is_playing:
+            await self.player.skip()
+            return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
+        else:
+            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.player.queue.clear()
-        await self.player.stop()
-        await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
-        try:
-            return await interaction.delete_original_message()
-        except:
-            return
+        if self.player.is_playing:
+            self.player.queue.clear()
+            await self.player.stop()
+            await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+            return await interaction.message.delete()
+        else:
+            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
 class event_hook_buttons(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
@@ -158,10 +217,6 @@ class event_hook_buttons(discord.ui.View):
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
-        try:
-            return await interaction.delete_original_message()
-        except:
-            return
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -259,12 +314,12 @@ class Music(commands.Cog):
             query = f'ytsearch:{query}'
         results = await player.node.get_tracks(query)
         if not results or not results['tracks']:
-            return await ctx.send('Nothing found!')
+            return await ctx.send('Nothing found!', delete_after=5)
         embed = discord.Embed(color=discord.Color.blurple())
         if results['loadType'] == 'LOAD_FAILED':
             await ctx.voice_client.disconnect(force=True)
             self.bot.lavalink.player_manager.remove(ctx.guild.id)
-            return await ctx.send('Oh no, something failed. Please try again.')
+            return await ctx.send('Oh no, something failed. Please try again.', delete_after=5)
         if results['loadType'] == 'PLAYLIST_LOADED':
             tracks = results['tracks']
             for track in tracks:
@@ -273,7 +328,7 @@ class Music(commands.Cog):
             embed.description = f'{results["playlistInfo"]["name"]} - {len(tracks)} tracks'
             if not player.is_playing:
                 await player.play()
-            await ctx.send(embed=embed)
+            await ctx.send(embed=embed, delete_after=5)
         else:
             track = results['tracks'][0]
             embed.title = 'Track Enqueued'
@@ -470,69 +525,12 @@ class Music(commands.Cog):
         e = discord.Embed(colour=discord.Color.blurple())
         e.add_field(name="Currently Playing:", value=f"{player.current.title}\n{player.current.uri}\n{await self.draw_time(ctx.guild.id)} `[{pos}/{dur}]`")
         e.add_field(name="Up Next:", value=f"{await self.draw_queue(ctx.guild.id, page)}", inline=False)
-        e.set_footer(text=f'Page {page}/{math.ceil(len(player.queue) / 10)} | {len(player.queue)} tracks')
-        msg = await ctx.send(embed=e)
-        def check(r, u):
-            return r.message.id == msg.id and u == ctx.author
-        for i in ['❌', '◀', '▶', '🔢']:
-            await msg.add_reaction(i)
-        while True:
-            try:
-                (reaction, user) = await self.bot.wait_for('reaction_add', check=check, timeout=60.0)
-            except asyncio.TimeoutError:
-                return
-            if str(reaction.emoji) == "❌":
-                await msg.delete()
-            elif str(reaction.emoji) == "◀":
-                await msg.remove_reaction('◀', ctx.author)
-                page = page-1
-                if page < 1:
-                    page = math.ceil(len(player.queue) / 10)
-                pos = format_time(player.position)
-                if player.current.stream:
-                    dur = 'LIVE'
-                else:
-                    dur = format_time(player.current.duration)
-                e = discord.Embed(colour=discord.Color.blurple())
-                e.add_field(name="Currently Playing:", value=f"{player.current.title}\n{player.current.uri}\n{await self.draw_time(ctx.guild.id)} `[{pos}/{dur}]`")
-                e.add_field(name="Up Next:", value=f"{await self.draw_queue(ctx.guild.id, page)}", inline=False)
-                e.set_footer(text=f'Page {page}/{math.ceil(len(player.queue) / 10)} | {len(player.queue)} tracks')
-                await msg.edit(embed=e)
-            elif str(reaction.emoji) == "▶":
-                await msg.remove_reaction('▶', ctx.author)
-                page = page+1
-                if page > math.ceil(len(player.queue) / 10):
-                    page = 1
-                pos = format_time(player.position)
-                if player.current.stream:
-                    dur = 'LIVE'
-                else:
-                    dur = format_time(player.current.duration)
-                e = discord.Embed(colour=discord.Color.blurple())
-                e.add_field(name="Currently Playing:", value=f"{player.current.title}\n{player.current.uri}\n{await self.draw_time(ctx.guild.id)} `[{pos}/{dur}]`")
-                e.add_field(name="Up Next:", value=f"{await self.draw_queue(ctx.guild.id, page)}", inline=False)
-                text = 'Page {}/{} | {} tracks'.format(page, math.ceil(len(player.queue) / 10), len(player.queue))
-                e.set_footer(text=f'Page {page}/{math.ceil(len(player.queue) / 10)} | {len(player.queue)} tracks')
-                await msg.edit(embed=e)
-            elif str(reaction.emoji) == "🔢":
-                m = await ctx.send('What page would you like to go to?')
-                def a(m):
-                    return m.channel == ctx.channel and m.author == ctx.author
-                while True:
-                    try:
-                        e = await ctx.bot.wait_for('message', check=a, timeout=60.0)
-                    except asyncio.TimeoutError:
-                        return
-                    if e.content.isdigit():
-                        if int(e.content) > math.ceil(len(player.queue) / 10):
-                            await ctx.send('<:tickNo:697759586538749982> Invalid page. Try again.', delete_after=4)
-                        elif int(e.content) < 1:
-                            await ctx.send('<:tickNo:697759586538749982> Invalid page. Try again.', delete_after=4)
-                        else:
-                            await msg.delete()
-                            await m.delete()
-                            await ctx.invoke(self.bot.get_command('queue'), page=int(e.content))
-                            return
+        e.set_thumbnail(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
+        if len(player.queue) > 10:
+            e.set_footer(text=f'Page {page}/{math.ceil(len(player.queue) / 10)} | {len(player.queue)} tracks')
+            return await ctx.send(embed=e, view=queue_msg_buttons(self.bot, ctx.guild.id, 1))
+        else:
+            return await ctx.send(embed=e)
 
     async def draw_queue(self, guild_id, page: int=1):
         player = self.bot.lavalink.player_manager.get(guild_id)
@@ -558,17 +556,17 @@ class Music(commands.Cog):
     #All spotify request functions below
     async def queue_spotify(self, ctx, player, query):
         """Let's not make the play command look like fucking hell anymore....."""
+        msg = await ctx.send("<a:loading:697759686509985814> Loading Spotify info...")
         parts = query.split(":")
         if "track" in parts:
             res = await self.make_spotify_req("https://api.spotify.com/v1/tracks/{0}".format(parts[-1]))
             results = await player.node.get_tracks("ytsearch:{} {}".format(res["artists"][0]["name"], res["name"]))
             if results:
+                enqueuemsg = f'<:tickYes:697759553626046546> Track Enqueued: {results["tracks"][0]["info"]["title"]}'
                 track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                 player.add(requester=ctx.author.id, track=track)
-                if not player.is_playing: await player.play()
-                await ctx.send(f'<:tickYes:697759553626046546> Track Enqueued: {results["tracks"][0]["info"]["title"]}', delete_after=5)
             else:
-                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
+                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
         elif "album" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/albums/{0}".format(query))
@@ -597,10 +595,9 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["name"], i["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                if not player.is_playing: await player.play()
-                await ctx.send(f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**", delete_after=5)
+                enqueuemsg = f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**"
             else:
-                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
+                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
         elif "playlist" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/playlists/{0}/tracks".format(query))
@@ -629,13 +626,15 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["track"]["name"], i["track"]["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                if not player.is_playing: await player.play()
-                await ctx.send(f"<:tickYes:697759553626046546> Loaded playlist **{playlistName}!**", delete_after=5)
+                enqueuemsg = f"<:tickYes:697759553626046546> Loaded playlist **{playlistName}!**"
             else:
-                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
+                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
         player.store('channel', ctx.channel.id)
         if not player.is_playing:
             await player.play()
+        msg =  await msg.edit(content=enqueuemsg)
+        await asyncio.sleep(10)
+        return await msg.delete()
 
     async def make_spotify_req(self, url):
         if self.spotify_token and not self.spotify_token["expires_at"] - int(time.time()) < 60:
