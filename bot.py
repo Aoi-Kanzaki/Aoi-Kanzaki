@@ -83,10 +83,12 @@ class Fresh(commands.AutoShardedBot):
 
 	async def on_ready(self):
 		await self.clear_screen()
+		await asyncio.sleep(1)
 		self.session = aiohttp.ClientSession()
 		channels = len([c for c in self.get_all_channels()])
 		login_time = datetime.datetime.now() - starttime
 		login_time = login_time.seconds + login_time.microseconds/1E6
+		print(color("-----------------------------------------------------------------", fore=self.colors["blue"]))
 		print(color("Login time         :", fore=self.colors["cyan"]), color(f"{login_time} milliseconds", fore=self.colors["purple"]))
 		print(color("Logged in as       :", fore=self.colors["cyan"]), color(f"{str(self.user.name)} ({self.user.id})", fore=self.colors["purple"]))
 		print(color("Connected to       :", fore=self.colors["cyan"]), color(f"{len(self.guilds)} guilds and {channels} channels", fore=self.colors["purple"]))
