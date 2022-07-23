@@ -242,17 +242,17 @@ class Music(commands.Cog):
     async def ensure_voice(self, ctx):
         player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint="us")
         if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send('<:tickNo:697759586538749982> Join a voicechannel first.')
+            return await ctx.send('<:tickNo:697759586538749982> Join a voicechannel first.', delete_after=5)
         if not player.is_connected:
             if not ctx.command.name in ('play', 'search'):
                 return await ctx.send('<:tickNo:697759586538749982> Not connected.')
             if not ctx.author.voice.channel.permissions_for(ctx.me).connect or not ctx.author.voice.channel.permissions_for(ctx.me).speak:
-                return await ctx.send('<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.')
+                return await ctx.send('<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.', delete_after=5)
             player.store('channel', ctx.channel.id)
             await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
         else:
             if int(player.channel_id) != ctx.author.voice.channel.id:
-                return await ctx.send('<:tickNo:697759586538749982> You need to be in my voicechannel.')
+                return await ctx.send('<:tickNo:697759586538749982> You need to be in my voicechannel.', delete_after=5)
 
     async def track_hook(self, event):
         if not hasattr(event, 'player'):
@@ -345,10 +345,10 @@ class Music(commands.Cog):
         """Returns to the previous song that played."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if player.fetch("prev_song") is None:
-            return await ctx.send("<:tickNo:697759586538749982> No previous track.")
+            return await ctx.send("<:tickNo:697759586538749982> No previous track.", delete_after=5)
         last_track = await player.node.get_tracks(player.fetch("prev_song"))
         if not last_track:
-            return await ctx.send("<:tickNo:697759586538749982> Seems there was an issue in getting the last track and nothing was found.")
+            return await ctx.send("<:tickNo:697759586538749982> Seems there was an issue in getting the last track and nothing was found.", delete_after=5)
         player.add(requester=player.fetch("prev_requester"), track=AudioTrack(last_track['tracks'][0], player.fetch("prev_requester"), recommended=True))
         player.queue.insert(0, player.queue[-1])
         player.queue.pop(len(player.queue))
@@ -378,7 +378,7 @@ class Music(commands.Cog):
         """Search for something to play."""
         results = await self.bot.lavalink.get_tracks(f'ytsearch:{query}')
         if not results or not results['tracks']:
-            return await ctx.send('<:tickNo:697759586538749982> Nothing found!')
+            return await ctx.send('<:tickNo:697759586538749982> Nothing found!', delete_after=5)
         number = 0
         e = discord.Embed()
         e.colour = discord.Color.blurple()
@@ -423,9 +423,9 @@ class Music(commands.Cog):
         """Moves song number specifed to the top of the queue."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.queue:
-            await ctx.send('<:tickNo:697759586538749982> Nothing queued.')
+            await ctx.send('<:tickNo:697759586538749982> Nothing queued.', delete_after=5)
         if number > len(player.queue) or number < 1:
-            await ctx.send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.')
+            await ctx.send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
         player.queue.insert(0, self.bot.lavalink.player_manager.get(ctx.guild.id).queue[number-1])
         player.queue.pop(number)
         return await ctx.send('<:tickYes:697759553626046546> Moved to the top of the queue.', delete_after=10)
@@ -435,7 +435,7 @@ class Music(commands.Cog):
         """Clears the queue, doesn't stop the player tho."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.queue:
-            await ctx.send("<:tickNo:697759586538749982> Nothing queued, use `play <song_name>`.")
+            await ctx.send("<:tickNo:697759586538749982> Nothing queued, use `play <song_name>`.", delete_after=5)
             return
         else:
             player.queue.clear()
@@ -446,7 +446,7 @@ class Music(commands.Cog):
         """Stops playback of the song and clears the queue."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if player.is_playing:
-            await ctx.send('Stopping...')
+            await ctx.send('Stopping...', delete_after=5)
             player.queue.clear()
             await player.stop()
 
@@ -456,9 +456,9 @@ class Music(commands.Cog):
         """Remove a specific song number from the queue."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.queue:
-            return await ctx.send("<:tickNo:697759586538749982> Nothing queued, use `play <song_name>`.")
+            return await ctx.send("<:tickNo:697759586538749982> Nothing queued, use `play <song_name>`.", delete_after=5)
         if index > len(player.queue) or index < 1:
-            return await ctx.send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.')
+            return await ctx.send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
         player.queue.pop(index-1)
         return await ctx.send('<:tickYes:697759553626046546> Removed from the queue.', delete_after=10)
 
@@ -482,7 +482,7 @@ class Music(commands.Cog):
             await ctx.send(embed=e, view=np_msg_buttons(self.bot, ctx.guild.id))
         else:
             if player.is_connected:
-                return await ctx.send("<:tickNo:697759586538749982> Nothing is playing.")
+                return await ctx.send("<:tickNo:697759586538749982> Nothing is playing.", delete_after=5)
 
     @commands.hybrid_command(aliases=['forceskip', 'fs'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -490,7 +490,7 @@ class Music(commands.Cog):
         """Skips to the next track in the queue."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if player.current is None:
-            return await ctx.send("<:tickNo:697759586538749982> Nothing playing, use `play <song_name>`.")
+            return await ctx.send("<:tickNo:697759586538749982> Nothing playing, use `play <song_name>`.", delete_after=5)
         if number is not None:
             results = await self.bot.lavalink.get_tracks(player.queue[number-1].uri)
             player.add(requester=ctx.author.id, track=results['tracks'][0])
@@ -506,9 +506,9 @@ class Music(commands.Cog):
         """Pauses or resumes music playback."""
         player = self.bot.lavalink.player_manager.get(ctx.guild.id)
         if not player.is_playing:
-            return await ctx.send("<:tickNo:697759586538749982> Nothing playing, use `play <song_name>`.")
+            return await ctx.send("<:tickNo:697759586538749982> Nothing playing, use `play <song_name>`.", delete_after=5)
         await player.set_pause(not player.paused)
-        return await ctx.message.add_reaction('\u2705')
+        return await ctx.send("Done.", delete_after=5)
 
     @commands.hybrid_command(aliases=['q'], name="queue")
     @commands.cooldown(1, 5, commands.BucketType.guild)
