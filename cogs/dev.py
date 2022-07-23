@@ -1,8 +1,4 @@
 import discord
-import os
-import glob
-import datetime
-import typing
 import time
 import asyncio
 from utils import checks

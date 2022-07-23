@@ -1,12 +1,7 @@
 import discord
-import asyncio
-import random
 import json
 import urllib
-import requests
 from aiohttp import request
-from typing import Optional
-from discord import app_commands
 from discord.ext import commands
 
 class Fun(commands.Cog):

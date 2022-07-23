@@ -232,7 +232,7 @@ class Music(commands.Cog):
 
     async def cog_before_invoke(self, ctx):
         if ctx.guild is not None:
-            await self.ensure_voice(ctx)
+            return await self.ensure_voice(ctx)
         return ctx.guild is not None
 
     async def cog_command_error(self, ctx, error):
@@ -619,7 +619,7 @@ class Music(commands.Cog):
                     except KeyError:
                         if results["tracks"]["next"] is not None:
                             results = await self.make_spotify_req(results["tracks"]["next"])
-                            continuez
+                            continue
                         else:
                             break
                 for i in spotify_info:

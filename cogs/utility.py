@@ -3,10 +3,8 @@ import discord
 import aiosqlite
 import requests
 import datetime
-import googletrans
 from colr import color
 from discord.ext import commands
-from googletrans import Translator
 
 class Utility(commands.Cog):
     def __init__(self, bot):

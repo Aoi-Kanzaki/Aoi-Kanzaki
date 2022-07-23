@@ -1,5 +1,4 @@
 import discord
-import traceback
 import random
 import aiosqlite
 from colr import color

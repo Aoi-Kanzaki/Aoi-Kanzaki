@@ -1,7 +1,7 @@
 import discord
 import aiosqlite
 from discord.ext import commands
-from easy_pil import *
+from easy_pil import Editor, Canvas, load_image_async, Font
 
 class Levels(commands.Cog):
     def __init__(self, bot):

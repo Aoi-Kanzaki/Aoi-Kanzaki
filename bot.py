@@ -3,13 +3,10 @@ import os
 import json
 import aiohttp
 import datetime
-import aiosqlite
-import random
 import asyncio
 from colr import color
 from pymongo import MongoClient
 from discord.ext import commands
-from discord import app_commands
 
 load_cogs = [
 	'cogs.music',
