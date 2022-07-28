@@ -1,4 +1,9 @@
-import json
+import os
+import pathlib
+import codecs
+import sys
+import psutil
+import humanize
 import discord
 import aiosqlite
 import requests
@@ -106,18 +111,172 @@ class Utility(commands.Cog):
         e.timestamp = datetime.datetime.utcnow()
         return await ctx.send(embed=e)
 
-    @commands.command(aliases=["setp"])
-    @commands.has_permissions(manage_guild=True)
-    async def setprefix(self, ctx, prefix=None):
-        """Set the bots prefix fot this guild."""
-        if prefix is None:
-            prefix = "f?"
-        with open('./data/prefixes.json', 'r') as f:
-            prefixes = json.load(f)
-        prefixes[str(ctx.guild.id)] = prefix
-        with open('./data/prefixes.json', 'w') as f:
-            json.dump(prefixes, f, indent=4)
-        await ctx.send(f"The bot's prefix has been changed to `{prefix}`.")
+    @commands.command()
+    async def lavastats(self, ctx):
+        """Shows lavalink music stats."""
+        server_num = self.get_playing()
+        server_ids = self.bot.lavalink.player_manager.players
+        server_list = []
+        number = 0
+        users = 0
+        await ctx.typing()
+        for _id, p in server_ids.items():
+            try:
+                if p.is_playing:
+                    number += 1
+                    g = self.bot.get_guild(_id)
+                    users += len(g.me.voice.channel.members)
+                    server_list.append(f"`{number}.` {g.name}: **{p.current.title}**")
+            except AttributeError:
+                pass
+        if server_list == []:
+            servers = 'Not connected anywhere.'
+        else:
+            servers = "\n".join(server_list)
+        e = discord.Embed()
+        e.colour = 0x36393E
+        e.add_field(name="Players:", value=f"Playing in {len(server_list)} servers..")
+        e.add_field(name="Users:", value=f"{users-len(server_list)} users listening..")
+        e.add_field(name="Guilds:", value=servers, inline=False)
+        e.set_footer(text=f"There is currently {len(server_ids)} players created in total.")
+        e.set_thumbnail(url=self.bot.user.avatar)
+        try:
+            return await ctx.send(embed=e)
+        except discord.HTTPException:
+            e = discord.Embed(colour=0x36393E)
+            e.description = f"**Well aren't we just popular? I can't display all the servers. But I am currently playing in {server_num} servers.**"
+            return await ctx.send(embed=e)
+
+    @commands.command()
+    async def commits(self, ctx):
+        """Shows last 5 github commits."""
+        cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
+        if os.name == 'posix':
+            cmd = cmd.format(r'\`%h\`')
+        else:
+            cmd = cmd.format(r'`%h`')
+        try:
+            revision = os.popen(cmd).read().strip()
+        except OSError:
+            revision = 'Could not fetch due to memory error. Sorry.'
+        e = discord.Embed()
+        e.colour = 0x36393E
+        e.description = revision
+        e.set_author(icon_url=self.bot.user.avatar_url, name="Latest Github Changes:")
+        e.set_thumbnail(url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
+        await ctx.send(embed=e)
+
+    @commands.command(aliases=['lls'])
+    async def stats(self, ctx):
+        """Posts bot stats."""
+        await ctx.typing()
+        oe = "<:online:1001425556887326720>"
+        ie = "<:idle:1001425440734466098>"
+        de = "<:dnd:1001425507331625060>"
+        cpuUsage      = psutil.cpu_percent(interval=1)
+        cpuThred      = os.cpu_count()
+        threadString = 'thread'
+        if not cpuThred == 1:
+            threadString += 's'
+        memStats      = psutil.virtual_memory()
+        memUsed       = memStats.used
+        memTotal      = memStats.total
+        memUsedGB     = "{0:.1f}".format(((memUsed / 1024) / 1024) / 1024)
+        memTotalGB    = "{0:.1f}".format(((memTotal/1024)/1024)/1024)
+        memPerc       = str(((memTotal/1024)/1024)/1024 / ((memUsed / 1024) / 1024) / 1024).split('.')[0]
+        online = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.online])
+        idle = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.idle])
+        dnd = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.dnd])
+        used = humanize.naturalsize(psutil.virtual_memory().used)
+        free = humanize.naturalsize(psutil.virtual_memory().free)
+        memory = f"**Used:** {used}\n"
+        memory += f"**Free:** {free}\n"
+        cpu = f"**Cores:** {os.cpu_count()}\n"
+        cpu += '**Cpu:** {}% of ({} {}) utilized\n'.format(cpuUsage, cpuThred, threadString)
+        cpu += '**Ram:** {} ({}%) of {}GB used\n'.format(memUsedGB, memPerc, memTotalGB)
+        members = f"{oe} {online} users online.\n"
+        members += f"{ie} {idle} users idle.\n"
+        members += f"{de} {dnd} users dnd."
+        vcs = 0
+        tcs = 0
+        for guild in self.bot.guilds:
+            for channel in guild.text_channels:
+                tcs += 1
+            for channel in guild.voice_channels:
+                vcs += 1
+        channels = f"{vcs} Voice Channels\n{tcs} Text Channels"
+        e = discord.Embed()
+        e.colour = 0x36393E
+        e.set_author(name=f"{self.bot.user.name} Stats:", icon_url=self.bot.user.avatar)
+        e.add_field(name="Guilds:", value=f"{len(self.bot.guilds)} Guilds\n{channels}")
+        e.add_field(name="Members:", value=members)
+        e.add_field(name="Memory:", value=memory)
+        e.add_field(name="CPU | RAM:", value=cpu)
+        e.add_field(name="Uptime:", value=f"{self.get_bot_uptime()}", inline=False)
+        e.set_thumbnail(url=self.bot.user.avatar)
+        await ctx.send(embed=e)
+
+    @commands.command(aliases=['info'])
+    async def about(self, ctx):
+        """Shows basic info about Kira."""
+        total = 0
+        file_amount = 0
+        pyvi = sys.version_info
+        discordi = f"Discord.py: v{discord.__version__} (Branch rewrite)"
+        python = f"Python: v{pyvi.major}.{pyvi.minor}.{pyvi.micro} (Branch {pyvi.releaselevel} v{pyvi.serial})"
+        dev = await self.bot.http.get_user(827940585201205258)
+        devn = f"{dev['username']}#{dev['discriminator']}"
+        for path, subdirs, files in os.walk('.'):
+            for name in files:
+                if name.endswith('.py'):
+                    file_amount += 1
+                    with codecs.open('./' + str(pathlib.PurePath(path, name)), 'r', 'utf-8') as f:
+                        for i, l in enumerate(f):
+                            if l.strip().startswith('#') or len(l.strip()) == 0:  # skip commented lines.
+                                pass
+                            else:
+                                total += 1
+        code = f'I am made of {total:,} lines of Python, spread across {file_amount:,} files!'
+        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
+        if os.name == 'posix':
+            cmd = cmd.format(r'\`%h\`')
+        else:
+            cmd = cmd.format(r'`%h`')
+        try:
+            revision = os.popen(cmd).read().strip()
+        except OSError:
+            revision = 'Could not fetch due to memory error. Sorry.'
+        e = discord.Embed()
+        e.colour = 0x36393E
+        e.add_field(name="Developer:", value=devn)
+        e.add_field(name="Libraries:", value=f"{discordi}\n{python}")
+        e.add_field(name="Latest Changes:", value=revision, inline=False)
+        e.add_field(name="Code Information:", value=code)
+        e.set_author(name=f"F.res.h {self.bot.version}", icon_url=ctx.author.avatar)
+        e.set_thumbnail(url=self.bot.user.avatar)
+        await ctx.send(embed=e)
+
+    @commands.command()
+    async def uptime(self, ctx):
+        """How long have I been online?"""
+        uptime = self.get_bot_uptime()
+        await ctx.send(uptime)
+
+    def get_playing(self):
+        return len([p for p in self.bot.lavalink.player_manager.players.values() if p.is_playing])
+
+    def get_bot_uptime(self, *, brief=False):
+        now = datetime.datetime.utcnow()
+        delta = now - self.bot.uptime
+        hours, remainder = divmod(int(delta.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
+
+        if not brief:
+            fmt = 'I\'ve been online for {d} days, {h} hours, {m} minutes, and {s} seconds!'
+        else:
+            fmt = '{d}d {h}h {m}m {s}s'
+        return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
 async def setup(bot):
     await bot.add_cog(Utility(bot))

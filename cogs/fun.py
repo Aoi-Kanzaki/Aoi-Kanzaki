@@ -27,6 +27,7 @@ class Fun(commands.Cog):
     @commands.command(aliases=['dj'])
     async def dadjoke(self, ctx):
         """Get a random dad joke."""
+        await ctx.typing()
         url = "https://dad-jokes.p.rapidapi.com/random/joke"
         headers = {
             "X-RapidAPI-Key": "ef73cad338msh002fd3975548b99p1f8db4jsna8c2f9e965d1",
@@ -46,6 +47,7 @@ class Fun(commands.Cog):
     @commands.command(aliases=['8b'], name="8ball")
     async def _8ball(self, ctx, *, question:str):
         """Find the answers to your questions. It knows, and is willing to share."""
+        await ctx.typing()
         url = "https://magic-8-ball1.p.rapidapi.com/my_answer/"
         querystring = {"question": question}
         headers = {

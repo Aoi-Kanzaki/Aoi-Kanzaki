@@ -31,7 +31,7 @@ class Help(commands.Cog):
         else:
             msg = ""
             number = 1
-            ignore_cogs = ['Jishaku', 'Help', 'Leveling', 'ErrorHandler']
+            ignore_cogs = ['Jishaku', 'Help', 'Leveling', 'ErrorHandler', 'JoinMsg']
             for cog in self.bot.cogs:
                 if cog in ignore_cogs:
                     pass

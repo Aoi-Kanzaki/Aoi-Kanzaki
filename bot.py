@@ -28,18 +28,10 @@ starttime = datetime.datetime.now()
 with open('config.json', 'r') as config:
 	_config = json.load(config)
 
-async def _prefix(bot, msg):
-	with open('./data/prefixes.json', 'r') as f:
-		prefixes = json.load(f)
-	if msg.guild is None:
-		return _config['prefix']
-	else:
-		return prefixes[str(msg.guild.id)]
-
 MY_GUILD = discord.Object(id=_config['guildid'])
 class Fresh(commands.AutoShardedBot):
 	def __init__(self):
-		super().__init__(command_prefix=_prefix, description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
+		super().__init__(command_prefix=_config['prefix'], description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
 		self.version = "v1.0.0"
 		self.spotify_id = _config['spotify_id']
 		self.spotify_secret = _config['spotify_secret']
@@ -58,20 +50,6 @@ class Fresh(commands.AutoShardedBot):
 		# This copies the global commands over to your guild.
 		self.tree.copy_global_to(guild=MY_GUILD)
 		await self.tree.sync(guild=MY_GUILD)
-
-	async def on_guild_join(self, guild):
-		with open('./data/prefixes.json', 'r') as f:
-			prefixes = json.load(f)
-		prefixes[str(guild.id)] = "f?"
-		with open('./data/prefixes.json', 'w') as f:
-			json.dump(prefixes, f, indent=4)
-
-	async def on_guild_remove(self, guild):
-		with open('./data/prefixes.json', 'r') as f:
-			prefixes = json.load(f)
-		prefixes.pop(str(guild.id))
-		with open('./data/prefixes.json', 'w') as f:
-			json.dump(prefixes, f, indent=4)
 			
 	async def clear_screen(self):
 		if os.name == "nt":
@@ -98,6 +76,9 @@ class Fresh(commands.AutoShardedBot):
 		else:
 			print(color("Database Status    :", fore=self.colors['cyan']), color("Not Enabled.", fore=self.colors['purple']))
 		print(color("-----------------------------------------------------------------", fore=self.colors["blue"]))
+		if not os.path.exists("./data/"):
+			os.makedirs("./data/")
+			print(color("Data folder was not found, the new directory was created!", fore=self.colors['green']))
 		try:
 			await self.load_extension("jishaku")
 			print(color("Loaded JSK on first try!", fore=self.colors["green"]))

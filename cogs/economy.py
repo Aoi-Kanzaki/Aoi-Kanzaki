@@ -11,6 +11,8 @@ class Economy(commands.Cog):
     async def cog_load(self):
         async with aiosqlite.connect("./data/bank.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS bank (wallet INTEGER, bank INTEGER, maxbank INTEGER, user INTEGER)")
+            await db.execute("CREATE TABLE IF NOT EXISTS inv (laptop INTEGER, phone INTEGER, fakeid INTEGER, user INTEGER)")
+            await db.execute("CREATE TABLE IF NOT EXISTS shop (name TEXT, id TEXT, desc TEXT, cost INTEGER)")
             await db.commit()
         print(color("The Economy cog is ready!", fore=self.bot.colors['blue']))
 
@@ -19,6 +21,22 @@ class Economy(commands.Cog):
             await db.execute("INSERT INTO bank VALUES (?, ?, ?, ?)", (0, 100, 500, user.id,))
             await db.commit()
             return
+
+    async def create_inv(self, user):
+        async with aiosqlite.connect("./data/bank.db") as db:
+            await db.execute("INSERT INTO inv VALUES (?, ?, ?, ?)", (0, 0, 0, user.id,))
+            await db.commit()
+            return
+
+    async def get_inv(self, user):
+        async with aiosqlite.connect("./data/bank.db") as db:
+            get_data = await db.execute("SELECT laptop, phone, fakeid FROM inv WHERE user = ?", (user.id,))
+            data = await get_data.fetchone()
+            if data is None:
+                await self.create_inv(user)
+                return 0, 0, 0
+            laptop, phone, fakeid = data[0], data[1], data[2]
+            return laptop, phone, fakeid
 
     async def get_balance(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
@@ -53,6 +71,23 @@ class Economy(commands.Cog):
                 return 1
             await db.execute("UPDATE bank SET bank = ? WHERE user = ?", (bank[1] + amount, user.id,))
             await db.commit()
+
+    async def update_maxbank(self, user, amount):
+        async with aiosqlite.connect("./data/bank.db") as db:
+            get_maxbank = await db.execute("SELECT maxbank FROM bank WHERE user = ?", (user.id,))
+            maxbank = await get_maxbank.fetchone()
+            if maxbank is None:
+                await self.create_balance(user)
+                return 0
+            await db.execute("UPDATE bank SET maxbank = ? WHERE user = ?", (maxbank[0] + amount, user.id,))
+            await db.commit()
+            return
+
+    async def update_shop(name: str, id: str, desc: str, cost: int):
+        async with aiosqlite.connect("./data/bank.db") as db:
+            await db.execute("INSERT INTO shop VALUES (?, ?, ?, ?)", (name, id, desc, cost,))
+            await db.commit()
+            return
 
     @commands.command()
     async def balance(self, ctx, member: discord.Member=None):

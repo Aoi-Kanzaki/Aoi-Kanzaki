@@ -26,6 +26,7 @@ class JoinMsg(commands.Cog):
 
     @commands.command()
     async def jointest(self, ctx):
+        channel = await ctx.guild.fetch_channel(685706016343719966)
         background = Editor(Canvas((900, 300), color="#141414"))
         profile_picture = await load_image_async(str(ctx.author.avatar.url))
         profile = Editor(profile_picture).resize((150, 150)).circle_image()
