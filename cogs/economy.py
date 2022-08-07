@@ -91,7 +91,7 @@ class Economy(commands.Cog):
             await db.commit()
             return
 
-    @commands.command()
+    @commands.command(aliases=['bal'])
     async def balance(self, ctx, member: discord.Member=None):
         """Shows your banks balance."""
         if not member:
@@ -116,7 +116,7 @@ class Economy(commands.Cog):
             return await ctx.send("No account found so one was created for you. Please run the command again!")
         await ctx.send(f"You got **{amount}** coins!")
 
-    @commands.command()
+    @commands.command(aliases=["with"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def withdraw(self, ctx, amount):
         """Widthdraw coins from your bank."""
@@ -141,7 +141,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=ctx.author.avatar)
         await ctx.send(embed=e)
         
-    @commands.command()
+    @commands.command(aliases=["dep"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def deposit(self, ctx, amount):
         """Deposit coins to your bank."""
@@ -152,7 +152,7 @@ class Economy(commands.Cog):
             pass
         if type(amount) == str:
             if amount.lower() == "max" or amount.lower() == "all":
-                amount = int(wallet)
+                amount = int(maxbank)
         else:
             amount = int(amount)
         bank_res = await self.update_bank(ctx.author, amount)

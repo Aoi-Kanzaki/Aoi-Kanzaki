@@ -131,9 +131,10 @@ class Levels(commands.Cog):
             await db.commit()
             await ctx.send("Updated that level role.")
 
-    @slvl.command()
+    @slvl.command(aliases=['lb'])
     async def leaderboard(self, ctx):
         """Shows the current leveling leaderboard for the guild."""
+        await ctx.typing()
         async with aiosqlite.connect("./data/level.db") as db:
             levelsys = await db.execute("SELECT levelsys FROM levelSettings WHERE guild = ?", (ctx.guild.id,))
             levelsys = await levelsys.fetchone()

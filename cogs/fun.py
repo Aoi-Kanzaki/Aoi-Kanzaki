@@ -14,6 +14,7 @@ class Fun(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def meme(self, ctx):
         """You want memes???"""
+        await ctx.typing()
         memeApi = urllib.request.urlopen("https://meme-api.herokuapp.com/gimme")
         memeData = json.load(memeApi)
         memeUrl = memeData['url']
@@ -48,7 +49,7 @@ class Fun(commands.Cog):
 
     @commands.command(aliases=['8b'], name="8ball")
     async def _8ball(self, ctx, *, question:str):
-        """Find the answers to your questions. It knows, and is willing to share."""
+        """Find the answers to your questions."""
         await ctx.typing()
         url = "https://magic-8-ball1.p.rapidapi.com/my_answer/"
         querystring = {"question": question}
@@ -66,6 +67,7 @@ class Fun(commands.Cog):
     @commands.command()
     async def phcomment(self, ctx, *, comment: str):
         """Send a comment on PornHub. ( ͡° ͜ʖ ͡°)"""
+        await ctx.typing()
         url = f"https://nekobot.xyz/api/imagegen?type=phcomment&image={ctx.author.avatar.url}&username={ctx.author.name}&text={comment}"
         async with request("GET", url) as response:
             json = await response.json();

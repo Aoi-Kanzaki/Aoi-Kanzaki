@@ -23,8 +23,7 @@ class Dev(commands.Cog):
         unloaded = [c.split(".")[1] for c in self._list_modules() if c.split(".")[1] not in loaded]
         if not unloaded:
             unloaded = ['All modules are loaded']
-        e = discord.Embed()
-        e.colour = 0x36393E
+        e = discord.Embed(colour=discord.Colour.blurple())
         e.set_author(name="Modules.", icon_url=self.bot.user.avatar)
         e.add_field(name="Loaded Modules:", value=", ".join(sorted(loaded)), inline=False)
         e.add_field(name="Unloaded Modules:", value=", ".join(sorted(unloaded)), inline=False)
@@ -34,6 +33,7 @@ class Dev(commands.Cog):
     @commands.check(_checks.is_owner)
     async def network(self, ctx, *, args=None):
         """Network information."""
+        await ctx.typing()
         if not args:
             proc = await asyncio.create_subprocess_shell("vnstati -s -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()

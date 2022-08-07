@@ -406,6 +406,7 @@ class Utility(commands.Cog):
     @commands.command()
     async def weather(self, ctx, *, city: str):
         """Get your citys weather."""
+        await ctx.typing()
         weather = await self.get_weather(city)
         e = discord.Embed(color=discord.Color.blurple())
         for forecast in weather.forecasts:
