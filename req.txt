@@ -6,3 +6,4 @@ aiosqlite
 psutil
 lavalink
 motor
+python-weather

@@ -69,7 +69,7 @@ class Utility(commands.Cog):
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        with open('.\\data\\voice_leaderboard.json', 'r') as file:
+        with open('./data/voice_leaderboard.json', 'r') as file:
             voice_data = json.load(file)
             new_user = str(member.id)
         if new_user in voice_data:
@@ -79,12 +79,12 @@ class Utility(commands.Cog):
                     datetime.datetime.strptime(voice_leave_time, '%H:%M:%S') - datetime.datetime.strptime(
                 voice_join_time, '%H:%M:%S'))
             voice_data[new_user] = f'{calculate_time}'
-            with open('.\\data\\voice_leaderboard.json', 'w') as update_user_data:
+            with open('./data/voice_leaderboard.json', 'w') as update_user_data:
                 json.dump(voice_data, update_user_data, indent=4)
         else:
             new_voice_join_time = datetime.datetime.now().time().strftime('%H:%M:%S')
             voice_data[new_user] = new_voice_join_time
-            with open('.\\data\\voice_leaderboard.json', 'w') as new_user_data:
+            with open('./data/voice_leaderboard.json', 'w') as new_user_data:
                 json.dump(voice_data, new_user_data, indent=4)
 
     @commands.command()

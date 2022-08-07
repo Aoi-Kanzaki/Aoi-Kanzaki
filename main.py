@@ -14,7 +14,7 @@ with open('config.json', 'r') as config:
 
 class Fresh(commands.AutoShardedBot):
 	def __init__(self):
-		super().__init__(command_prefix=_config['prefix'], description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
+		super().__init__(command_prefix=commands.when_mentioned_or(_config['prefix']), description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
 		self.version = "v1.0.0"
 		self.spotify_id = _config['spotify_id']
 		self.spotify_secret = _config['spotify_secret']
