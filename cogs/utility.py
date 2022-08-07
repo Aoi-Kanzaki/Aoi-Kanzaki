@@ -89,7 +89,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def voice(self, ctx):
-        with open('.\\data\\voice_leaderboard.json', 'r') as file:
+        with open('./data/voice_leaderboard.json', 'r') as file:
             voice_data = json.load(file)
             if not voice_data:
                 return await ctx.send("Oops, seems like there is no voice stats data file? Try again later.")
