@@ -3,7 +3,7 @@ import time
 import asyncio
 import os
 import glob
-from utils import checks
+from utils import _checks
 from discord.ext import commands
 from asyncio.subprocess import PIPE
 
@@ -16,7 +16,7 @@ class Dev(commands.Cog):
         return ["cogs." + os.path.splitext(f)[0] for f in modules]
 
     @commands.command()
-    @commands.check(checks.is_owner)
+    @commands.check(_checks.is_owner)
     async def modules(self, ctx):
         """Shows modules."""
         loaded = [c.__module__.split(".")[1] for c in self.bot.cogs.values()]
@@ -31,7 +31,7 @@ class Dev(commands.Cog):
         await ctx.send(embed=e)
 
     @commands.command()
-    @commands.check(checks.is_owner)
+    @commands.check(_checks.is_owner)
     async def network(self, ctx, *, args=None):
         """Network information."""
         if not args:

@@ -1,8 +1,10 @@
 import discord
 import json
 import urllib
+import random
 from aiohttp import request
 from discord.ext import commands
+from decimal import Decimal, ROUND_HALF_UP
 
 class Fun(commands.Cog):
     def __init__(self, bot):
@@ -60,6 +62,68 @@ class Fun(commands.Cog):
                 await ctx.reply(f"{ctx.author.mention} {data['answer']}")
             else:
                 await ctx.send(f"{response.status}")
+
+    @commands.command()
+    async def phcomment(self, ctx, *, comment: str):
+        """Send a comment on PornHub. ( ͡° ͜ʖ ͡°)"""
+        url = f"https://nekobot.xyz/api/imagegen?type=phcomment&image={ctx.author.avatar.url}&username={ctx.author.name}&text={comment}"
+        async with request("GET", url) as response:
+            json = await response.json();
+            if json['status'] == 200:
+                e = discord.Embed(color=discord.Color.blurple())
+                e.set_image(url=json['message'])
+                await ctx.send(embed=e)
+            else:
+                await ctx.send(f"{json['message']}")
+
+    @commands.command()
+    async def ship(self, ctx, lover1: discord.Member, lover2: discord.Member=None):
+        """Ship 2 users."""
+        await ctx.typing()
+        lover2 = lover2 or ctx.author
+        rigged = False
+        name1 = lover1.name[:-round(len(lover1.name) / 2)] + lover2.name[-round(len(lover2.name) / 2):]
+        name2 = lover2.name[:-round(len(lover2.name) / 2)] + lover1.name[-round(len(lover1.name) / 2):]
+        if 827940585201205258 in [lover1.id, lover2.id] and 882012969523884072 in [lover1.id, lover2.id]:
+            rigged = True
+        desc = f"**{ctx.author.mention} ships {lover1.mention} and {lover2.mention}!**\n\n " \
+               f"Ship names: __**{name1}**__ or __**{name2}**__\n\n " \
+               f"{self.draw_meter(rigged)}"
+        e = discord.Embed(description=desc, color=discord.Color.blurple())
+        return await ctx.send(embed=e)
+
+
+    @staticmethod
+    def draw_meter(rigged: bool = False):
+        random_integer = 100 if rigged else random.randint(0, 100)
+        love = Decimal(str(random_integer / 10)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+        love_emoji = "❤"
+        empty_bar = "🖤"
+        if random_integer == 0:
+            empty_bar = "💔"
+            love_message = "That's not good... maybe delete this and try again before they see?"
+        elif random_integer <= 15:
+            love_message = "That's a yikes.."
+        elif random_integer <= 30:
+            love_message = "Maybe in the future?"
+        elif random_integer <= 45:
+            love_message = "I mean this is the perfect range for friends?"
+        elif random_integer <= 60:
+            love_message = "Maybe try talking more?"
+        elif random_integer == 69:
+            love_emoji = "😏"
+            love_message = "That's the sex number *wink wonk*"
+        elif random_integer <= 75:
+            love_message = "Best friends, stay as best friends."
+        elif random_integer <= 90:
+            love_message = "Give it a go, you're made for each other!"
+        elif random_integer <= 99:
+            love_message = "I ship it!"
+        else:
+            love_emoji = "💙"
+            love_message = "Go get married! I hope I'm invited ❤"
+        bar = "".join(love_emoji if i < love else empty_bar for i in range(10))
+        return f"**Love meter:** {bar} **{random_integer}%**\n**{love_message}**"
 
 async def setup(bot):
     await bot.add_cog(Fun(bot))

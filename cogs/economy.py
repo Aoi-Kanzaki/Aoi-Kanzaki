@@ -1,12 +1,14 @@
 import discord
 import aiosqlite
 import random
+import datetime
 from colr import color
 from discord.ext import commands
 
 class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.daily_cooldowns = {}
 
     async def cog_load(self):
         async with aiosqlite.connect("./data/bank.db") as db:
@@ -255,6 +257,24 @@ class Economy(commands.Cog):
             e.add_field(name="Outcome:", value=f"{final[0]}{final[1]}{final[2]}")
             e.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png")
             return await ctx.send(embed=e)
+
+    @commands.command()
+    async def daily(self, ctx):
+        """Get your daily coins."""
+        if ctx.author.id in self.daily_cooldowns:
+            difference = (datetime.datetime.now() - self.daily_cooldowns[ctx.author.id]).total_seconds()
+            m, s = divmod(int(86400 - difference), 60)
+            h, m = divmod(m, 60)
+            if h > 0:
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{h} hour(s) {m} minute(s) {s} second(s).**")
+            elif m > 0:
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{m} minute(s) {s} second(s).**")
+            else:
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{s} second(s).**")
+        wallet, bank, maxbank = await self.get_balance(ctx.author)
+        await self.update_wallet(ctx.author, +5000)
+        self.daily_cooldowns[ctx.author.id] = datetime.datetime.now()
+        return await ctx.send(f"You received 5000 coins! New Balance: **{wallet+5000}**")
 
 async def setup(bot):
     await bot.add_cog(Economy(bot))

@@ -11,6 +11,7 @@ class Levels(commands.Cog):
     @commands.command(aliases=['lvl', 'rank'])
     async def level(self, ctx, member: discord.Member=None):
         """Show's your current level."""
+        await ctx.typing()
         if member is None: member = ctx.author
         async with aiosqlite.connect("./data/level.db") as db:
             levelsys = await db.execute("SELECT levelsys FROM levelSettings WHERE guild = ?", (ctx.guild.id,))
@@ -58,6 +59,7 @@ class Levels(commands.Cog):
 
     @commands.group()
     async def slvl(self, ctx):
+        """Leveling system settings."""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
             await self.bot.send_sub_help(ctx, ctx.command)
 

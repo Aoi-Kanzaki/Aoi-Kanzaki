@@ -5,218 +5,13 @@ import math
 import asyncio
 import discord
 import lavalink
+import aiosqlite
 from colr import color
 from lavalink.utils import format_time
 from lavalink.models import AudioTrack
 from discord.ext import commands
-
-class LavalinkVoiceClient(discord.VoiceClient):
-
-    def __init__(self, client: discord.Client, channel: discord.abc.Connectable):
-        self.client = client
-        self.channel = channel
-        # ensure there exists a client already
-        if hasattr(self.client, 'lavalink'):
-            self.lavalink = self.client.lavalink
-        else:
-            self.client.lavalink = lavalink.Client(client.user.id)
-            self.client.lavalink.add_node( 'localhost', 2333, 'youshallnotpass', 'us', 'default-node')
-            self.lavalink = self.client.lavalink
-
-    async def on_voice_server_update(self, data):
-        await self.lavalink.voice_update_handler({ 't': 'VOICE_SERVER_UPDATE', 'd': data })
-
-    async def on_voice_state_update(self, data):
-        await self.lavalink.voice_update_handler({ 't': 'VOICE_STATE_UPDATE', 'd': data })
-
-    async def connect(self, *, timeout: float, reconnect: bool, self_deaf: bool = False, self_mute: bool = False) -> None:
-        self.lavalink.player_manager.create(guild_id=self.channel.guild.id)
-        await self.channel.guild.change_voice_state(channel=self.channel, self_mute=self_mute, self_deaf=self_deaf)
-
-    async def disconnect(self, *, force: bool = False) -> None:
-        player = self.lavalink.player_manager.get(self.channel.guild.id)
-        if not force and not player.is_connected:
-            return
-        await self.channel.guild.change_voice_state(channel=None)
-        player.channel_id = None
-        player.store("prev_requester", None)
-        player.store("prev_song", None)
-        player.store("playing_song", None)
-        player.store("requester", None)
-        self.cleanup()
-
-class queue_msg_buttons(discord.ui.View):
-    def __init__(self, bot, guild_id, page) -> None:
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.page = page
-        self.guild_id = guild_id
-        self.player = bot.lavalink.player_manager.get(self.guild_id)
-
-    @discord.ui.button(label="Prev Page", style=discord.ButtonStyle.blurple)
-    async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.page = self.page-1
-        if self.page < 1:
-            self.page = math.ceil(len(self.player.queue) / 10)
-        pos = format_time(self.player.position)
-        if self.player.current.stream:
-            dur = 'LIVE'
-        else:
-            dur = format_time(self.player.current.duration)
-        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
-        draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, self.page)
-        e = discord.Embed(colour=discord.Color.blurple())
-        e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
-        e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
-        e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-        return await interaction.response.edit_message(embed=e)
-
-    @discord.ui.button(label="Next Page", style=discord.ButtonStyle.blurple)
-    async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.page = self.page+1
-        if self.page > math.ceil(len(self.player.queue) / 10):
-            self.page = 1
-        pos = format_time(self.player.position)
-        if self.player.current.stream:
-            dur = 'LIVE'
-        else:
-            dur = format_time(self.player.current.duration)
-        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
-        draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, self.page)
-        e = discord.Embed(colour=discord.Color.blurple())
-        e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
-        e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
-        e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-        return await interaction.response.edit_message(embed=e)
-
-    @discord.ui.button(label="Done", style=discord.ButtonStyle.red)
-    async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
-        return await interaction.message.delete()
-
-class np_msg_buttons(discord.ui.View):
-    def __init__(self, bot, guild_id) -> None:
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.guild_id = guild_id
-        self.player = bot.lavalink.player_manager.get(self.guild_id)
-
-    @discord.ui.button(label="Queue", style=discord.ButtonStyle.blurple)
-    async def queue(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if not self.player.queue:
-            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
-        if self.player.current.stream:
-            dur = 'LIVE'
-        else:
-            dur = format_time(self.player.current.duration)
-        pos = format_time(self.player.position)
-        e = discord.Embed(colour=discord.Color.blurple())
-        draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
-        draw_queue = await self.bot.get_cog("Music").draw_queue(self.guild_id, 1)
-        e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
-        e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
-        e.set_footer(text=f'Page 1/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-        if len(self.player.queue) > 10:
-            return await interaction.response.edit_message(embed=e, view=queue_msg_buttons(self.bot, self.guild_id, 1))
-        else:
-            return await interaction.response.edit_message(embed=e, view=None)
-
-    @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
-    async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.player.is_playing:
-            await self.player.set_pause(not self.player.paused)
-            e = discord.Embed(colour=discord.Color.blurple())
-            if self.player.current.stream:
-                dur = 'LIVE'
-            else:
-                dur = format_time(self.player.current.duration)
-            if self.player.paused is True:
-                e.title = "Paused:"
-            else:
-                e.title = "Now Playing:"
-            draw_time = await self.bot.get_cog("Music").draw_time(self.guild_id)
-            e.description = f"{self.player.current.title}\n"
-            e.description += f"{draw_time} `[{format_time(self.player.position)}/{dur}]`\n"
-            e.description += f"{self.player.current.uri}\n"
-            e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-            return await interaction.response.edit_message(embed=e)
-        else:
-            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
-
-    @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
-    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.player.is_playing:
-            await self.player.skip()
-            return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
-        else:
-            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
-
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
-    async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.player.is_playing:
-            self.player.queue.clear()
-            await self.player.stop()
-            await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
-            return await interaction.message.delete()
-        else:
-            return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
-
-class event_hook_buttons(discord.ui.View):
-    def __init__(self, bot, guild_id) -> None:
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.player = bot.lavalink.player_manager.get(guild_id)
-
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple)
-    async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.player.fetch("prev_song") is None:
-            return await interaction.response.send_message(content="No previous track.", ephemeral=True)
-        last_track = await self.player.node.get_tracks(self.player.fetch("prev_song"))
-        if not last_track:
-            return interaction.response.edit_message(content="Seems there was an issue in getting the last track and nothing was found.", embed=None, view=None)
-        self.player.add(requester=self.player.fetch("prev_requester"), track=last_track['tracks'][0])
-        self.player.queue.insert(0, self.player.queue[-1])
-        self.player.queue.pop(len(self.player.queue)-1)
-        await self.player.skip()
-        self.player.store("prev_requester", None)
-        self.player.store("prev_song", None)
-        self.player.store("playing_song", None)
-        self.player.store("requester", None)
-        embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
-        return await interaction.response.edit_message(embed=embed, view=None)
-
-    @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
-    async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.player.set_pause(not self.player.paused)
-        e = discord.Embed(colour=discord.Color.blurple())
-        if self.player.paused is True:
-            e.title = "Paused:"
-        else:
-            e.title = "Now Playing:"
-        e.description = f"{self.player.current.title}\n"
-        e.description += f"{self.player.current.uri}\n"
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-        if self.player.queue:
-            number = 0
-            upNext = ""
-            for track in self.player.queue[0:5]:
-                number += 1
-                upNext += f"`{number})` {track.title}\n"
-            e.add_field(name="Up Next:", value=upNext)
-        return await interaction.response.edit_message(embed=e)
-
-    @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
-    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.player.skip()
-        return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
-
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
-    async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.player.queue.clear()
-        await self.player.stop()
-        await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+from utils._LavalinkVoiceClient import LavalinkVoiceClient
+from utils._MusicButtons import event_hook_buttons, queue_msg_buttons, np_msg_buttons
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -226,6 +21,12 @@ class Music(commands.Cog):
             bot.lavalink = lavalink.Client(bot.user.id)
             bot.lavalink.add_node(host='127.0.0.1', port=2333, password='youshallnotpass', region='eu', name='default-node', resume_timeout=None, reconnect_attempts=3)
         lavalink.add_event_hook(self.track_hook)
+
+    async def cog_load(self):
+        async with aiosqlite.connect("./data/music.db") as db:
+            await db.execute("CREATE TABLE IF NOT EXISTS musicSettings (musicMessage INTEGER, musicToggle INTEGER, musicChannel INTEGER, musicRunning INTEGER, guild INTEGER)")
+            await db.commit()
+        print(color("The music database is ready!", fore=self.bot.colors['blue']))
 
     def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
@@ -241,26 +42,44 @@ class Music(commands.Cog):
 
     async def ensure_voice(self, ctx):
         player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint="us")
-        if not ctx.author.voice or not ctx.author.voice.channel:
-            return await ctx.send('<:tickNo:697759586538749982> Join a voicechannel first.', delete_after=5)
-        if not player.is_connected:
-            if not ctx.command.name in ('play', 'search'):
-                return await ctx.send('<:tickNo:697759586538749982> Not connected.')
-            if not ctx.author.voice.channel.permissions_for(ctx.me).connect or not ctx.author.voice.channel.permissions_for(ctx.me).speak:
-                return await ctx.send('<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.', delete_after=5)
-            player.store('channel', ctx.channel.id)
-            await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
-        else:
-            if int(player.channel_id) != ctx.author.voice.channel.id:
-                return await ctx.send('<:tickNo:697759586538749982> You need to be in my voicechannel.', delete_after=5)
+        if ctx.command.name in ('play', 'search'):
+            if not ctx.author.voice or not ctx.author.voice.channel:
+                return await ctx.send('<:tickNo:697759586538749982> Join a voicechannel first.', delete_after=5)
+            if not player.is_connected:
+                if not ctx.author.voice.channel.permissions_for(ctx.me).connect or not ctx.author.voice.channel.permissions_for(ctx.me).speak:
+                    return await ctx.send('<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.', delete_after=5)
+                player.store('channel', ctx.channel.id)
+                await ctx.author.voice.channel.connect(cls=LavalinkVoiceClient)
+            else:
+                if int(player.channel_id) != ctx.author.voice.channel.id:
+                    return await ctx.send('<:tickNo:697759586538749982> You need to be in my voicechannel.', delete_after=5)
 
     async def track_hook(self, event):
+        async with aiosqlite.connect("./data/music.db") as db:
+            try:
+                getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (event.player.guild_id,))
+                data = await getData.fetchone()
+            except:
+                pass
         if not hasattr(event, 'player'):
             return
         if isinstance(event, lavalink.events.NodeConnectedEvent):
             print(color(f"Lavalink succesfully connected to node:", fore=self.bot.colors['cyan']), color(f"{event.node.name}", fore=self.bot.colors['purple']))
         if isinstance(event, lavalink.events.QueueEndEvent):
-            return await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
+            if event.player.fetch('channel') == data[2]:
+                channel = await self.bot.fetch_channel(data[2])
+                msg = await channel.fetch_message(data[0])
+                e = discord.Embed(color=discord.Color.blurple())
+                e.title = "Nothing Currently Playing:"
+                e.description = "Send a song `link` or `query` to play."
+                e.description += "\nSend `pause` or `resume` to control the music."
+                e.description += "\nSend `skip` to skip the current song."
+                e.description += "\nSend `prev` or `previous` to skip to the previous song."
+                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                await msg.edit(embed=e, view=None)
+            await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
+            self.bot.lavalink.player_manager.remove(event.player.guild_id)
         if isinstance(event, lavalink.events.TrackEndEvent):
             if event.player.fetch('npmsg') != None:
                 try:
@@ -276,30 +95,112 @@ class Music(commands.Cog):
             event.player.store("playing_song", event.player.current.uri)
             event.player.store("requester", event.player.current.requester)
             if event.player.fetch('channel'):
-                if event.player.fetch('npmsg') != None:
-                    try:
-                        msg = await self.bot.get_channel(event.player.fetch('channel')).fetch_message(event.player.fetch('npmsg'))
-                        await msg.delete()
-                    except:
-                        pass
-                if self.bot.get_channel(event.player.fetch('channel')):
-                    try:
-                        e = discord.Embed(colour=discord.Color.blurple())
-                        e.title = "Now Playing:"
-                        e.description = f"{event.player.current.title}\n"
-                        e.description += f"{event.player.current.uri}\n"
-                        e.set_thumbnail(url=f'https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg')
-                        if event.player.queue:
-                            number = 0
-                            upNext = ""
-                            for track in event.player.queue[0:5]:
-                                number += 1
-                                upNext += f"`{number})` {track.title}\n"
-                            e.add_field(name="Up Next:", value=upNext)
-                        message = await self.bot.get_channel(event.player.fetch('channel')).send(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
-                        event.player.store('npmsg', message.id)
-                    except:
-                        pass
+                if data[2] == event.player.fetch('channel'):
+                    if event.player.current:
+                        while True:
+                            if not event.player.current:
+                                break
+                            if event.player.queue:
+                                queue_list = ''
+                                for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                            else:
+                                queue_list = "Join a voice channel and queue songs by name or url in here."
+                            if event.player.current.stream:
+                                dur = 'LIVE'
+                            else:
+                                dur = format_time(event.player.current.duration)
+                            e = discord.Embed(color=discord.Color.blurple())
+                            e.add_field(name="Title:", value=event.player.current.title, inline=False)
+                            e.add_field(name="Position:", value=f"{await self.draw_time(event.player.guild_id)} `[{format_time(event.player.position)}/{dur}]`\n", inline=False)
+                            e.add_field(name="Queue List:", value=queue_list, inline=False)
+                            e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
+                            requester = self.bot.get_user(event.player.current.requester)
+                            e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+                            channel = await self.bot.fetch_channel(data[2])
+                            msg = await channel.fetch_message(data[0])
+                            try:
+                                if event.player.paused == True:
+                                    pass
+                            except:
+                                break
+                            else:
+                                await msg.edit(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
+                            await asyncio.sleep(20)
+                else:
+                    if event.player.fetch('npmsg') != None:
+                        try:
+                            msg = await self.bot.get_channel(event.player.fetch('channel')).fetch_message(event.player.fetch('npmsg'))
+                            await msg.delete()
+                        except:
+                            pass
+                    if self.bot.get_channel(event.player.fetch('channel')):
+                        try:
+                            e = discord.Embed(colour=discord.Color.blurple())
+                            e.title = "Now Playing:"
+                            e.description = f"{event.player.current.title}\n"
+                            e.description += f"{event.player.current.uri}\n"
+                            e.set_thumbnail(url=f'https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg')
+                            if event.player.queue:
+                                number = 0
+                                upNext = ""
+                                for track in event.player.queue[0:5]:
+                                    number += 1
+                                    upNext += f"`{number})` {track.title}\n"
+                                e.add_field(name="Up Next:", value=upNext)
+                            message = await self.bot.get_channel(event.player.fetch('channel')).send(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
+                            event.player.store('npmsg', message.id)
+                        except:
+                            pass
+
+    @commands.command()
+    @commands.cooldown(1, 10, commands.BucketType.guild)
+    async def setup(self, ctx):
+        """Toggles the music channel on and off."""
+        existing_channels = [e.name for e in ctx.guild.channels]
+        async with aiosqlite.connect("./data/music.db") as db:
+            getData = await db.execute("SELECT musicToggle, musicChannel FROM musicSettings WHERE guild = ?", (ctx.guild.id,))
+            data = await getData.fetchone()
+            if data is None:
+                if "fresh-music" in existing_channels:
+                    return await ctx.send("<:tickNo:697759586538749982> Please delete the `fresh-music` channel first.", delete_after=5)
+                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
+                msgid = await self.send_player_msg(created.id)
+                await db.execute("INSERT INTO musicSettings (musicMessage, musicToggle, musicChannel, musicRunning, guild) VALUES (?, ?, ?, ?, ?)", (msgid, 1, created.id, 0, ctx.guild.id,))
+                await ctx.send("<:tickYes:697759553626046546> Music channel setup complete. You can now move the channel to wherever you want.")
+            elif data[0] == 1:
+                if "fresh-music" in existing_channels:
+                    channel = await ctx.guild.fetch_channel(data[1])
+                    await channel.delete()
+                    await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
+                    await ctx.send("<:tickYes:697759553626046546> Deleted fresh music channel and disabled the system.")
+                else:
+                    await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
+                    await ctx.send("<:tickYes:697759553626046546> The fresh music channel has already been deleted. But I disabled the system.")
+            else:
+                if "fresh-music" in existing_channels:
+                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
+                    msgid = await self.send_player_msg(channelid)
+                    await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, channelid, ctx.guild.id,))
+                    await ctx.send("<:tickYes:697759553626046546> Music channel setup complete. You can now move the channel to wherever you want.")
+                else:
+                    created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
+                    msgid = await self.send_player_msg(created.id)
+                    await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, created.id, ctx.guild.id,))
+                    await ctx.send(f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
+            await db.commit()
+            
+    async def send_player_msg(self, channelid):
+        e = discord.Embed(color=discord.Color.blurple())
+        e.title = "Nothing Currently Playing:"
+        e.description = "Send a song `link` or `query` to play."
+        e.description += "\nSend `pause` or `resume` to control the music."
+        e.description += "\nSend `skip` to skip the current song."
+        e.description += "\nSend `prev` or `previous` to skip to the previous song."
+        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+        e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+        msg = await self.bot.get_channel(channelid).send(embed=e)
+        return msg.id
 
     @commands.hybrid_command(aliases=['p'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -556,17 +457,19 @@ class Music(commands.Cog):
     #All spotify request functions below
     async def queue_spotify(self, ctx, player, query):
         """Let's not make the play command look like fucking hell anymore....."""
-        msg = await ctx.send("<a:loading:697759686509985814> Loading Spotify info...")
+        try:
+            send = ctx.send
+        except AttributeError:
+            send = ctx.channel.send
         parts = query.split(":")
         if "track" in parts:
             res = await self.make_spotify_req("https://api.spotify.com/v1/tracks/{0}".format(parts[-1]))
             results = await player.node.get_tracks("ytsearch:{} {}".format(res["artists"][0]["name"], res["name"]))
             if results:
-                enqueuemsg = f'<:tickYes:697759553626046546> Track Enqueued: {results["tracks"][0]["info"]["title"]}'
                 track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                 player.add(requester=ctx.author.id, track=track)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "album" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/albums/{0}".format(query))
@@ -595,9 +498,9 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["name"], i["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                enqueuemsg = f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**"
+                await send(f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**", delete_after=5)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "playlist" in parts:
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/playlists/{0}/tracks".format(query))
@@ -626,15 +529,12 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["track"]["name"], i["track"]["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
-                enqueuemsg = f"<:tickYes:697759553626046546> Loaded playlist **{playlistName}!**"
+                await send(f"<:tickYes:697759553626046546> Loaded Playlist **{playlistName}**!", delete_after=5)
             else:
-                enqueuemsg = "<:tickNo:697759586538749982> Nothing was found!"
+                await send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         player.store('channel', ctx.channel.id)
         if not player.is_playing:
             await player.play()
-        msg =  await msg.edit(content=enqueuemsg)
-        await asyncio.sleep(10)
-        return await msg.delete()
 
     async def make_spotify_req(self, url):
         if self.spotify_token and not self.spotify_token["expires_at"] - int(time.time()) < 60:
