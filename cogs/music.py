@@ -28,8 +28,28 @@ class Music(commands.Cog):
             await db.commit()
         print(color("The music database is ready!", fore=self.bot.colors['blue']))
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
+        async with aiosqlite.connect("./data/music.db") as db:
+            for guild in self.bot.guilds:
+                try:
+                    getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (guild.id,))
+                    data = await getData.fetchone()
+                    if data[1] ==1:
+                        channel = await guild.fetch_channel(data[2])
+                        msg = await channel.fetch_message(data[0])
+                        e = discord.Embed(color=discord.Color.blurple())
+                        e.title = "Nothing Currently Playing:"
+                        e.description = "Send a song `link` or `query` to play."
+                        e.description += "\nSend `pause` or `resume` to control the music."
+                        e.description += "\nSend `skip` to skip the current song."
+                        e.description += "\nSend `prev` or `previous` to skip to the previous song."
+                        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                        e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                        await msg.edit(embed=e, view=None)
+                        await asyncio.sleep(1)
+                except Exception as e:
+                    print(e)
 
     async def cog_before_invoke(self, ctx):
         if ctx.guild is not None:
