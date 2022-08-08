@@ -49,6 +49,61 @@ class Fun(commands.Cog):
 
     @commands.command(aliases=['8b'], name="8ball")
     async def _8ball(self, ctx, *, question:str):
+        """Ask the 8ball a question."""
+        await ctx.typing()
+        responses = [
+            "It is certain.",
+            "It is decidedly so.",
+            "Without a doubt.",
+            "Yes - definitely.",
+            "You may rely on it.",
+            "As I see it, yes.",
+            "Most likely.",
+            "Outlook good.",
+            "Yes.",
+            "Signs point to yes.",
+            "Reply hazy, try again.",
+            "Ask again later.",
+            "Better not tell you now.",
+            "Cannot predict now.",
+            "Concentrate and ask again.",
+            "Don't count on it.",
+            "My reply is no.",
+            "My sources say no.",
+            "Outlook not so good.",
+            "Very doubtful."
+        ]
+        await ctx.send(f"Question: {question}\nAnswer: {random.choice(responses)}")
+
+    @commands.command()
+    async def rps(self, ctx, *, choice:str):
+        """Play rock paper scissors with the bot."""
+        await ctx.typing()
+        choices = ["rock", "paper", "scissors"]
+        botChoice = random.choice(choices)
+        if choice.lower() in choices:
+            if choice.lower() == botChoice:
+                await ctx.send(f"You both chose {choice.lower()}, it's a tie!")
+            elif choice.lower() in "rock":
+                if botChoice == "paper":
+                    await ctx.send(f"I chose {botChoice}, you lose!")
+                else:
+                    await ctx.send(f"I chose {botChoice}, you win!")
+            elif choice.lower() == "paper":
+                if botChoice == "scissors":
+                    await ctx.send(f"I chose {botChoice}, you lose!")
+                else:
+                    await ctx.send(f"I chose {botChoice}, you win!")
+            elif choice.lower() == "scissors":
+                if botChoice == "rock":
+                    await ctx.send(f"I chose {botChoice}, you lose!")
+                else:
+                    await ctx.send(f"I chose {botChoice}, you win!")
+        else:
+            await ctx.send("Invalid choice, please choose rock, paper, or scissors.")
+
+    @commands.command(aliases=['8b'], name="8ball")
+    async def _8ball(self, ctx, *, question:str):
         """Find the answers to your questions."""
         await ctx.typing()
         url = "https://magic-8-ball1.p.rapidapi.com/my_answer/"

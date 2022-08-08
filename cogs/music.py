@@ -98,6 +98,7 @@ class Music(commands.Cog):
                 if data[2] == event.player.fetch('channel'):
                     if event.player.current:
                         while True:
+                            await asyncio.sleep(0.5)
                             if not event.player.current:
                                 break
                             if event.player.queue:
@@ -126,7 +127,7 @@ class Music(commands.Cog):
                                 break
                             else:
                                 await msg.edit(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
-                            await asyncio.sleep(20)
+                            await asyncio.sleep(19.5)
                 else:
                     if event.player.fetch('npmsg') != None:
                         try:
