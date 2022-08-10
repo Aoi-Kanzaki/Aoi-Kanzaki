@@ -75,8 +75,10 @@ class MusicChannel(commands.Cog):
                                     dur = 'LIVE'
                                 else:
                                     dur = format_time(player.current.duration)
-                                e.add_field(name="Title:", value=player.current.title, inline=False)
-                                e.add_field(name="Position:", value=f"{await self.draw_time(player.guild_id)} `[{format_time(player.position)}/{dur}]`\n", inline=False)
+                                kek = f"{player.current.title}\n{player.current.uri}"
+                                e.add_field(name="Currently Playing:", value=kek, inline=False)
+                                e.add_field(name="Author:", value=player.current.author)
+                                e.add_field(name="Duration:", value=dur)
                                 e.add_field(name="Queue List:", value=queue_list, inline=False)
                                 e.set_image(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
                                 requester = self.bot.get_user(player.current.requester)
@@ -97,8 +99,10 @@ class MusicChannel(commands.Cog):
                                     queue_list = ''
                                     for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
                                         queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                                    e.add_field(name="Title:", value=player.current.title, inline=False)
-                                    e.add_field(name="Position:", value=f"{await self.bot.get_cog('Music').draw_time(player.guild_id)} `[{format_time(player.position)}/{dur}]`\n", inline=False)
+                                    kek = f"{player.current.title}\n{player.current.uri}"
+                                    e.add_field(name="Currently Playing:", value=kek, inline=False)
+                                    e.add_field(name="Author:", value=player.current.author)
+                                    e.add_field(name="Duration:", value=dur)
                                     e.add_field(name="Queue List:", value=queue_list, inline=False)
                                     e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                                     e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
@@ -138,8 +142,10 @@ class MusicChannel(commands.Cog):
                                     dur = 'LIVE'
                                 else:
                                     dur = format_time(player.current.duration)
-                                e.add_field(name="Title:", value=player.current.title, inline=False)
-                                e.add_field(name="Position:", value=f"{await self.bot.get_cog('Music').draw_time(player.guild_id)} `[{format_time(player.position)}/{dur}]`\n", inline=False)
+                                kek = f"{player.current.title}\n{player.current.uri}"
+                                e.add_field(name="Currently Playing:", value=kek, inline=False)
+                                e.add_field(name="Author:", value=player.current.author)
+                                e.add_field(name="Duration:", value=dur)
                                 e.add_field(name="Queue List:", value=queue_list, inline=False)
                                 e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                                 e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
