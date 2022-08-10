@@ -6,7 +6,6 @@ from discord.ext import commands
 from lavalink.models import AudioTrack
 from lavalink.utils import format_time
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
-from utils._MusicButtons import np_msg_buttons
 
 class MusicChannel(commands.Cog):
     def __init__(self, bot):
