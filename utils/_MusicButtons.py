@@ -177,8 +177,10 @@ class event_hook_buttons(discord.ui.View):
                             queue_list += '`{}.` {}\n'.format(i + 1, track.title)
                     else:
                         queue_list = "Join a voice channel and queue songs by name or url in here."
-                    e.add_field(name="Title:", value=self.player.current.title, inline=False)
-                    e.add_field(name="Position:", value=f"{await self.bot.get_cog('Music').draw_time(self.player.guild_id)} `[{format_time(self.player.position)}/{dur}]`\n", inline=False)
+                    kek = f"{self.player.current.title}\n{self.player.current.uri}"
+                    e.add_field(name="Currently Playing:", value=kek, inline=False)
+                    e.add_field(name="Author:", value=self.player.current.author)
+                    e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
                     e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(self.player.current.requester)

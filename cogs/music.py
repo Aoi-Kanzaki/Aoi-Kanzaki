@@ -129,8 +129,8 @@ class Music(commands.Cog):
                     e = discord.Embed(color=discord.Color.blurple())
                     kek = f"{event.player.current.title}\n{event.player.current.uri}"
                     e.add_field(name="Currently Playing:", value=kek, inline=False)
-                    e.add_field(name="Author:", value=event.player.current.author, inline=False)
-                    e.add_field(name="Duration:", value=dur, inline=False)
+                    e.add_field(name="Author:", value=event.player.current.author)
+                    e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
                     e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(event.player.current.requester)
