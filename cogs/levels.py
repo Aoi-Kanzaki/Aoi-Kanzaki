@@ -21,39 +21,34 @@ class Levels(commands.Cog):
                     return await ctx.send("The leveling system is not enabled in this server!")
             xp = await db.execute("SELECT xp FROM levels WHERE user = ? AND guild = ?", (member.id, ctx.guild.id,))
             xp = await xp.fetchone()
+            xpcap = await db.execute("SELECT xpcap FROM levels WHERE user = ? AND guild = ?", (member.id, ctx.guild.id,))
+            xpcap = await xpcap.fetchone()
             level = await db.execute("SELECT level FROM levels WHERE user = ? AND guild = ?", (member.id, ctx.guild.id,))
             level = await level.fetchone()
             if not xp or not level:
-                await db.execute("INSERT INTO levels (level, xp, user, guild) VALUES (?, ?, ?, ?)", (0, 0, member.id, ctx.guild.id,))
+                await db.execute("INSERT INTO levels (level, xp, xpcap, user, guild) VALUES (?, ?, ?, ?, ?)", (0, 0, 1000, member.id, ctx.guild.id,))
                 await db.commit()
             try:
                 xp = xp[0]
                 level = level[0]
+                xpcap = xpcap[0]
             except TypeError:
                 xp = 0
                 level = 0
-
-            user_data = { "name": f"{member.name}#{member.discriminator}", "xp": xp, "level": level, "next_level_xp": 100, "percentage": xp }
-
+                xpcap = 1000
             background = Editor(Canvas((900, 300), color="#141414"))
             profile_picture = await load_image_async(str(member.avatar.url))
             profile = Editor(profile_picture).resize((150, 150)).circle_image()
-
             poppins = Font.poppins(size=40)
             poppins_small = Font.poppins(size=30)
-
             card_right_shape = [(600, 0), (750, 300), (900, 300), (900, 0)]
-
             background.polygon(card_right_shape, color="#FFFFFF")
             background.paste(profile, (30, 30))
-
             background.rectangle((30, 220), width=650, height=40, color="#FFFFFF", radius=20)
-            background.bar((30, 220), max_width=650, height=40, percentage=user_data["percentage"], color="#282828", radius=20)
-            background.text((200, 40), user_data["name"], font=poppins, color="#FFFFFF")
-
+            background.bar((30, 220), max_width=650, height=40, percentage=round(xp / xpcap * 100), color="#282828", radius=20)
+            background.text((200, 40), f"{member.name}#{member.discriminator}", font=poppins, color="#FFFFFF")
             background.rectangle((200, 100), width=350, height=2, fill="#FFFFFF")
-            background.text((200, 130), f"Level - {user_data['level']} | XP - {user_data['xp']}/{user_data['next_level_xp']}", font=poppins_small, color="#FFFFFF")
-
+            background.text((200, 130), f"Level - {level} | XP - {xp}/{xpcap}", font=poppins_small, color="#FFFFFF")
             file = discord.File(fp=background.image_bytes, filename="levelcard.png")
             await ctx.send(file=file)
 

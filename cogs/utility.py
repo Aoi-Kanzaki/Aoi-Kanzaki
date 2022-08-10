@@ -89,6 +89,7 @@ class Utility(commands.Cog):
 
     @commands.command()
     async def voice(self, ctx):
+        """Get your voice stats."""
         with open('./data/voice_leaderboard.json', 'r') as file:
             voice_data = json.load(file)
             if not voice_data:

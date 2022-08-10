@@ -4,23 +4,25 @@ import json
 import aiohttp
 import datetime
 import asyncio
+import aiosqlite
 from colr import color
-from motor.motor_asyncio import AsyncIOMotorClient
 from discord.ext import commands
+from utils._checks import check_commands
+from motor.motor_asyncio import AsyncIOMotorClient
 
 starttime = datetime.datetime.now()
 with open('config.json', 'r') as config:
 	_config = json.load(config)
-
 class Fresh(commands.AutoShardedBot):
 	def __init__(self):
-		super().__init__(command_prefix=commands.when_mentioned_or(_config['prefix']), description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
+		super().__init__(command_prefix=commands.when_mentioned_or(self.get_prefix), description="", pm_help=None, case_insensitive=True, intents=discord.Intents.all())
 		self.version = "v1.0.0"
 		self.spotify_id = _config['spotify_id']
 		self.spotify_secret = _config['spotify_secret']
 		self.stats = {}
 		self.sniped = []
 		self.uptime = datetime.datetime.utcnow()
+		self.add_check(check_commands)
 		self.colors = {
 			"blue": (4, 95, 185),
 			"cyan": (4, 211, 232),
@@ -28,7 +30,16 @@ class Fresh(commands.AutoShardedBot):
 			"green": (4, 232, 95),
 			"red": (189, 16, 16)
 		}
-		
+	
+	async def get_prefix(bot, message):
+		async with aiosqlite.connect("./data/prefixes.db") as db:
+			getData = await db.execute("SELECT * FROM prefixs WHERE guild = ?", (message.guild.id,))
+			data = await getData.fetchone()
+			if data is None:
+				return _config['prefix']
+			else:
+				return data[0]
+
 	async def setup_hook(self):
 		# This copies the global commands over to your guild.
 		self.tree.copy_global_to(guild=discord.Object(id=_config['guildid']))

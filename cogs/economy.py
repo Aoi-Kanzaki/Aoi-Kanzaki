@@ -2,6 +2,7 @@ import discord
 import aiosqlite
 import random
 import datetime
+import asyncio
 from colr import color
 from discord.ext import commands
 
@@ -196,11 +197,13 @@ class Economy(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def gamble(self, ctx, amount:int=200):
+    async def gamble(self, ctx, amount:int=100):
         """Gamble against the odds."""
         wallet, bank, maxbank = await self.get_balance(ctx.author)
-        if wallet < 200:
+        if wallet < 100:
             return await ctx.send("You need to have at least 100 coins in your wallet!")
+        if amount > 5000:
+            return await ctx.send("You can't bet more than 5000 coins!")
         if amount > wallet:
             return await ctx.send("You don't have enough coins in your wallet!")
         user_strikes = random.randint(1, 20)
@@ -228,11 +231,13 @@ class Economy(commands.Cog):
 
     @commands.command()
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def slots(self, ctx, amount:int=200):
+    async def slots(self, ctx, amount:int=100):
         """Play the slot machine."""
         wallet, bank, maxbank = await self.get_balance(ctx.author)
-        if wallet < 200:
+        if wallet < 100:
             return await ctx.send("You need to have at least 100 coins in your wallet!")
+        if amount > 5000:
+            return await ctx.send("You can't bet more than 5000 coins!")
         if amount > wallet:
             return await ctx.send("You don't have enough coins in your wallet!")
         times_factors = random.randint(1, 5)
@@ -257,6 +262,37 @@ class Economy(commands.Cog):
             e.add_field(name="Outcome:", value=f"{final[0]}{final[1]}{final[2]}")
             e.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png")
             return await ctx.send(embed=e)
+
+    @commands.command()
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def dice(self, ctx, amount:int=100):
+        """Roll the dice."""
+        wallet, bank, maxbank = await self.get_balance(ctx.author)
+        if wallet < 100:
+            return await ctx.send("You need to have at least 100 coins in your wallet!")
+        if amount > 5000:
+            return await ctx.send("You can't bet more than 5000 coins!")
+        if amount > wallet:
+            return await ctx.send("You don't have enough coins in your wallet!")
+        # Roll the dice
+        msg = await ctx.send("🎲 Rolling your dice...")
+        await asyncio.sleep(1.5)
+        pd1 = random.randint(1, 6)
+        pd2 = random.randint(1, 6)
+        await msg.edit(content=f"🎲 You rolled a **{pd1}** and a **{pd2}**")
+        await asyncio.sleep(1.5)
+        await msg.edit(content="🎲 Rolling the bots dice...")
+        await asyncio.sleep(1.5)
+        bd1 = random.randint(1, 6)
+        bd2 = random.randint(1, 6)
+        await msg.edit(content=f"🎲 The bot rolled a **{bd1}** and a **{bd2}**")
+        await asyncio.sleep(1.5)
+        if (pd1 + pd2) > (bd1 + bd2):
+            await self.update_wallet(ctx.author, +amount)
+            return await msg.edit(content=f"🎲 {ctx.author.mention} You won {amount} coins! Your new balance is {wallet+amount}.")
+        elif (pd1 + pd2) < (bd1 + bd2):
+            await self.update_wallet(ctx.author, -amount)
+            return await msg.edit(content=f"🎲 {ctx.author.mention} You lost {amount} coins! Your new balance is {wallet-amount}.")
 
     @commands.command()
     async def daily(self, ctx):

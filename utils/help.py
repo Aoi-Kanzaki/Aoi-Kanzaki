@@ -33,7 +33,7 @@ class HelpSelect(discord.ui.Select):
 class HelpView(discord.ui.View):
     def __init__(self, bot):
         self.bot = bot
-        super().__init__()
+        super().__init__(timeout=60)
         self.add_item(HelpSelect(self.bot))
 
 class Help(commands.Cog):
@@ -71,7 +71,7 @@ class Help(commands.Cog):
         else:
             e = discord.Embed(colour=discord.Colour.blurple())
             e.description = "For help on a certain module select one from the dropdown below. Or you can use the following command below.\n\n"
-            e.description += "`f?help <command>` for more info on a specific command."
+            e.description += f"`{ctx.prefix}help <command>` for more info on a specific command."
             e.set_author(name=f"{self.bot.user.name} Help", icon_url=self.bot.user.avatar)
             e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
             view = HelpView(self.bot)

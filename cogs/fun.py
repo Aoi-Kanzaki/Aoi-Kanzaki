@@ -102,23 +102,6 @@ class Fun(commands.Cog):
         else:
             await ctx.send("Invalid choice, please choose rock, paper, or scissors.")
 
-    @commands.command(aliases=['8b'], name="8ball")
-    async def _8ball(self, ctx, *, question:str):
-        """Find the answers to your questions."""
-        await ctx.typing()
-        url = "https://magic-8-ball1.p.rapidapi.com/my_answer/"
-        querystring = {"question": question}
-        headers = {
-	        "X-RapidAPI-Key": "ef73cad338msh002fd3975548b99p1f8db4jsna8c2f9e965d1",
-	        "X-RapidAPI-Host": "magic-8-ball1.p.rapidapi.com"
-        }
-        async with request("GET", url, headers=headers, params=querystring) as response:
-            if response.status == 200:
-                data = await response.json()
-                await ctx.reply(f"{ctx.author.mention} {data['answer']}")
-            else:
-                await ctx.send(f"{response.status}")
-
     @commands.command()
     async def phcomment(self, ctx, *, comment: str):
         """Send a comment on PornHub. ( ͡° ͜ʖ ͡°)"""
@@ -149,6 +132,15 @@ class Fun(commands.Cog):
         e = discord.Embed(description=desc, color=discord.Color.blurple())
         return await ctx.send(embed=e)
 
+    @commands.command()
+    async def recipe(self, ctx, query: str):
+        """Don't know how to make something? Find a recipe!"""
+        headers = {
+	        "Content-Type": "application/json",
+        }
+        url = f"https://api.spoonacular.com/recipes/complexSearch?query={query}"
+        async with request("GET", url, headers=headers) as response:
+            print(response)
 
     @staticmethod
     def draw_meter(rigged: bool = False):
