@@ -116,38 +116,28 @@ class Music(commands.Cog):
             event.player.store("requester", event.player.current.requester)
             if event.player.fetch('channel'):
                 if data[2] == event.player.fetch('channel'):
-                    if event.player.current:
-                        while True:
-                            await asyncio.sleep(1)
-                            if not event.player.current:
-                                break
-                            if event.player.queue:
-                                queue_list = ''
-                                for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                            else:
-                                queue_list = "Join a voice channel and queue songs by name or url in here."
-                            if event.player.current.stream:
-                                dur = 'LIVE'
-                            else:
-                                dur = format_time(event.player.current.duration)
-                            e = discord.Embed(color=discord.Color.blurple())
-                            e.add_field(name="Title:", value=event.player.current.title, inline=False)
-                            e.add_field(name="Position:", value=f"{await self.draw_time(event.player.guild_id)} `[{format_time(event.player.position)}/{dur}]`\n", inline=False)
-                            e.add_field(name="Queue List:", value=queue_list, inline=False)
-                            e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
-                            requester = self.bot.get_user(event.player.current.requester)
-                            e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                            channel = await self.bot.fetch_channel(data[2])
-                            msg = await channel.fetch_message(data[0])
-                            try:
-                                if event.player.paused == True:
-                                    pass
-                            except:
-                                break
-                            else:
-                                await msg.edit(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
-                            await asyncio.sleep(20)
+                    if event.player.queue:
+                        queue_list = ''
+                        for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                            queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                    else:
+                        queue_list = "Join a voice channel and queue songs by name or url in here."
+                    if event.player.current.stream:
+                        dur = 'LIVE'
+                    else:
+                        dur = format_time(event.player.current.duration)
+                    e = discord.Embed(color=discord.Color.blurple())
+                    kek = f"{event.player.current.title}\n{event.player.current.uri}"
+                    e.add_field(name="Currently Playing:", value=kek, inline=False)
+                    e.add_field(name="Author:", value=event.player.current.author, inline=False)
+                    e.add_field(name="Duration:", value=dur, inline=False)
+                    e.add_field(name="Queue List:", value=queue_list, inline=False)
+                    e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
+                    requester = self.bot.get_user(event.player.current.requester)
+                    e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+                    channel = await self.bot.fetch_channel(data[2])
+                    msg = await channel.fetch_message(data[0])
+                    await msg.edit(embed=e, view=event_hook_buttons(self.bot, int(event.player.guild_id)))
                 else:
                     if event.player.fetch('npmsg') != None:
                         try:
