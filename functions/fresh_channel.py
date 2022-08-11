@@ -48,7 +48,7 @@ class MusicChannel(commands.Cog):
                             await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, message.guild.id,))
                             await db.commit()
                             playermsg = await message.channel.fetch_message(msg.id)
-                        if query not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous'):
+                        if query.lower() not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous', 'help'):
                             query = query.strip('<>')
                             if "open.spotify.com" in query:
                                 query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
@@ -124,7 +124,7 @@ class MusicChannel(commands.Cog):
                                     e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                                     e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
                                     return await playermsg.edit(embed=e)
-                        elif query in ('dc', 'disconnect'):
+                        elif query.lower() in ('dc', 'disconnect'):
                             if player.is_connected:
                                 await message.guild.voice_client.disconnect(force=True)
                                 e = discord.Embed(color=discord.Color.blurple())
@@ -136,7 +136,7 @@ class MusicChannel(commands.Cog):
                                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                                 await playermsg.edit(embed=e)
                                 return self.bot.lavalink.player_manager.remove(message.guild.id)
-                        elif query in ('pause', 'resume'):
+                        elif query.lower() in ('pause', 'resume'):
                             if not player.is_playing:
                                 return
                             await player.set_pause(not player.paused)
@@ -166,9 +166,9 @@ class MusicChannel(commands.Cog):
                                 e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                                 e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
                                 return await playermsg.edit(embed=e)
-                        elif query == 'skip':
+                        elif query.lower() == 'skip':
                             return await player.skip()
-                        elif query == "help":
+                        elif query.lower() == "help":
                             e = discord.Embed(color=discord.Color.blurple())
                             e.description = "Send a song `link` or `query` to play."
                             e.description += "\nSend `pause` or `resume` to control the music."
