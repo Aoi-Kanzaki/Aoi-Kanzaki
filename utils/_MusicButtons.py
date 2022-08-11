@@ -107,7 +107,7 @@ class np_msg_buttons(discord.ui.View):
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.player.is_playing:
             await self.player.skip()
-            return await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
+            return await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
         else:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
@@ -142,8 +142,14 @@ class event_hook_buttons(discord.ui.View):
         self.player.store("prev_song", None)
         self.player.store("playing_song", None)
         self.player.store("requester", None)
-        embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
-        return await interaction.response.edit_message(embed=embed, view=None)
+        async with aiosqlite.connect("./data/music.db") as db:
+            getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (interaction.guild.id,))
+            data = await getData.fetchone()
+            if data[2] == self.player.fetch('channel'):
+                return await interaction.response.send_message(content="<:tickYes:697759553626046546> Replaying Track.", ephemeral=True)
+            else:
+                embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
+                return await interaction.response.edit_message(embed=embed, view=None)
 
     @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -220,7 +226,7 @@ class event_hook_buttons(discord.ui.View):
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(content="✅ Skipped.", ephemeral=True)
+        await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
         await self.player.skip()
 
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)

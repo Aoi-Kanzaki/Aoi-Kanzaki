@@ -482,6 +482,7 @@ class Music(commands.Cog):
             else:
                 await ctx.send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "album" in parts:
+            loadingmsg = await send("<a:loading:697759686509985814> Loading spotify info...")
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/albums/{0}".format(query))
             albumName = results['name']
@@ -509,10 +510,13 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["name"], i["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
+                await loadingmsg.delete()
                 await send(f"<:tickYes:697759553626046546> Loaded Album **{albumName}** by **{artistName}!**", delete_after=5)
             else:
+                await loadingmsg.delete()
                 await send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         elif "playlist" in parts:
+            loadingmsg = await send("<a:loading:697759686509985814> Loading spotify info...")
             query = parts[-1]
             results = await self.make_spotify_req("https://api.spotify.com/v1/playlists/{0}/tracks".format(query))
             playlistName = results['name']
@@ -540,8 +544,10 @@ class Music(commands.Cog):
                     results = await player.node.get_tracks("ytsearch:{} {}".format(i["track"]["name"], i["track"]["artists"][0]["name"]))
                     track = AudioTrack(results['tracks'][0], ctx.author.id, recommended=True)
                     player.add(requester=ctx.author.id, track=track)
+                await loadingmsg.delete()
                 await send(f"<:tickYes:697759553626046546> Loaded Playlist **{playlistName}**!", delete_after=5)
             else:
+                await loadingmsg.delete()
                 await send("<:tickNo:697759586538749982> Nothing was found!", delete_after=5)
         player.store('channel', ctx.channel.id)
         if not player.is_playing:

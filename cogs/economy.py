@@ -267,6 +267,10 @@ class Economy(commands.Cog):
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def dice(self, ctx, amount:int=100):
         """Roll the dice."""
+        pd1 = random.randint(1, 6)
+        pd2 = random.randint(1, 6)
+        bd1 = random.randint(1, 6)
+        bd2 = random.randint(1, 6)
         wallet, bank, maxbank = await self.get_balance(ctx.author)
         if wallet < 100:
             return await ctx.send("You need to have at least 100 coins in your wallet!")
@@ -277,14 +281,10 @@ class Economy(commands.Cog):
         # Roll the dice
         msg = await ctx.send("🎲 Rolling your dice...")
         await asyncio.sleep(1.5)
-        pd1 = random.randint(1, 6)
-        pd2 = random.randint(1, 6)
         await msg.edit(content=f"🎲 You rolled a **{pd1}** and a **{pd2}**")
         await asyncio.sleep(1.5)
         await msg.edit(content="🎲 Rolling the bots dice...")
         await asyncio.sleep(1.5)
-        bd1 = random.randint(1, 6)
-        bd2 = random.randint(1, 6)
         await msg.edit(content=f"🎲 The bot rolled a **{bd1}** and a **{bd2}**")
         await asyncio.sleep(1.5)
         if (pd1 + pd2) > (bd1 + bd2):
