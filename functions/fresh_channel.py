@@ -44,7 +44,6 @@ class MusicChannel(commands.Cog):
                             e.description += "\nSend `pause` or `resume` to control the music."
                             e.description += "\nSend `skip` to skip the current song."
                             e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                            e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
                             msg = await self.bot.get_channel(data[2]).send(embed=e)
                             await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, message.guild.id,))
                             await db.commit()
@@ -135,7 +134,6 @@ class MusicChannel(commands.Cog):
                                 e.description += "\nSend `skip` to skip the current song."
                                 e.description += "\nSend `prev` or `previous` to skip to the previous song."
                                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                                e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
                                 await playermsg.edit(embed=e)
                                 return self.bot.lavalink.player_manager.remove(message.guild.id)
                         elif query in ('pause', 'resume'):
@@ -170,7 +168,15 @@ class MusicChannel(commands.Cog):
                                 return await playermsg.edit(embed=e)
                         elif query == 'skip':
                             return await player.skip()
-                        
+                        elif query == "help":
+                            e = discord.Embed(color=discord.Color.blurple())
+                            e.description = "Send a song `link` or `query` to play."
+                            e.description += "\nSend `pause` or `resume` to control the music."
+                            e.description += "\nSend `skip` to skip the current song."
+                            e.description += "\nSend `prev` or `previous` to skip to the previous song."
+                            e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                            e.set_footer(text="This message will delete in 30 seconds.")
+                            await message.channel.send(embed=e, delete_after=30)
 
 async def setup(bot):
     await bot.add_cog(MusicChannel(bot))
