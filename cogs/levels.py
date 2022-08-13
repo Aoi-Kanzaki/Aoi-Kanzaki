@@ -7,8 +7,7 @@ class Levels(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-
-    @commands.command(aliases=['lvl', 'rank'])
+    @commands.hybrid_command(aliases=['lvl', 'rank'])
     async def level(self, ctx, member: discord.Member=None):
         """Show's your current level."""
         await ctx.typing()
@@ -52,7 +51,7 @@ class Levels(commands.Cog):
             file = discord.File(fp=background.image_bytes, filename="levelcard.png")
             await ctx.send(file=file)
 
-    @commands.group()
+    @commands.hybrid_group()
     async def slvl(self, ctx):
         """Leveling system settings."""
         if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):

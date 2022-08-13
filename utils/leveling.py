@@ -13,7 +13,6 @@ class Leveling(commands.Cog):
             await db.execute("CREATE TABLE IF NOT EXISTS levels (level INTEGER, xp INTEGER, xpcap INTEGER, user INTEGER, guild INTEGER)")
             await db.execute("CREATE TABLE IF NOT EXISTS levelSettings (levelsys BOOL, role INTEGER, levelreq INTEGER, guild INTEGER)")
             await db.commit()
-        print(color("The util leveling cog is ready!", fore=self.bot.colors['blue']))
 
     @commands.Cog.listener()
     async def on_message(self, message):

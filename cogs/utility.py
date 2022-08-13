@@ -24,28 +24,10 @@ class Utility(commands.Cog):
             e.set_image(url=member.avatar.url)
             await interaction.response.send_message(embed=e)
 
-        @bot.tree.context_menu(name='Report to Moderators')
-        async def report_message(interaction: discord.Interaction, message: discord.Message):
-            if interaction.guild.id != 678226695190347797:
-                return await interaction.response.send_message("This doesn't work outside of Jonny's server!", ephemeral=True)
-            await interaction.response.send_message(
-                f'Thanks for reporting this message by {message.author.mention} to our moderators.', ephemeral=True
-            )
-            log_channel = interaction.guild.get_channel(995171906426773564)
-            embed = discord.Embed(title='Reported Message')
-            if message.content:
-                embed.description = message.content
-            embed.set_author(name=message.author.display_name, icon_url=message.author.display_avatar.url)
-            embed.timestamp = message.created_at
-            url_view = discord.ui.View()
-            url_view.add_item(discord.ui.Button(label='Go to Message', style=discord.ButtonStyle.url, url=message.jump_url))
-            await log_channel.send(embed=embed, view=url_view)
-
     async def cog_load(self):
         async with aiosqlite.connect("./data/afk.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS afk (user INTEGER, guild INTEGER, reason TEXT)")
             await db.commit()
-        print(color("The utility cog is ready!", fore=self.bot.colors['blue']))
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -67,75 +49,7 @@ class Utility(commands.Cog):
                         await message.channel.send(f"{mention.name} is currently AFK! Reason: `{data[0]}`", delete_after=10)
             await db.commit()
 
-    @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
-        with open('./data/voice_leaderboard.json', 'r') as file:
-            voice_data = json.load(file)
-            new_user = str(member.id)
-        if new_user in voice_data:
-            voice_leave_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-            voice_join_time = voice_data[new_user]
-            calculate_time = (
-                    datetime.datetime.strptime(voice_leave_time, '%H:%M:%S') - datetime.datetime.strptime(
-                voice_join_time, '%H:%M:%S'))
-            voice_data[new_user] = f'{calculate_time}'
-            with open('./data/voice_leaderboard.json', 'w') as update_user_data:
-                json.dump(voice_data, update_user_data, indent=4)
-        else:
-            new_voice_join_time = datetime.datetime.now().time().strftime('%H:%M:%S')
-            voice_data[new_user] = new_voice_join_time
-            with open('./data/voice_leaderboard.json', 'w') as new_user_data:
-                json.dump(voice_data, new_user_data, indent=4)
-
-    @commands.command()
-    async def voice(self, ctx):
-        """Get your voice stats."""
-        with open('./data/voice_leaderboard.json', 'r') as file:
-            voice_data = json.load(file)
-            if not voice_data:
-                return await ctx.send("Oops, seems like there is no voice stats data file? Try again later.")
-            elif not voice_data[str(ctx.author.id)]:
-                return await ctx.send("Oops, seems like you have not joined any voice channels yet? Try again later.")
-            else:
-                tmsg = ""
-                if ctx.author.voice is not None:
-                    calculate_time = (
-                    datetime.datetime.strptime(datetime.datetime.now().time().strftime('%H:%M:%S'), '%H:%M:%S') - datetime.datetime.strptime(
-                    voice_data[str(ctx.author.id)], '%H:%M:%S'))
-                    ctime = str(calculate_time).split(':')
-                    if ctime[0] != '0':
-                        if int(ctime[0]) > 1:
-                            e = 'hours'
-                        else:
-                            e = 'hour'
-                        tmsg += f"{ctime[0]} {e}, "
-                    if ctime[1] != '00':
-                        if int(ctime[1]) > 1:
-                            e = 'minutes'
-                        else:
-                            e = 'mibnute'
-                        tmsg += f"{ctime[1]} {e} and "
-                    if ctime[2] != '0':
-                        tmsg += f"{ctime[2]} seconds"
-                else:
-                    time = voice_data[str(ctx.author.id)].split(':')
-                    if time[0] != '0':
-                        if int(time[0]) > 1:
-                            e = 'hours'
-                        else:
-                            e = 'hour'
-                        tmsg += f"{time[0]} {e}, "
-                    if time[1] != '00':
-                        if int(time[1]) > 1:
-                            e = 'minutes'
-                        else:
-                            e = 'mibnute'
-                        tmsg += f"{time[1]} {e} and "
-                    if time[2] != '0':
-                        tmsg += f"{time[2]} seconds"
-                return await ctx.send(f"You have spent a total of `{tmsg}` in voice channels.")
-
-    @commands.command()
+    @commands.hybrid_command()
     async def afk(self, ctx, *, reason=None):
         """Go afk with a personal message."""
         if reason is None:
@@ -154,7 +68,7 @@ class Utility(commands.Cog):
                 await ctx.send(f"You are now AFK for: `{reason}`")
             await db.commit()
 
-    @commands.command()
+    @commands.hybrid_command()
     async def iplookup(self, ctx, *, ipaddr: str='9.9.9.9'):
         """Lookup an ip address."""
         r = requests.get(f"http://extreme-ip-lookup.com/json/{ipaddr}?key=BnhTX1mBfAK0y9v1gtvh")
@@ -181,7 +95,7 @@ class Utility(commands.Cog):
         e.timestamp = datetime.datetime.utcnow()
         return await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def commits(self, ctx):
         """Shows last 5 github commits."""
         cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
@@ -200,7 +114,7 @@ class Utility(commands.Cog):
         e.set_thumbnail(url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
         await ctx.send(embed=e)
 
-    @commands.command(aliases=['lls'])
+    @commands.hybrid_command(aliases=['lls'])
     async def stats(self, ctx):
         """Posts bot stats."""
         await ctx.typing()
@@ -404,7 +318,7 @@ class Utility(commands.Cog):
         embed.set_thumbnail(url=channel.guild.icon)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def weather(self, ctx, *, city: str):
         """Get your citys weather."""
         await ctx.typing()
@@ -417,7 +331,7 @@ class Utility(commands.Cog):
             e.add_field(name=f"{forecast.date}", value=value, inline=False)
         await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def uptime(self, ctx):
         """How long have I been online?"""
         uptime = self.get_bot_uptime()

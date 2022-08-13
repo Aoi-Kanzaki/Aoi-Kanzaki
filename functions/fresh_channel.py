@@ -44,11 +44,57 @@ class MusicChannel(commands.Cog):
                             e.description += "\nSend `pause` or `resume` to control the music."
                             e.description += "\nSend `skip` to skip the current song."
                             e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                            e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                             msg = await self.bot.get_channel(data[2]).send(embed=e)
                             await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, message.guild.id,))
                             await db.commit()
                             playermsg = await message.channel.fetch_message(msg.id)
-                        if query.lower() not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous', 'help'):
+                        if query.startswith("rem") or query.startswith("remove"):
+                            index = query.replace("rem", "").replace("ove", "").replace(" ", "")
+                            if not index.isdigit():
+                                return await message.channel.send("<:tickNo:697759586538749982> Invalid number.", delete_after=5)
+                            index = int(index)
+                            if not player.queue:
+                                return await message.channel.send("<:tickNo:697759586538749982> Nothing queued.", delete_after=5)
+                            if index > len(player.queue) or index < 1:
+                                return await message.channel.send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
+                            player.queue.pop(index-1)
+                            if player.queue:
+                                queue_list = ''
+                                for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                            else:
+                                queue_list = "Join a voice channel and queue songs by name or url in here."
+                            if player.current.stream:
+                                dur = 'LIVE'
+                            else:
+                                dur = format_time(player.current.duration)
+                            kek = f"{player.current.title}\n{player.current.uri}"
+                            e = discord.Embed(color=discord.Color.blurple())
+                            e.add_field(name="Currently Playing:", value=kek, inline=False)
+                            e.add_field(name="Author:", value=player.current.author)
+                            e.add_field(name="Duration:", value=dur)
+                            e.add_field(name="Queue List:", value=queue_list, inline=False)
+                            e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
+                            requester = self.bot.get_user(player.current.requester)
+                            e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+                            await playermsg.edit(embed=e)
+                            return await message.channel.send(f"<:tickYes:697759553626046546> Removed song {index} from the queue.", delete_after=5)
+                        if query.startswith("vol") or query.startswith("volume"):
+                            vol = query.replace("vol", "").replace("ume", "").replace(" ", "")
+                            if vol != "":
+                                if not vol.isdigit():
+                                    return await message.channel.send("<:tickNo:697759586538749982> Volume must be a number.", delete_after=5)
+                                vol = int(vol)
+                                if vol > 100:
+                                    return await message.channel.send("<:tickNo:697759586538749982> Volume must be between 0 and 100.", delete_after=5)
+                                await player.set_volume(vol)
+                                return await message.channel.send(f'🔈 | Set to {player.volume}%', delete_after=5)
+                            else:
+                                return await message.channel.send(f'🔈 | {player.volume}%', delete_after=5)
+                        if query not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous', 'help', 'volume', 'vol', 'rem', 'remove'):
                             query = query.strip('<>')
                             if "open.spotify.com" in query:
                                 query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
@@ -71,60 +117,61 @@ class MusicChannel(commands.Cog):
                                     requester = self.bot.get_user(player.current.requester)
                                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                                     return await playermsg.edit(embed=e)
-                            if not re.compile(r'https?://(?:www\.)?.+').match(query):
-                                query = f'ytsearch:{query}'
-                            results = await player.node.get_tracks(query)
-                            if not results or not results['tracks']:
-                                return await message.channel.send('Nothing found!', delete_after=5)
-                            if results['loadType'] == 'LOAD_FAILED':
-                                return await message.channel.send('Oh no, something failed. Please try again.', delete_after=5)
-                            if results['loadType'] == 'PLAYLIST_LOADED':
-                                tracks = results['tracks']
-                                for track in tracks:
-                                    player.add(requester=message.author.id, track=track)
-                                if not player.is_playing:
-                                    await player.play()
-                                e = discord.Embed(color=discord.Color.blurple())
-                                queue_list = ''
-                                for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                                if player.current.stream:
-                                    dur = 'LIVE'
-                                else:
-                                    dur = format_time(player.current.duration)
-                                kek = f"{player.current.title}\n{player.current.uri}"
-                                e.add_field(name="Currently Playing:", value=kek, inline=False)
-                                e.add_field(name="Author:", value=player.current.author)
-                                e.add_field(name="Duration:", value=dur)
-                                e.add_field(name="Queue List:", value=queue_list, inline=False)
-                                e.set_image(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
-                                requester = self.bot.get_user(player.current.requester)
-                                e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                                return await playermsg.edit(embed=e)
                             else:
-                                e = discord.Embed(color=discord.Color.blurple())
-                                track = results['tracks'][0]
-                                track = AudioTrack(track, message.author.id, recommended=True)
-                                player.add(requester=message.author.id, track=track)
-                                if not player.is_playing:
-                                    await player.play()
-                                if player.queue:
+                                if not re.compile(r'https?://(?:www\.)?.+').match(query):
+                                    query = f'ytsearch:{query}'
+                                results = await player.node.get_tracks(query)
+                                if not results or not results['tracks']:
+                                    return await message.channel.send('Nothing found!', delete_after=5)
+                                if results['loadType'] == 'LOAD_FAILED':
+                                    return await message.channel.send('Oh no, something failed. Please try again.', delete_after=5)
+                                if results['loadType'] == 'PLAYLIST_LOADED':
+                                    tracks = results['tracks']
+                                    for track in tracks:
+                                        player.add(requester=message.author.id, track=track)
+                                    if not player.is_playing:
+                                        await player.play()
+                                    e = discord.Embed(color=discord.Color.blurple())
+                                    queue_list = ''
+                                    for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                        queue_list += '`{}.` {}\n'.format(i + 1, track.title)
                                     if player.current.stream:
                                         dur = 'LIVE'
                                     else:
                                         dur = format_time(player.current.duration)
-                                    queue_list = ''
-                                    for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                                        queue_list += '`{}.` {}\n'.format(i + 1, track.title)
                                     kek = f"{player.current.title}\n{player.current.uri}"
                                     e.add_field(name="Currently Playing:", value=kek, inline=False)
                                     e.add_field(name="Author:", value=player.current.author)
                                     e.add_field(name="Duration:", value=dur)
                                     e.add_field(name="Queue List:", value=queue_list, inline=False)
-                                    e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
-                                    e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
+                                    e.set_image(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
+                                    requester = self.bot.get_user(player.current.requester)
+                                    e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                                     return await playermsg.edit(embed=e)
-                        elif query.lower() in ('dc', 'disconnect'):
+                                else:
+                                    e = discord.Embed(color=discord.Color.blurple())
+                                    track = results['tracks'][0]
+                                    track = AudioTrack(track, message.author.id, recommended=True)
+                                    player.add(requester=message.author.id, track=track)
+                                    if not player.is_playing:
+                                        await player.play()
+                                    if player.queue:
+                                        if player.current.stream:
+                                            dur = 'LIVE'
+                                        else:
+                                            dur = format_time(player.current.duration)
+                                        queue_list = ''
+                                        for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                            queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                                        kek = f"{player.current.title}\n{player.current.uri}"
+                                        e.add_field(name="Currently Playing:", value=kek, inline=False)
+                                        e.add_field(name="Author:", value=player.current.author)
+                                        e.add_field(name="Duration:", value=dur)
+                                        e.add_field(name="Queue List:", value=queue_list, inline=False)
+                                        e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
+                                        e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
+                                        return await playermsg.edit(embed=e)
+                        elif query in ('dc', 'disconnect'):
                             if player.is_connected:
                                 await message.guild.voice_client.disconnect(force=True)
                                 e = discord.Embed(color=discord.Color.blurple())
@@ -132,11 +179,13 @@ class MusicChannel(commands.Cog):
                                 e.description = "Send a song `link` or `query` to play."
                                 e.description += "\nSend `pause` or `resume` to control the music."
                                 e.description += "\nSend `skip` to skip the current song."
-                                e.description += "\nSend `prev` or `previous` to skip to the previous song."
                                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                                 await playermsg.edit(embed=e)
                                 return self.bot.lavalink.player_manager.remove(message.guild.id)
-                        elif query.lower() in ('pause', 'resume'):
+                        elif query in ('pause', 'resume'):
                             if not player.is_playing:
                                 return
                             await player.set_pause(not player.paused)
@@ -166,15 +215,17 @@ class MusicChannel(commands.Cog):
                                 e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                                 e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
                                 return await playermsg.edit(embed=e)
-                        elif query.lower() == 'skip':
+                        elif query == 'skip':
                             return await player.skip()
-                        elif query.lower() == "help":
+                        elif query == "help":
                             e = discord.Embed(color=discord.Color.blurple())
                             e.description = "Send a song `link` or `query` to play."
                             e.description += "\nSend `pause` or `resume` to control the music."
                             e.description += "\nSend `skip` to skip the current song."
                             e.description += "\nSend `prev` or `previous` to skip to the previous song."
                             e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
                             e.set_footer(text="This message will delete in 30 seconds.")
                             await message.channel.send(embed=e, delete_after=30)
 

@@ -3,6 +3,7 @@ import time
 import asyncio
 import os
 import glob
+import typing
 from utils import _checks
 from discord.ext import commands
 from asyncio.subprocess import PIPE
@@ -15,7 +16,7 @@ class Dev(commands.Cog):
         modules = [os.path.basename(f) for f in glob.glob("cogs/*.py")]
         return ["cogs." + os.path.splitext(f)[0] for f in modules]
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.check(_checks.is_owner)
     async def modules(self, ctx):
         """Shows modules."""
@@ -29,7 +30,7 @@ class Dev(commands.Cog):
         e.add_field(name="Unloaded Modules:", value=", ".join(sorted(unloaded)), inline=False)
         await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.check(_checks.is_owner)
     async def network(self, ctx, *, args=None):
         """Network information."""
@@ -52,6 +53,35 @@ class Dev(commands.Cog):
             await ctx.send(file=discord.File('vnstati.png'))
 
     @commands.command()
+    @commands.check(_checks.is_owner)
+    async def sync(self, ctx, guilds: commands.Greedy[discord.Object], spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
+        if not guilds:
+            if spec == "~":
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+            elif spec == "*":
+                ctx.bot.tree.copy_global_to(guild=ctx.guild)
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+            elif spec == "^":
+                ctx.bot.tree.clear_commands(guild=ctx.guild)
+                await ctx.bot.tree.sync(guild=ctx.guild)
+                synced = []
+            else:
+                synced = await ctx.bot.tree.sync()
+            await ctx.send(
+                f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
+            )
+            return
+        ret = 0
+        for guild in guilds:
+            try:
+                await ctx.bot.tree.sync(guild=guild)
+            except discord.HTTPException:
+                pass
+            else:
+                ret += 1
+        await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
+    @commands.hybrid_command()
     async def ping(self, ctx):
         """ Pong! """
         pings = []

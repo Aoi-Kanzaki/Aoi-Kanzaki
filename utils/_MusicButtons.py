@@ -126,7 +126,7 @@ class event_hook_buttons(discord.ui.View):
         super().__init__(timeout=None)
         self.bot = bot
         self.player = bot.lavalink.player_manager.get(guild_id)
-
+    
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.player.fetch("prev_song") is None:
@@ -165,9 +165,10 @@ class event_hook_buttons(discord.ui.View):
                     e.description = "Send a song `link` or `query` to play."
                     e.description += "\nSend `pause` or `resume` to control the music."
                     e.description += "\nSend `skip` to skip the current song."
-                    e.description += "\nSend `prev` or `previous` to skip to the previous song."
                     e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                    e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                    e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                    e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                    e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                     msg = await self.bot.get_channel(data[2]).send(embed=e)
                     await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, interaction.guild.id,))
                     await db.commit()
@@ -242,9 +243,10 @@ class event_hook_buttons(discord.ui.View):
                 e.description = "Send a song `link` or `query` to play."
                 e.description += "\nSend `pause` or `resume` to control the music."
                 e.description += "\nSend `skip` to skip the current song."
-                e.description += "\nSend `prev` or `previous` to skip to the previous song."
                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                 await msg.edit(embed=e, view=None)
                 self.player.queue.clear()
                 await self.player.stop()

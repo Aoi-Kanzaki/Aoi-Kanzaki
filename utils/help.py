@@ -40,7 +40,7 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.hybrid_command()
     async def help(self, ctx, *, option: str=None):
         """Just your basic help command."""
         ignore_cogs = ['Jishaku', 'Help', 'Leveling', 'ErrorHandler']

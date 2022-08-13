@@ -26,7 +26,6 @@ class Music(commands.Cog):
         async with aiosqlite.connect("./data/music.db") as db:
             await db.execute("CREATE TABLE IF NOT EXISTS musicSettings (musicMessage INTEGER, musicToggle INTEGER, musicChannel INTEGER, musicRunning INTEGER, guild INTEGER)")
             await db.commit()
-        print(color("The music database is ready!", fore=self.bot.colors['blue']))
 
     async def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
@@ -43,9 +42,10 @@ class Music(commands.Cog):
                         e.description = "Send a song `link` or `query` to play."
                         e.description += "\nSend `pause` or `resume` to control the music."
                         e.description += "\nSend `skip` to skip the current song."
-                        e.description += "\nSend `prev` or `previous` to skip to the previous song."
                         e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                        e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                         await msg.edit(embed=e, view=None)
                         await asyncio.sleep(1)
                 except Exception as e:
@@ -94,9 +94,10 @@ class Music(commands.Cog):
                 e.description = "Send a song `link` or `query` to play."
                 e.description += "\nSend `pause` or `resume` to control the music."
                 e.description += "\nSend `skip` to skip the current song."
-                e.description += "\nSend `prev` or `previous` to skip to the previous song."
                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                 await msg.edit(embed=e, view=None)
             await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
             self.bot.lavalink.player_manager.remove(event.player.guild_id)
@@ -164,8 +165,9 @@ class Music(commands.Cog):
                         except:
                             pass
 
-    @commands.command()
-    @commands.cooldown(1, 10, commands.BucketType.guild)
+    @commands.hybrid_command()
+    @commands.cooldown(1, 5, commands.BucketType.guild)
+    @commands.has_permissions(manage_guild=True)
     async def setup(self, ctx):
         """Toggles the music channel on and off."""
         existing_channels = [e.name for e in ctx.guild.channels]
@@ -207,9 +209,10 @@ class Music(commands.Cog):
         e.description = "Send a song `link` or `query` to play."
         e.description += "\nSend `pause` or `resume` to control the music."
         e.description += "\nSend `skip` to skip the current song."
-        e.description += "\nSend `prev` or `previous` to skip to the previous song."
         e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-        e.set_image(url="https://cdn.upload.systems/uploads/UCbzyCAS.jpg")
+        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
         msg = await self.bot.get_channel(channelid).send(embed=e)
         return msg.id
 

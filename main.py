@@ -28,7 +28,8 @@ class Fresh(commands.AutoShardedBot):
 			"cyan": (4, 211, 232),
 			"purple": (123, 4, 232),
 			"green": (4, 232, 95),
-			"red": (189, 16, 16)
+			"red": (189, 16, 16),
+			"yellow": (163, 187, 3)
 		}
 	
 	async def get_prefix(bot, message):
@@ -107,6 +108,12 @@ class Fresh(commands.AutoShardedBot):
 		print(color("Discord.py version :", fore=self.colors["cyan"]), color(f"{discord.__version__}", fore=self.colors["purple"]))
 		await self.connect_to_db()
 		await self.load_modules()
+		print(color("Syncing commands...", fore=self.colors["yellow"]))
+		try:
+			synced = await self.tree.sync()
+			print(color(f"Synced {len(synced)} commands globaly!", fore=self.colors["green"]))
+		except Exception as e:
+			print(color(f"Failed to sync commands! Reason:\n{e}", fore=self.colors["red"]))
         
 	async def send_sub_help(self, ctx, cmd):
 		e = discord.Embed()

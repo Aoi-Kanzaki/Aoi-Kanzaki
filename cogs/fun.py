@@ -10,7 +10,7 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def meme(self, ctx):
         """You want memes???"""
@@ -27,7 +27,7 @@ class Fun(commands.Cog):
         e.set_footer(text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}")
         await ctx.send(embed=e)
 
-    @commands.command(aliases=['dj'])
+    @commands.hybrid_command(aliases=['dj'])
     async def dadjoke(self, ctx):
         """Get a random dad joke."""
         await ctx.typing()
@@ -47,7 +47,7 @@ class Fun(commands.Cog):
             else:
                 await ctx.send(f"{response.status}")
 
-    @commands.command(aliases=['8b'], name="8ball")
+    @commands.hybrid_command(aliases=['8b'], name="8ball")
     async def _8ball(self, ctx, *, question:str):
         """Ask the 8ball a question."""
         await ctx.typing()
@@ -75,7 +75,7 @@ class Fun(commands.Cog):
         ]
         await ctx.send(f"Question: {question}\nAnswer: {random.choice(responses)}")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def rps(self, ctx, *, choice:str):
         """Play rock paper scissors with the bot."""
         await ctx.typing()
@@ -102,7 +102,7 @@ class Fun(commands.Cog):
         else:
             await ctx.send("Invalid choice, please choose rock, paper, or scissors.")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def phcomment(self, ctx, *, comment: str):
         """Send a comment on PornHub. ( ͡° ͜ʖ ͡°)"""
         await ctx.typing()
@@ -116,7 +116,7 @@ class Fun(commands.Cog):
             else:
                 await ctx.send(f"{json['message']}")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def ship(self, ctx, lover1: discord.Member, lover2: discord.Member=None):
         """Ship 2 users."""
         await ctx.typing()
@@ -131,16 +131,6 @@ class Fun(commands.Cog):
                f"{self.draw_meter(rigged)}"
         e = discord.Embed(description=desc, color=discord.Color.blurple())
         return await ctx.send(embed=e)
-
-    @commands.command()
-    async def recipe(self, ctx, query: str):
-        """Don't know how to make something? Find a recipe!"""
-        headers = {
-	        "Content-Type": "application/json",
-        }
-        url = f"https://api.spoonacular.com/recipes/complexSearch?query={query}"
-        async with request("GET", url, headers=headers) as response:
-            print(response)
 
     @staticmethod
     def draw_meter(rigged: bool = False):

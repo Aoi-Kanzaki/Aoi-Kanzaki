@@ -17,7 +17,6 @@ class Economy(commands.Cog):
             await db.execute("CREATE TABLE IF NOT EXISTS inv (laptop INTEGER, phone INTEGER, fakeid INTEGER, user INTEGER)")
             await db.execute("CREATE TABLE IF NOT EXISTS shop (name TEXT, id TEXT, desc TEXT, cost INTEGER)")
             await db.commit()
-        print(color("The Economy cog is ready!", fore=self.bot.colors['blue']))
 
     async def create_balance(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
@@ -92,7 +91,7 @@ class Economy(commands.Cog):
             await db.commit()
             return
 
-    @commands.command(aliases=['bal'])
+    @commands.hybrid_command(aliases=['bal'])
     async def balance(self, ctx, member: discord.Member=None):
         """Shows your banks balance."""
         if not member:
@@ -104,7 +103,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=member.avatar)
         await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 30, commands.BucketType.user)
     async def beg(self, ctx):
         """Beg for money."""
@@ -117,7 +116,7 @@ class Economy(commands.Cog):
             return await ctx.send("No account found so one was created for you. Please run the command again!")
         await ctx.send(f"You got **{amount}** coins!")
 
-    @commands.command(aliases=["with"])
+    @commands.hybrid_command(aliases=["with"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def withdraw(self, ctx, amount):
         """Widthdraw coins from your bank."""
@@ -142,7 +141,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=ctx.author.avatar)
         await ctx.send(embed=e)
         
-    @commands.command(aliases=["dep"])
+    @commands.hybrid_command(aliases=["dep"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def deposit(self, ctx, amount):
         """Deposit coins to your bank."""
@@ -169,7 +168,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=ctx.author.avatar)
         await ctx.send(embed=e)
         
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def give(self, ctx, member: discord.Member, amount):
         """Give a user some coins."""
@@ -195,7 +194,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=ctx.author.avatar)
         await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def gamble(self, ctx, amount:int=100):
         """Gamble against the odds."""
@@ -229,7 +228,7 @@ class Economy(commands.Cog):
         e.set_thumbnail(url=ctx.author.avatar)
         return await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def slots(self, ctx, amount:int=100):
         """Play the slot machine."""
@@ -263,7 +262,7 @@ class Economy(commands.Cog):
             e.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png")
             return await ctx.send(embed=e)
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def dice(self, ctx, amount:int=100):
         """Roll the dice."""
@@ -294,7 +293,7 @@ class Economy(commands.Cog):
             await self.update_wallet(ctx.author, -amount)
             return await msg.edit(content=f"🎲 {ctx.author.mention} You lost {amount} coins! Your new balance is {wallet-amount}.")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def daily(self, ctx):
         """Get your daily coins."""
         if ctx.author.id in self.daily_cooldowns:
