@@ -84,7 +84,7 @@ class MusicChannel(commands.Cog):
                                         else:
                                             await m.delete()
                                             e = discord.Embed(color=discord.Color.blurple())
-                                            track = results['tracks'][int(content)]
+                                            track = results['tracks'][int(content)-1]
                                             track = AudioTrack(track, message.author.id, recommended=True)
                                             player.add(requester=message.author.id, track=track)
                                             if not player.is_playing:
