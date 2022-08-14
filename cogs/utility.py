@@ -13,6 +13,7 @@ import python_weather
 from colr import color
 from discord.ext import commands
 
+
 class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -26,7 +27,9 @@ class Utility(commands.Cog):
 
     async def cog_load(self):
         async with aiosqlite.connect("./data/afk.db") as db:
-            await db.execute("CREATE TABLE IF NOT EXISTS afk (user INTEGER, guild INTEGER, reason TEXT)")
+            await db.execute(
+                "CREATE TABLE IF NOT EXISTS afk (user INTEGER, guild INTEGER, reason TEXT)"
+            )
             await db.commit()
 
     @commands.Cog.listener()
@@ -36,17 +39,41 @@ class Utility(commands.Cog):
         if message.author.bot:
             return
         async with aiosqlite.connect("./data/afk.db") as db:
-            get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (message.author.id, message.guild.id,))
+            get_data = await db.execute(
+                "SELECT reason FROM afk WHERE user = ? AND guild = ?",
+                (
+                    message.author.id,
+                    message.guild.id,
+                ),
+            )
             data = await get_data.fetchone()
             if data:
-                await message.channel.send(f"{message.author.mention} Welcome back! You are no longer afk.", delete_after=10)
-                await db.execute("DELETE FROM afk WHERE user = ? AND guild = ?", (message.author.id, message.guild.id,))
+                await message.channel.send(
+                    f"{message.author.mention} Welcome back! You are no longer afk.",
+                    delete_after=10,
+                )
+                await db.execute(
+                    "DELETE FROM afk WHERE user = ? AND guild = ?",
+                    (
+                        message.author.id,
+                        message.guild.id,
+                    ),
+                )
             if message.mentions:
                 for mention in message.mentions:
-                    get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (mention.id, message.guild.id,))
+                    get_data = await db.execute(
+                        "SELECT reason FROM afk WHERE user = ? AND guild = ?",
+                        (
+                            mention.id,
+                            message.guild.id,
+                        ),
+                    )
                     data = await get_data.fetchone()
                     if data and mention.id != message.author.id:
-                        await message.channel.send(f"{mention.name} is currently AFK! Reason: `{data[0]}`", delete_after=10)
+                        await message.channel.send(
+                            f"{mention.name} is currently AFK! Reason: `{data[0]}`",
+                            delete_after=10,
+                        )
             await db.commit()
 
     @commands.hybrid_command()
@@ -56,41 +83,64 @@ class Utility(commands.Cog):
             reason = "No reason provided."
         async with aiosqlite.connect("./data/afk.db") as db:
             try:
-                get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (ctx.author.id, ctx.guild.id,))
+                get_data = await db.execute(
+                    "SELECT reason FROM afk WHERE user = ? AND guild = ?",
+                    (
+                        ctx.author.id,
+                        ctx.guild.id,
+                    ),
+                )
                 data = await get_data.fetchone()
-            except: pass
+            except:
+                pass
             if data:
                 if data[0] == reason:
                     await ctx.send("You're already AFK with the same reason.")
-                await db.execute("UPDATE afk SET reason = ? WHERE user = ? AND guild = ?", (reason, ctx.author.id, ctx.guild.id,))
+                await db.execute(
+                    "UPDATE afk SET reason = ? WHERE user = ? AND guild = ?",
+                    (
+                        reason,
+                        ctx.author.id,
+                        ctx.guild.id,
+                    ),
+                )
             else:
-                await db.execute("INSERT INTO afk (user, guild, reason) VALUES (?, ?, ?)", (ctx.author.id, ctx.guild.id, reason,))
+                await db.execute(
+                    "INSERT INTO afk (user, guild, reason) VALUES (?, ?, ?)",
+                    (
+                        ctx.author.id,
+                        ctx.guild.id,
+                        reason,
+                    ),
+                )
                 await ctx.send(f"You are now AFK for: `{reason}`")
             await db.commit()
 
     @commands.hybrid_command()
-    async def iplookup(self, ctx, *, ipaddr: str='9.9.9.9'):
+    async def iplookup(self, ctx, *, ipaddr: str = "9.9.9.9"):
         """Lookup an ip address."""
-        r = requests.get(f"http://extreme-ip-lookup.com/json/{ipaddr}?key=BnhTX1mBfAK0y9v1gtvh")
+        r = requests.get(
+            f"http://extreme-ip-lookup.com/json/{ipaddr}?key=BnhTX1mBfAK0y9v1gtvh"
+        )
         geo = r.json()
         e = discord.Embed(color=discord.Color.blurple())
         fields = [
-            {'name': 'IP', 'value': geo['query']},
-            {'name': 'IP Type', 'value': geo['ipType']},
-            {'name': 'Country', 'value': geo['country']},
-            {'name': 'City', 'value': geo['city']},
-            {'name': 'Continent', 'value': geo['continent']},
-            {'name': 'IP Name', 'value': geo['ipName']},
-            {'name': 'ISP', 'value': geo['isp']},
-            {'name': 'Latitude', 'value': geo['lat']},
-            {'name': 'Longitude', 'value': geo['lon']},
-            {'name': 'Org', 'value': geo['org']},
-            {'name': 'Region', 'value': geo['region']},
-            {'name': 'Status', 'value': geo['status']},
+            {"name": "IP", "value": geo["query"]},
+            {"name": "IP Type", "value": geo["ipType"]},
+            {"name": "Country", "value": geo["country"]},
+            {"name": "City", "value": geo["city"]},
+            {"name": "Continent", "value": geo["continent"]},
+            {"name": "IP Name", "value": geo["ipName"]},
+            {"name": "ISP", "value": geo["isp"]},
+            {"name": "Latitude", "value": geo["lat"]},
+            {"name": "Longitude", "value": geo["lon"]},
+            {"name": "Org", "value": geo["org"]},
+            {"name": "Region", "value": geo["region"]},
+            {"name": "Status", "value": geo["status"]},
         ]
         for field in fields:
-            if field['value']:
-                e.add_field(name=field['name'], value=field['value'], inline=True)
+            if field["value"]:
+                e.add_field(name=field["name"], value=field["value"], inline=True)
         e.set_footer(text="\u200b")
         e.timestamp = datetime.datetime.utcnow()
         return await ctx.send(embed=e)
@@ -99,49 +149,73 @@ class Utility(commands.Cog):
     async def commits(self, ctx):
         """Shows last 5 github commits."""
         cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
-        if os.name == 'posix':
-            cmd = cmd.format(r'\`%h\`')
+        if os.name == "posix":
+            cmd = cmd.format(r"\`%h\`")
         else:
-            cmd = cmd.format(r'`%h`')
+            cmd = cmd.format(r"`%h`")
         try:
             revision = os.popen(cmd).read().strip()
         except OSError:
-            revision = 'Could not fetch due to memory error. Sorry.'
+            revision = "Could not fetch due to memory error. Sorry."
         e = discord.Embed()
         e.colour = discord.Colour.blurple()
         e.description = revision
         e.set_author(icon_url=self.bot.user.avatar, name="Latest Github Changes:")
-        e.set_thumbnail(url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
+        e.set_thumbnail(
+            url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4"
+        )
         await ctx.send(embed=e)
 
-    @commands.hybrid_command(aliases=['lls'])
+    @commands.hybrid_command(aliases=["lls"])
     async def stats(self, ctx):
         """Posts bot stats."""
         await ctx.typing()
         oe = "<:online:1001425556887326720>"
         ie = "<:idle:1001425440734466098>"
         de = "<:dnd:1001425507331625060>"
-        cpuUsage      = psutil.cpu_percent(interval=1)
-        cpuThred      = os.cpu_count()
-        threadString = 'thread'
+        cpuUsage = psutil.cpu_percent(interval=1)
+        cpuThred = os.cpu_count()
+        threadString = "thread"
         if not cpuThred == 1:
-            threadString += 's'
-        memStats      = psutil.virtual_memory()
-        memUsed       = memStats.used
-        memTotal      = memStats.total
-        memUsedGB     = "{0:.1f}".format(((memUsed / 1024) / 1024) / 1024)
-        memTotalGB    = "{0:.1f}".format(((memTotal/1024)/1024)/1024)
-        memPerc       = str(((memTotal/1024)/1024)/1024 / ((memUsed / 1024) / 1024) / 1024).split('.')[0]
-        online = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.online])
-        idle = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.idle])
-        dnd = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.dnd])
+            threadString += "s"
+        memStats = psutil.virtual_memory()
+        memUsed = memStats.used
+        memTotal = memStats.total
+        memUsedGB = "{0:.1f}".format(((memUsed / 1024) / 1024) / 1024)
+        memTotalGB = "{0:.1f}".format(((memTotal / 1024) / 1024) / 1024)
+        memPerc = str(
+            ((memTotal / 1024) / 1024) / 1024 / ((memUsed / 1024) / 1024) / 1024
+        ).split(".")[0]
+        online = len(
+            [
+                e.name
+                for e in self.bot.get_all_members()
+                if e.status == discord.Status.online
+            ]
+        )
+        idle = len(
+            [
+                e.name
+                for e in self.bot.get_all_members()
+                if e.status == discord.Status.idle
+            ]
+        )
+        dnd = len(
+            [
+                e.name
+                for e in self.bot.get_all_members()
+                if e.status == discord.Status.dnd
+            ]
+        )
         used = humanize.naturalsize(psutil.virtual_memory().used)
         free = humanize.naturalsize(psutil.virtual_memory().free)
         memory = f"**Used:** {used}\n"
         memory += f"**Free:** {free}\n"
         cpu = f"**Cores:** {os.cpu_count()}\n"
-        cpu += '**Cpu:** {}% of ({} {}) utilized\n'.format(cpuUsage, cpuThred, threadString)
-        cpu += '**Ram:** {} ({}%) of {}GB used\n'.format(memUsedGB, memPerc, memTotalGB)
+        cpu += "**Cpu:** {}% of ({} {}) utilized\n".format(
+            cpuUsage, cpuThred, threadString
+        )
+        cpu += "**Ram:** {} ({}%) of {}GB used\n".format(memUsedGB, memPerc, memTotalGB)
         members = f"{oe} {online} users online.\n"
         members += f"{ie} {idle} users idle.\n"
         members += f"{de} {dnd} users dnd."
@@ -167,7 +241,9 @@ class Utility(commands.Cog):
     @commands.hybrid_group()
     async def info(self, ctx):
         """Info commands."""
-        if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
+        if ctx.invoked_subcommand is None or isinstance(
+            ctx.invoked_subcommand, commands.Group
+        ):
             await self.bot.send_sub_help(ctx, ctx.command)
 
     @info.command()
@@ -189,7 +265,7 @@ class Utility(commands.Cog):
             except AttributeError:
                 pass
         if server_list == []:
-            servers = 'Not connected anywhere.'
+            servers = "Not connected anywhere."
         else:
             servers = "\n".join(server_list)
         e = discord.Embed()
@@ -197,7 +273,9 @@ class Utility(commands.Cog):
         e.add_field(name="Players:", value=f"Playing in {len(server_list)} servers..")
         e.add_field(name="Users:", value=f"{users-len(server_list)} users listening..")
         e.add_field(name="Guilds:", value=servers, inline=False)
-        e.set_footer(text=f"There is currently {len(server_ids)} players created in total.")
+        e.set_footer(
+            text=f"There is currently {len(server_ids)} players created in total."
+        )
         e.set_thumbnail(url=self.bot.user.avatar)
         try:
             return await ctx.send(embed=e)
@@ -216,26 +294,30 @@ class Utility(commands.Cog):
         python = f"Python: v{pyvi.major}.{pyvi.minor}.{pyvi.micro} (Branch {pyvi.releaselevel} v{pyvi.serial})"
         dev = await self.bot.http.get_user(827940585201205258)
         devn = f"{dev['username']}#{dev['discriminator']}"
-        for path, subdirs, files in os.walk('.'):
+        for path, subdirs, files in os.walk("."):
             for name in files:
-                if name.endswith('.py'):
+                if name.endswith(".py"):
                     file_amount += 1
-                    with codecs.open('./' + str(pathlib.PurePath(path, name)), 'r', 'utf-8') as f:
+                    with codecs.open(
+                        "./" + str(pathlib.PurePath(path, name)), "r", "utf-8"
+                    ) as f:
                         for i, l in enumerate(f):
-                            if l.strip().startswith('#') or len(l.strip()) == 0:  # skip commented lines.
+                            if (
+                                l.strip().startswith("#") or len(l.strip()) == 0
+                            ):  # skip commented lines.
                                 pass
                             else:
                                 total += 1
-        code = f'I am made of {total:,} lines of Python, spread across {file_amount:,} files!'
+        code = f"I am made of {total:,} lines of Python, spread across {file_amount:,} files!"
         cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
-        if os.name == 'posix':
-            cmd = cmd.format(r'\`%h\`')
+        if os.name == "posix":
+            cmd = cmd.format(r"\`%h\`")
         else:
-            cmd = cmd.format(r'`%h`')
+            cmd = cmd.format(r"`%h`")
         try:
             revision = os.popen(cmd).read().strip()
         except OSError:
-            revision = 'Could not fetch due to memory error. Sorry.'
+            revision = "Could not fetch due to memory error. Sorry."
         e = discord.Embed()
         e.colour = discord.Colour.blurple()
         e.add_field(name="Developer:", value=devn)
@@ -247,7 +329,7 @@ class Utility(commands.Cog):
         await ctx.send(embed=e)
 
     @info.command()
-    async def user(self, ctx, user: discord.Member=None):
+    async def user(self, ctx, user: discord.Member = None):
         """Information about your account or someone elses."""
         if user is None:
             user = ctx.author
@@ -256,12 +338,20 @@ class Utility(commands.Cog):
         embed.add_field(name="ID", value=user.id)
         embed.add_field(name="Status", value=user.status)
         embed.add_field(name="Highest role", value=user.top_role.mention)
-        embed.add_field(name="Created", value=user.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
-        embed.add_field(name="Joined", value=user.joined_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(
+            name="Created",
+            value=user.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
+        embed.add_field(
+            name="Joined",
+            value=user.joined_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
         embed.set_thumbnail(url=user.avatar)
         await ctx.send(embed=embed)
 
-    @info.command(aliases=['server'])
+    @info.command(aliases=["server"])
     async def guild(self, ctx):
         """Information on the guild/server."""
         embed = discord.Embed(color=discord.Color.blurple())
@@ -269,8 +359,16 @@ class Utility(commands.Cog):
         embed.add_field(name="Owner", value=ctx.guild.owner.mention)
         embed.add_field(name="Members", value=ctx.guild.member_count)
         embed.add_field(name="Channels", value=len(ctx.guild.channels))
-        embed.add_field(name="Created", value=ctx.guild.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
-        embed.add_field(name="Roles", value=", ".join([e.mention for e in ctx.guild.roles]), inline=False)
+        embed.add_field(
+            name="Created",
+            value=ctx.guild.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
+        embed.add_field(
+            name="Roles",
+            value=", ".join([e.mention for e in ctx.guild.roles]),
+            inline=False,
+        )
         embed.set_thumbnail(url=ctx.guild.icon)
         await ctx.send(embed=embed)
 
@@ -284,12 +382,16 @@ class Utility(commands.Cog):
         embed.add_field(name="Position", value=role.position)
         embed.add_field(name="Hoist", value=role.hoist)
         embed.add_field(name="Mentionable", value=role.mentionable)
-        embed.add_field(name="Created", value=role.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(
+            name="Created",
+            value=role.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
         embed.set_thumbnail(url=role.guild.icon)
         await ctx.send(embed=embed)
 
     @info.command()
-    async def textchannel(self, ctx, channel: discord.TextChannel=None):
+    async def textchannel(self, ctx, channel: discord.TextChannel = None):
         """Information on a text channel."""
         if channel is None:
             channel = ctx.channel
@@ -298,13 +400,17 @@ class Utility(commands.Cog):
         embed.add_field(name="ID", value=channel.id)
         embed.add_field(name="NSFW", value=channel.is_nsfw())
         embed.add_field(name="Position", value=channel.position)
-        embed.add_field(name="Created", value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(
+            name="Created",
+            value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
         embed.add_field(name="Topic", value=channel.topic, inline=False)
         embed.set_thumbnail(url=channel.guild.icon)
         await ctx.send(embed=embed)
 
     @info.command()
-    async def voicechannel(self, ctx, channel: discord.VoiceChannel=None):
+    async def voicechannel(self, ctx, channel: discord.VoiceChannel = None):
         """Information on a voice channel."""
         if channel is None:
             if not ctx.author.voice:
@@ -314,7 +420,11 @@ class Utility(commands.Cog):
         embed = discord.Embed(color=discord.Color.blurple())
         embed.add_field(name="Name", value=channel.name)
         embed.add_field(name="ID", value=channel.id)
-        embed.add_field(name="Created", value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(
+            name="Created",
+            value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
+            inline=False,
+        )
         embed.set_thumbnail(url=channel.guild.icon)
         await ctx.send(embed=embed)
 
@@ -343,7 +453,13 @@ class Utility(commands.Cog):
             return weather
 
     def get_playing(self):
-        return len([p for p in self.bot.lavalink.player_manager.players.values() if p.is_playing])
+        return len(
+            [
+                p
+                for p in self.bot.lavalink.player_manager.players.values()
+                if p.is_playing
+            ]
+        )
 
     def get_bot_uptime(self, *, brief=False):
         now = datetime.datetime.utcnow()
@@ -353,9 +469,9 @@ class Utility(commands.Cog):
         days, hours = divmod(hours, 24)
 
         if not brief:
-            fmt = 'I\'ve been online for {d} days, {h} hours, {m} minutes, and {s} seconds!'
+            fmt = "I've been online for {d} days, {h} hours, {m} minutes, and {s} seconds!"
         else:
-            fmt = '{d}d {h}h {m}m {s}s'
+            fmt = "{d}d {h}h {m}m {s}s"
         return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
 
