@@ -45,6 +45,7 @@ class Music(commands.Cog):
                         e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                         e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                         e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                        e.description += "\nSend `search <query>` to search for a song."
                         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                         await msg.edit(embed=e, view=None)
                         await asyncio.sleep(1)
@@ -97,6 +98,7 @@ class Music(commands.Cog):
                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                 e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                 e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                e.description += "\nSend `search <query>` to search for a song."
                 e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                 await msg.edit(embed=e, view=None)
             await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
@@ -212,6 +214,7 @@ class Music(commands.Cog):
         e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
         e.description += "\nSend `vol 10` or `volume 10` to change the volume."
         e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+        e.description += "\nSend `search <query>` to search for a song."
         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
         msg = await self.bot.get_channel(channelid).send(embed=e)
         return msg.id

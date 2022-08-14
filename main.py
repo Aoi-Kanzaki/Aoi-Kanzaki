@@ -40,11 +40,6 @@ class Fresh(commands.AutoShardedBot):
 				return _config['prefix']
 			else:
 				return data[0]
-
-	async def setup_hook(self):
-		# This copies the global commands over to your guild.
-		self.tree.copy_global_to(guild=discord.Object(id=_config['guildid']))
-		await self.tree.sync(guild=discord.Object(id=_config['guildid']))
 			
 	async def clear_screen(self):
 		if os.name == "nt":
@@ -58,29 +53,19 @@ class Fresh(commands.AutoShardedBot):
 			print(color("Loaded JSK on first try!", fore=self.colors["green"]))
 		except Exception as e:
 			print(color(f"Failed to load JSK! Reason:\n{e}", fore=self.colors["red"]))
-		for cog in os.listdir('./functions'):
-			if cog.endswith('.py'):
-				name = cog[:-3]
-				try:
-					await self.load_extension(f'functions.{name}')
-				except Exception as e:
-					print(color(f'Failed to load cog {name}:\n{e}', fore=self.colors["red"]))
-		for cog in os.listdir('./cogs'):
-			if cog.endswith('.py'):
-				name = cog[:-3]
-				try:
-					await self.load_extension(f'cogs.{name}')
-				except Exception as e:
-					print(color(f'Failed to load cog {name}:\n{e}', fore=self.colors["red"]))
-		for util in os.listdir('./utils'):
-			if util.startswith('_'):
-				continue
-			elif util.endswith('.py'):
-				name = util[:-3]
-				try:
-					await self.load_extension(f'utils.{name}')
-				except Exception as e:
-					print(color(f'Failed to load util {name}:\n{e}', fore=self.colors["red"]))
+		dirs = ['./functions', './cogs', './utils']
+		for d in dirs:
+			for module in os.listdir(d):
+				if module.endswith('.py'):
+					name = module[:-3]
+					if name in ('_checks', '_LavalinkVoiceClient', '_MusicButtons'):
+						pass
+					else:
+						try:
+							d = d.replace('./', '')
+							await self.load_extension(f'{d}.{name}')
+						except Exception as e:
+							print(color(f'Failed to load {name}:\n{e}', fore=self.colors["red"]))
 
 	async def connect_to_db(self):
 		if _config['mongoURI'] != "":

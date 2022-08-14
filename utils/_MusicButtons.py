@@ -168,6 +168,7 @@ class event_hook_buttons(discord.ui.View):
                     e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                     e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                     e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                    e.description += "\nSend `search <query>` to search for a song."
                     e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                     msg = await self.bot.get_channel(data[2]).send(embed=e)
                     await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, interaction.guild.id,))
@@ -246,6 +247,7 @@ class event_hook_buttons(discord.ui.View):
                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                 e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                 e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                e.description += "\nSend `search <query>` to search for a song."
                 e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                 await msg.edit(embed=e, view=None)
                 self.player.queue.clear()

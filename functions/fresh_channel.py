@@ -13,7 +13,7 @@ class MusicChannel(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        query = message.content
+        query = str(message.content).lower()
         if message.author.bot: return
         if message.guild != None:
             if message.content.startswith("ft?") or message.content.startswith("f?"): return
@@ -46,11 +46,67 @@ class MusicChannel(commands.Cog):
                             e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                             e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                             e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                            e.description += "\nSend `search <query>` to search for a song."
                             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                             msg = await self.bot.get_channel(data[2]).send(embed=e)
                             await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, message.guild.id,))
                             await db.commit()
                             playermsg = await message.channel.fetch_message(msg.id)
+                        if query.startswith('cancel') or query.startswith('start'):
+                            return
+                        if query.startswith("search"):
+                            query = query.replace('search', '')
+                            results = await self.bot.lavalink.get_tracks(f'ytsearch:{query}')
+                            if not results or not results['tracks']:
+                                return await message.channel.send('<:tickNo:697759586538749982> Nothing found!', delete_after=5)
+                            number = 0
+                            e = discord.Embed(colour=discord.Colour.blurple())
+                            e.description = ""
+                            for r in results['tracks']:
+                                number += 1
+                                e.description += f"**{number})** {r['info']['title']}\n"
+                            e.description += "\nPlease choose a result. Examples: `start 1` to play, `cancel` to cancel this search and delete messages."
+                            m = await message.channel.send(embed=e)
+                            def check(m):
+                                return m.channel == message.channel and m.author == message.author
+                            while True:
+                                try:
+                                    msg = await self.bot.wait_for('message', check=check, timeout=60.0)
+                                except asyncio.TimeoutError:
+                                    return await m.delete()
+                                if msg.content == 'cancel':
+                                    return await m.delete()
+                                elif msg.content.startswith('start'):
+                                    content = msg.content.replace('start ', '')
+                                    if content.isdigit():
+                                        if int(content) > number:
+                                            await message.channel.send("<:tickNo:697759586538749982> Invalid number, try again.", delete_after=2)
+                                        else:
+                                            await m.delete()
+                                            e = discord.Embed(color=discord.Color.blurple())
+                                            track = results['tracks'][int(content)]
+                                            track = AudioTrack(track, message.author.id, recommended=True)
+                                            player.add(requester=message.author.id, track=track)
+                                            if not player.is_playing:
+                                                await player.play()
+                                            if player.queue:
+                                                if player.current.stream:
+                                                    dur = 'LIVE'
+                                                else:
+                                                    dur = format_time(player.current.duration)
+                                                queue_list = ''
+                                                for i, track in enumerate(player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                                                kek = f"{player.current.title}\n{player.current.uri}"
+                                                e.add_field(name="Currently Playing:", value=kek, inline=False)
+                                                e.add_field(name="Author:", value=player.current.author)
+                                                e.add_field(name="Duration:", value=dur)
+                                                e.add_field(name="Queue List:", value=queue_list, inline=False)
+                                                e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
+                                                e.set_footer(text=f"Requested by {message.author.name}#{message.author.discriminator}")
+                                                return await playermsg.edit(embed=e)
+                                            else:
+                                                return await message.channel.send(f"<:tickYes:697759553626046546> Added song {content} to queue.", delete_after=5)
                         if query.startswith("rem") or query.startswith("remove"):
                             index = query.replace("rem", "").replace("ove", "").replace(" ", "")
                             if not index.isdigit():
@@ -94,7 +150,7 @@ class MusicChannel(commands.Cog):
                                 return await message.channel.send(f'🔈 | Set to {player.volume}%', delete_after=5)
                             else:
                                 return await message.channel.send(f'🔈 | {player.volume}%', delete_after=5)
-                        if query not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous', 'help', 'volume', 'vol', 'rem', 'remove'):
+                        if query not in ('pause', 'resume', 'skip', 'dc', 'disconnect', 'prev', 'previous', 'help', 'volume', 'vol', 'rem', 'remove', 'cancel', 'search', 'start'):
                             query = query.strip('<>')
                             if "open.spotify.com" in query:
                                 query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
@@ -182,6 +238,7 @@ class MusicChannel(commands.Cog):
                                 e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                                 e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                                 e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                                e.description += "\nSend `search <query>` to search for a song."
                                 e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                                 await playermsg.edit(embed=e)
                                 return self.bot.lavalink.player_manager.remove(message.guild.id)
@@ -226,6 +283,7 @@ class MusicChannel(commands.Cog):
                             e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
                             e.description += "\nSend `vol 10` or `volume 10` to change the volume."
                             e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                            e.description += "\nSend `search <query>` to search for a song."
                             e.set_footer(text="This message will delete in 30 seconds.")
                             await message.channel.send(embed=e, delete_after=30)
 
