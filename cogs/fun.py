@@ -25,9 +25,7 @@ class Fun(commands.Cog):
         memeLink = memeData["postLink"]
         e = discord.Embed(title=memeName)
         e.set_image(url=memeUrl)
-        e.set_footer(
-            text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}"
-        )
+        e.set_footer(text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}")
         await ctx.send(embed=e)
 
     @commands.hybrid_command(aliases=["dj"])
@@ -44,12 +42,8 @@ class Fun(commands.Cog):
                 data = await response.json()
                 e = discord.Embed(color=discord.Color.blurple())
                 e.title = "Here is your dad joke:"
-                e.description = (
-                    f"{data['body'][0]['setup']}\n\n||{data['body'][0]['punchline']}||"
-                )
-                e.set_thumbnail(
-                    url="https://megaphone.imgix.net/podcasts/f9b00b92-4953-11ec-bbeb-6b1d62ae44a1/image/1619957732809-podcast_icon_v2.png?ixlib=rails-2.1.2&max-w=3000&max-h=3000&fit=crop&auto=format,compress?crop=1:1,offset-y0"
-                )
+                e.description = f"{data['body'][0]['setup']}\n\n||{data['body'][0]['punchline']}||"
+                e.set_thumbnail(url="https://megaphone.imgix.net/podcasts/f9b00b92-4953-11ec-bbeb-6b1d62ae44a1/image/1619957732809-podcast_icon_v2.png?ixlib=rails-2.1.2&max-w=3000&max-h=3000&fit=crop&auto=format,compress?crop=1:1,offset-y0")
                 await ctx.send(embed=e)
             else:
                 await ctx.send(f"{response.status}")
@@ -129,18 +123,9 @@ class Fun(commands.Cog):
         await ctx.typing()
         lover2 = lover2 or ctx.author
         rigged = False
-        name1 = (
-            lover1.name[: -round(len(lover1.name) / 2)]
-            + lover2.name[-round(len(lover2.name) / 2) :]
-        )
-        name2 = (
-            lover2.name[: -round(len(lover2.name) / 2)]
-            + lover1.name[-round(len(lover1.name) / 2) :]
-        )
-        if 827940585201205258 in [lover1.id, lover2.id] and 882012969523884072 in [
-            lover1.id,
-            lover2.id,
-        ]:
+        name1 = lover1.name[: -round(len(lover1.name) / 2)] + lover2.name[-round(len(lover2.name) / 2) :]
+        name2 = lover2.name[: -round(len(lover2.name) / 2)] + lover1.name[-round(len(lover1.name) / 2) :]
+        if 827940585201205258 in [lover1.id, lover2.id] and 882012969523884072 in [lover1.id, lover2.id]:
             rigged = True
         desc = (
             f"**{ctx.author.mention} ships {lover1.mention} and {lover2.mention}!**\n\n "
@@ -153,16 +138,12 @@ class Fun(commands.Cog):
     @staticmethod
     def draw_meter(rigged: bool = False):
         random_integer = 100 if rigged else random.randint(0, 100)
-        love = Decimal(str(random_integer / 10)).quantize(
-            Decimal("1"), rounding=ROUND_HALF_UP
-        )
+        love = Decimal(str(random_integer / 10)).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
         love_emoji = "❤"
         empty_bar = "🖤"
         if random_integer == 0:
             empty_bar = "💔"
-            love_message = (
-                "That's not good... maybe delete this and try again before they see?"
-            )
+            love_message = "That's not good... maybe delete this and try again before they see?"
         elif random_integer <= 15:
             love_message = "That's a yikes.."
         elif random_integer <= 30:

@@ -4,6 +4,6 @@ humanize
 colr
 aiosqlite
 psutil
-pip install git+https://github.com/devoxin/lavalink.py@dev
+git+https://github.com/devoxin/lavalink.py@dev
 motor
 python-weather

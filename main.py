@@ -38,13 +38,12 @@ class Fresh(commands.AutoShardedBot):
             "green": (4, 232, 95),
             "red": (189, 16, 16),
             "yellow": (163, 187, 3),
+            "grey": (110, 108, 108)
         }
 
     async def get_prefix(bot, message):
         async with aiosqlite.connect("./data/prefixes.db") as db:
-            getData = await db.execute(
-                "SELECT * FROM prefixs WHERE guild = ?", (message.guild.id,)
-            )
+            getData = await db.execute("SELECT * FROM prefixs WHERE guild = ?", (message.guild.id,))
             data = await getData.fetchone()
             if data is None:
                 return _config["prefix"]
@@ -75,39 +74,18 @@ class Fresh(commands.AutoShardedBot):
                             d = d.replace("./", "")
                             await self.load_extension(f"{d}.{name}")
                         except Exception as e:
-                            print(
-                                color(
-                                    f"Failed to load {name}:\n{e}",
-                                    fore=self.colors["red"],
-                                )
-                            )
+                            print(color(f"Failed to load {name}:\n{e}", fore=self.colors["red"]))
 
     async def connect_to_db(self):
-        if _config["mongoURI"] != "":
+        if _config["mongoURI"] != "Disabled.":
             self.db = AsyncIOMotorClient(_config["mongoURI"])["db"]
-            print(
-                color("Database Status    :", fore=self.colors["cyan"]),
-                color("Should be connected!", fore=self.colors["purple"]),
-            )
+            print(color("Database Status    :", fore=self.colors["cyan"]), color("Should be connected!", fore=self.colors["purple"]))
         else:
-            print(
-                color("Database Status    :", fore=self.colors["cyan"]),
-                color("Not Enabled.", fore=self.colors["purple"]),
-            )
-        print(
-            color(
-                "+-----------------------------------------------------------+",
-                fore=self.colors["blue"],
-            )
-        )
+            print(color("Database Status    :", fore=self.colors["cyan"]), color("Disabled, not connecting.", fore=self.colors["grey"]))
+        print(color("+-----------------------------------------------------------+", fore=self.colors["blue"]))
         if not os.path.exists("./data/"):
             os.makedirs("./data/")
-            print(
-                color(
-                    "Data folder was not found, the new directory was created!",
-                    fore=self.colors["green"],
-                )
-            )
+            print(color("Data folder was not found, the new directory was created!", fore=self.colors["green"]))
 
     async def on_ready(self):
         await self.clear_screen()
@@ -116,53 +94,27 @@ class Fresh(commands.AutoShardedBot):
         channels = len([c for c in self.get_all_channels()])
         login_time = datetime.datetime.now() - starttime
         login_time = login_time.seconds + login_time.microseconds / 1e6
-        print(
-            color(
-                "+-----------------------------------------------------------+",
-                fore=self.colors["blue"],
+        print(color("+-----------------------------------------------------------+", fore=self.colors["blue"]))
+        print(color("Login time         :", fore=self.colors["cyan"]), color(f"{login_time} milliseconds", fore=self.colors["purple"]))
+        print(color("Logged in as       :", fore=self.colors["cyan"]), color(f"{str(self.user.name)} ({self.user.id})", fore=self.colors["purple"]))
+        print(color("Connected to       :", fore=self.colors["cyan"]), color(f"{len(self.guilds)} guilds and {channels} channels", fore=self.colors["purple"]))
+        print(color("Python version     :", fore=self.colors["cyan"]), color("{}.{}.{}".format(*os.sys.version_info[:3]), fore=self.colors["purple"]))
+        print(color("Discord.py version :", fore=self.colors["cyan"]), color(f"{discord.__version__}", fore=self.colors["purple"]))
+        await self.change_presence(
+            status=discord.Status.dnd,
+            activity=discord.Activity(
+                type=discord.ActivityType.watching,
+                name=f"f?help | {len(self.guilds)} guilds.."
             )
-        )
-        print(
-            color("Login time         :", fore=self.colors["cyan"]),
-            color(f"{login_time} milliseconds", fore=self.colors["purple"]),
-        )
-        print(
-            color("Logged in as       :", fore=self.colors["cyan"]),
-            color(
-                f"{str(self.user.name)} ({self.user.id})", fore=self.colors["purple"]
-            ),
-        )
-        print(
-            color("Connected to       :", fore=self.colors["cyan"]),
-            color(
-                f"{len(self.guilds)} guilds and {channels} channels",
-                fore=self.colors["purple"],
-            ),
-        )
-        print(
-            color("Python version     :", fore=self.colors["cyan"]),
-            color(
-                "{}.{}.{}".format(*os.sys.version_info[:3]), fore=self.colors["purple"]
-            ),
-        )
-        print(
-            color("Discord.py version :", fore=self.colors["cyan"]),
-            color(f"{discord.__version__}", fore=self.colors["purple"]),
         )
         await self.connect_to_db()
         await self.load_modules()
         print(color("Syncing commands...", fore=self.colors["yellow"]))
         try:
             synced = await self.tree.sync()
-            print(
-                color(
-                    f"Synced {len(synced)} commands globaly!", fore=self.colors["green"]
-                )
-            )
+            print(color(f"Synced {len(synced)} commands globaly!", fore=self.colors["green"]))
         except Exception as e:
-            print(
-                color(f"Failed to sync commands! Reason:\n{e}", fore=self.colors["red"])
-            )
+            print(color(f"Failed to sync commands! Reason:\n{e}", fore=self.colors["red"]))
 
     async def send_sub_help(self, ctx, cmd):
         e = discord.Embed()
@@ -180,5 +132,5 @@ class Fresh(commands.AutoShardedBot):
         except Exception as e:
             print(color(f"Failed to login:\n{e}", fore=self.colors["red"]))
 
-
-Fresh().run()
+if __name__ == "__main__":
+    Fresh().run()

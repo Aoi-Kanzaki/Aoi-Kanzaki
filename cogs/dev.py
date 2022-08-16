@@ -22,21 +22,13 @@ class Dev(commands.Cog):
     async def modules(self, ctx):
         """Shows modules."""
         loaded = [c.__module__.split(".")[1] for c in self.bot.cogs.values()]
-        unloaded = [
-            c.split(".")[1]
-            for c in self._list_modules()
-            if c.split(".")[1] not in loaded
-        ]
+        unloaded = [c.split(".")[1] for c in self._list_modules() if c.split(".")[1] not in loaded]
         if not unloaded:
             unloaded = ["All modules are loaded"]
         e = discord.Embed(colour=discord.Colour.blurple())
         e.set_author(name="Modules.", icon_url=self.bot.user.avatar)
-        e.add_field(
-            name="Loaded Modules:", value=", ".join(sorted(loaded)), inline=False
-        )
-        e.add_field(
-            name="Unloaded Modules:", value=", ".join(sorted(unloaded)), inline=False
-        )
+        e.add_field(name="Loaded Modules:", value=", ".join(sorted(loaded)), inline=False)
+        e.add_field(name="Unloaded Modules:", value=", ".join(sorted(unloaded)), inline=False)
         await ctx.send(embed=e)
 
     @commands.hybrid_command()
@@ -45,50 +37,25 @@ class Dev(commands.Cog):
         """Network information."""
         await ctx.typing()
         if not args:
-            proc = await asyncio.create_subprocess_shell(
-                "vnstati -s -i enp1s0 -o vnstati.png",
-                stdin=None,
-                stderr=None,
-                stdout=PIPE,
-            )
+            proc = await asyncio.create_subprocess_shell("vnstati -s -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File("vnstati.png"))
         elif args == "daily":
-            proc = await asyncio.create_subprocess_shell(
-                "vnstati -d -i enp1s0 -o vnstati.png",
-                stdin=None,
-                stderr=None,
-                stdout=PIPE,
-            )
+            proc = await asyncio.create_subprocess_shell("vnstati -d -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File("vnstati.png"))
         elif args == "hourly":
-            proc = await asyncio.create_subprocess_shell(
-                "vnstati -h -i enp1s0 -o vnstati.png",
-                stdin=None,
-                stderr=None,
-                stdout=PIPE,
-            )
+            proc = await asyncio.create_subprocess_shell("vnstati -h -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File("vnstati.png"))
         elif args == "monthly":
-            proc = await asyncio.create_subprocess_shell(
-                "vnstati -m -i enp1s0 -o vnstati.png",
-                stdin=None,
-                stderr=None,
-                stdout=PIPE,
-            )
+            proc = await asyncio.create_subprocess_shell("vnstati -m -i enp1s0 -o vnstati.png", stdin=None, stderr=None, stdout=PIPE)
             out = await proc.stdout.read()
             await ctx.send(file=discord.File("vnstati.png"))
 
     @commands.command()
     @commands.check(_checks.is_owner)
-    async def sync(
-        self,
-        ctx,
-        guilds: commands.Greedy[discord.Object],
-        spec: typing.Optional[typing.Literal["~", "*", "^"]] = None,
-    ) -> None:
+    async def sync(self, ctx, guilds: commands.Greedy[discord.Object], spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
         if not guilds:
             if spec == "~":
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -101,9 +68,7 @@ class Dev(commands.Cog):
                 synced = []
             else:
                 synced = await ctx.bot.tree.sync()
-            await ctx.send(
-                f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}"
-            )
+            await ctx.send(f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current guild.'}")
             return
         ret = 0
         for guild in guilds:
@@ -140,9 +105,7 @@ class Dev(commands.Cog):
         for ms in pings:
             number += ms
         average = round(number / len(pings))
-        await ctx.send(
-            f"__**Ping Times:**__\nTyping: `{typingms}ms`  |  Latency: `{latencyms}ms`\nDiscord: `{discordms}`  |  Average: `{average}ms`"
-        )
+        await ctx.send(f"__**Ping Times:**__\nTyping: `{typingms}ms`  |  Latency: `{latencyms}ms`\nDiscord: `{discordms}`  |  Average: `{average}ms`")
 
 
 async def setup(bot):

@@ -14,50 +14,26 @@ class Economy(commands.Cog):
 
     async def cog_load(self):
         async with aiosqlite.connect("./data/bank.db") as db:
-            await db.execute(
-                "CREATE TABLE IF NOT EXISTS bank (wallet INTEGER, bank INTEGER, maxbank INTEGER, user INTEGER)"
-            )
-            await db.execute(
-                "CREATE TABLE IF NOT EXISTS inv (laptop INTEGER, phone INTEGER, fakeid INTEGER, user INTEGER)"
-            )
-            await db.execute(
-                "CREATE TABLE IF NOT EXISTS shop (name TEXT, id TEXT, desc TEXT, cost INTEGER)"
-            )
+            await db.execute("CREATE TABLE IF NOT EXISTS bank (wallet INTEGER, bank INTEGER, maxbank INTEGER, user INTEGER)")
+            await db.execute("CREATE TABLE IF NOT EXISTS inv (laptop INTEGER, phone INTEGER, fakeid INTEGER, user INTEGER)")
+            await db.execute("CREATE TABLE IF NOT EXISTS shop (name TEXT, id TEXT, desc TEXT, cost INTEGER)")
             await db.commit()
 
     async def create_balance(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
-            await db.execute(
-                "INSERT INTO bank VALUES (?, ?, ?, ?)",
-                (
-                    0,
-                    100,
-                    500,
-                    user.id,
-                ),
-            )
+            await db.execute("INSERT INTO bank VALUES (?, ?, ?, ?)", (0, 100, 500, user.id,))
             await db.commit()
             return
 
     async def create_inv(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
-            await db.execute(
-                "INSERT INTO inv VALUES (?, ?, ?, ?)",
-                (
-                    0,
-                    0,
-                    0,
-                    user.id,
-                ),
-            )
+            await db.execute("INSERT INTO inv VALUES (?, ?, ?, ?)", (0, 0, 0, user.id,))
             await db.commit()
             return
 
     async def get_inv(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
-            get_data = await db.execute(
-                "SELECT laptop, phone, fakeid FROM inv WHERE user = ?", (user.id,)
-            )
+            get_data = await db.execute("SELECT laptop, phone, fakeid FROM inv WHERE user = ?", (user.id,))
             data = await get_data.fetchone()
             if data is None:
                 await self.create_inv(user)
@@ -67,9 +43,7 @@ class Economy(commands.Cog):
 
     async def get_balance(self, user):
         async with aiosqlite.connect("./data/bank.db") as db:
-            get_data = await db.execute(
-                "SELECT wallet, bank, maxbank FROM bank WHERE user = ?", (user.id,)
-            )
+            get_data = await db.execute("SELECT wallet, bank, maxbank FROM bank WHERE user = ?", (user.id,))
             data = await get_data.fetchone()
             if data is None:
                 await self.create_balance(user)
@@ -79,27 +53,17 @@ class Economy(commands.Cog):
 
     async def update_wallet(self, user, amount: int):
         async with aiosqlite.connect("./data/bank.db") as db:
-            get_wallet = await db.execute(
-                "SELECT wallet FROM bank WHERE user = ?", (user.id,)
-            )
+            get_wallet = await db.execute("SELECT wallet FROM bank WHERE user = ?", (user.id,))
             wallet = await get_wallet.fetchone()
             if wallet is None:
                 await self.create_balance(user)
                 return 0
-            await db.execute(
-                "UPDATE bank SET wallet = ? WHERE user = ?",
-                (
-                    wallet[0] + amount,
-                    user.id,
-                ),
-            )
+            await db.execute("UPDATE bank SET wallet = ? WHERE user = ?", (wallet[0] + amount, user.id,))
             await db.commit()
 
     async def update_bank(self, user, amount):
         async with aiosqlite.connect("./data/bank.db") as db:
-            get_bank = await db.execute(
-                "SELECT wallet, bank, maxbank FROM bank WHERE user = ?", (user.id,)
-            )
+            get_bank = await db.execute("SELECT wallet, bank, maxbank FROM bank WHERE user = ?", (user.id,))
             bank = await get_bank.fetchone()
             if bank is None:
                 await self.create_balance(user)
@@ -108,45 +72,23 @@ class Economy(commands.Cog):
             if amount > capacity:
                 await self.update_wallet(user, amount)
                 return 1
-            await db.execute(
-                "UPDATE bank SET bank = ? WHERE user = ?",
-                (
-                    bank[1] + amount,
-                    user.id,
-                ),
-            )
+            await db.execute("UPDATE bank SET bank = ? WHERE user = ?", (bank[1] + amount, user.id,))
             await db.commit()
 
     async def update_maxbank(self, user, amount):
         async with aiosqlite.connect("./data/bank.db") as db:
-            get_maxbank = await db.execute(
-                "SELECT maxbank FROM bank WHERE user = ?", (user.id,)
-            )
+            get_maxbank = await db.execute("SELECT maxbank FROM bank WHERE user = ?", (user.id,))
             maxbank = await get_maxbank.fetchone()
             if maxbank is None:
                 await self.create_balance(user)
                 return 0
-            await db.execute(
-                "UPDATE bank SET maxbank = ? WHERE user = ?",
-                (
-                    maxbank[0] + amount,
-                    user.id,
-                ),
-            )
+            await db.execute("UPDATE bank SET maxbank = ? WHERE user = ?", (maxbank[0] + amount, user.id,))
             await db.commit()
             return
 
     async def update_shop(name: str, id: str, desc: str, cost: int):
         async with aiosqlite.connect("./data/bank.db") as db:
-            await db.execute(
-                "INSERT INTO shop VALUES (?, ?, ?, ?)",
-                (
-                    name,
-                    id,
-                    desc,
-                    cost,
-                ),
-            )
+            await db.execute("INSERT INTO shop VALUES (?, ?, ?, ?)", (name, id, desc, cost,))
             await db.commit()
             return
 
@@ -172,9 +114,7 @@ class Economy(commands.Cog):
         amount = random.randint(200, 2000)
         res = await self.update_wallet(ctx.author, amount)
         if res == 0:
-            return await ctx.send(
-                "No account found so one was created for you. Please run the command again!"
-            )
+            return await ctx.send("No account found so one was created for you. Please run the command again!")
         await ctx.send(f"You got **{amount}** coins!")
 
     @commands.hybrid_command(aliases=["with"])
@@ -194,9 +134,7 @@ class Economy(commands.Cog):
         bank_res = await self.update_bank(ctx.author, -amount)
         wallet_res = await self.update_wallet(ctx.author, amount)
         if bank_res == 0 or wallet_res == 0:
-            return await ctx.send(
-                "No account found so one was created for you. Please run the command again!"
-            )
+            return await ctx.send("No account found so one was created for you. Please run the command again!")
         wallet, bank, maxbank = await self.get_balance(ctx.author)
         e = discord.Embed(title=f"{amount} coins have been withdrew")
         e.add_field(name="New Wallet", value=wallet)
@@ -221,9 +159,7 @@ class Economy(commands.Cog):
         bank_res = await self.update_bank(ctx.author, amount)
         wallet_res = await self.update_wallet(ctx.author, -amount)
         if bank_res == 0 or wallet_res == 0:
-            return await ctx.send(
-                "No account found so one was created for you. Please run the command again!"
-            )
+            return await ctx.send("No account found so one was created for you. Please run the command again!")
         elif bank_res == 1:
             return await ctx.send("You don't have enough storage in your bank!")
         wallet, bank, maxbank = await self.get_balance(ctx.author)
@@ -250,9 +186,7 @@ class Economy(commands.Cog):
         wallet_res = await self.update_wallet(ctx.author, -amount)
         wallet_res2 = await self.update_wallet(member, amount)
         if wallet_res == 0 or wallet_res2 == 0:
-            return await ctx.send(
-                "No account found so one was created for of you. Please run the command again!"
-            )
+            return await ctx.send("No account found so one was created for of you. Please run the command again!")
         wallet2, bank2, maxbank2 = await self.get_balance(member)
         wallet, bank, maxbank = await self.get_balance(ctx.author)
         e = discord.Embed(title=f"Gave {amount} coins to {member.name}")
@@ -284,16 +218,12 @@ class Economy(commands.Cog):
             e.color = discord.Color.green()
         elif bot_strikes > user_strikes:
             await self.update_wallet(ctx.author, -amount)
-            e.description = (
-                f"You lost **{amount}** coins!\nNew Balance: `{wallet - amount}`"
-            )
+            e.description = f"You lost **{amount}** coins!\nNew Balance: `{wallet - amount}`"
             e.set_author(name=ctx.author.name, icon_url=ctx.author.avatar)
             e.color = discord.Color.red()
         else:
             e.description = f"It was a tie!"
-            e.set_author(
-                name=f"Shit Play {ctx.author.name}!", icon_url=ctx.author.avatar
-            )
+            e.set_author(name=f"Shit Play {ctx.author.name}!", icon_url=ctx.author.avatar)
         e.add_field(name=f"{ctx.author.name.title()}", value=f"Strikes {user_strikes}")
         e.add_field(name=f"{ctx.bot.user.name}", value=f"Strikes {bot_strikes}")
         e.set_thumbnail(url=ctx.author.avatar)
@@ -320,23 +250,17 @@ class Economy(commands.Cog):
             await self.update_wallet(ctx.author, +earnings)
             e = discord.Embed(color=discord.Color.green())
             e.title = f"You won {earnings} coins!\n"
-            e.add_field(
-                name="Outcome:", value=f"{final[0]}{final[1]}{final[2]}", inline=False
-            )
+            e.add_field(name="Outcome:", value=f"{final[0]}{final[1]}{final[2]}", inline=False)
             e.add_field(name="Multiplier:", value=f"X{times_factors}")
             e.add_field(name="New Balance:", value=f"{wallet+earnings}")
-            e.set_thumbnail(
-                url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png"
-            )
+            e.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png")
             return await ctx.send(embed=e)
         else:
             await self.update_wallet(ctx.author, -amount)
             e = discord.Embed(color=discord.Color.red())
             e.title = f"You lost {amount} coins!\n\n"
             e.add_field(name="Outcome:", value=f"{final[0]}{final[1]}{final[2]}")
-            e.set_thumbnail(
-                url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png"
-            )
+            e.set_thumbnail(url="https://cdn-icons-png.flaticon.com/512/1055/1055823.png")
             return await ctx.send(embed=e)
 
     @commands.hybrid_command()
@@ -365,42 +289,28 @@ class Economy(commands.Cog):
         await asyncio.sleep(1.5)
         if (pd1 + pd2) > (bd1 + bd2):
             await self.update_wallet(ctx.author, +amount)
-            return await msg.edit(
-                content=f"🎲 {ctx.author.mention} You won {amount} coins! Your new balance is {wallet+amount}."
-            )
+            return await msg.edit(content=f"🎲 {ctx.author.mention} You won {amount} coins! Your new balance is {wallet+amount}.")
         elif (pd1 + pd2) < (bd1 + bd2):
             await self.update_wallet(ctx.author, -amount)
-            return await msg.edit(
-                content=f"🎲 {ctx.author.mention} You lost {amount} coins! Your new balance is {wallet-amount}."
-            )
+            return await msg.edit(content=f"🎲 {ctx.author.mention} You lost {amount} coins! Your new balance is {wallet-amount}.")
 
     @commands.hybrid_command()
     async def daily(self, ctx):
         """Get your daily coins."""
         if ctx.author.id in self.daily_cooldowns:
-            difference = (
-                datetime.datetime.now() - self.daily_cooldowns[ctx.author.id]
-            ).total_seconds()
+            difference = (datetime.datetime.now() - self.daily_cooldowns[ctx.author.id]).total_seconds()
             m, s = divmod(int(86400 - difference), 60)
             h, m = divmod(m, 60)
             if h > 0:
-                return await ctx.send(
-                    f"You already claimed your daily coins! You can claim again in **{h} hour(s) {m} minute(s) {s} second(s).**"
-                )
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{h} hour(s) {m} minute(s) {s} second(s).**")
             elif m > 0:
-                return await ctx.send(
-                    f"You already claimed your daily coins! You can claim again in **{m} minute(s) {s} second(s).**"
-                )
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{m} minute(s) {s} second(s).**")
             else:
-                return await ctx.send(
-                    f"You already claimed your daily coins! You can claim again in **{s} second(s).**"
-                )
+                return await ctx.send(f"You already claimed your daily coins! You can claim again in **{s} second(s).**")
         wallet, bank, maxbank = await self.get_balance(ctx.author)
         await self.update_wallet(ctx.author, +5000)
         self.daily_cooldowns[ctx.author.id] = datetime.datetime.now()
-        return await ctx.send(
-            f"You received 5000 coins! New Balance: **{wallet+5000}**"
-        )
+        return await ctx.send(f"You received 5000 coins! New Balance: **{wallet+5000}**")
 
 
 async def setup(bot):

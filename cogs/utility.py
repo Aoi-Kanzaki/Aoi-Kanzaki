@@ -27,9 +27,7 @@ class Utility(commands.Cog):
 
     async def cog_load(self):
         async with aiosqlite.connect("./data/afk.db") as db:
-            await db.execute(
-                "CREATE TABLE IF NOT EXISTS afk (user INTEGER, guild INTEGER, reason TEXT)"
-            )
+            await db.execute("CREATE TABLE IF NOT EXISTS afk (user INTEGER, guild INTEGER, reason TEXT)")
             await db.commit()
 
     @commands.Cog.listener()
@@ -39,41 +37,17 @@ class Utility(commands.Cog):
         if message.author.bot:
             return
         async with aiosqlite.connect("./data/afk.db") as db:
-            get_data = await db.execute(
-                "SELECT reason FROM afk WHERE user = ? AND guild = ?",
-                (
-                    message.author.id,
-                    message.guild.id,
-                ),
-            )
+            get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (message.author.id, message.guild.id,))
             data = await get_data.fetchone()
             if data:
-                await message.channel.send(
-                    f"{message.author.mention} Welcome back! You are no longer afk.",
-                    delete_after=10,
-                )
-                await db.execute(
-                    "DELETE FROM afk WHERE user = ? AND guild = ?",
-                    (
-                        message.author.id,
-                        message.guild.id,
-                    ),
-                )
+                await message.channel.send(f"{message.author.mention} Welcome back! You are no longer afk.", delete_after=10)
+                await db.execute("DELETE FROM afk WHERE user = ? AND guild = ?", (message.author.id, message.guild.id,))
             if message.mentions:
                 for mention in message.mentions:
-                    get_data = await db.execute(
-                        "SELECT reason FROM afk WHERE user = ? AND guild = ?",
-                        (
-                            mention.id,
-                            message.guild.id,
-                        ),
-                    )
+                    get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (mention.id, message.guild.id,))
                     data = await get_data.fetchone()
                     if data and mention.id != message.author.id:
-                        await message.channel.send(
-                            f"{mention.name} is currently AFK! Reason: `{data[0]}`",
-                            delete_after=10,
-                        )
+                        await message.channel.send(f"{mention.name} is currently AFK! Reason: `{data[0]}`", delete_after=10)
             await db.commit()
 
     @commands.hybrid_command()
@@ -83,45 +57,23 @@ class Utility(commands.Cog):
             reason = "No reason provided."
         async with aiosqlite.connect("./data/afk.db") as db:
             try:
-                get_data = await db.execute(
-                    "SELECT reason FROM afk WHERE user = ? AND guild = ?",
-                    (
-                        ctx.author.id,
-                        ctx.guild.id,
-                    ),
-                )
+                get_data = await db.execute("SELECT reason FROM afk WHERE user = ? AND guild = ?", (ctx.author.id, ctx.guild.id,))
                 data = await get_data.fetchone()
             except:
                 pass
             if data:
                 if data[0] == reason:
                     await ctx.send("You're already AFK with the same reason.")
-                await db.execute(
-                    "UPDATE afk SET reason = ? WHERE user = ? AND guild = ?",
-                    (
-                        reason,
-                        ctx.author.id,
-                        ctx.guild.id,
-                    ),
-                )
+                await db.execute("UPDATE afk SET reason = ? WHERE user = ? AND guild = ?", (reason, ctx.author.id, ctx.guild.id,))
             else:
-                await db.execute(
-                    "INSERT INTO afk (user, guild, reason) VALUES (?, ?, ?)",
-                    (
-                        ctx.author.id,
-                        ctx.guild.id,
-                        reason,
-                    ),
-                )
+                await db.execute("INSERT INTO afk (user, guild, reason) VALUES (?, ?, ?)", (ctx.author.id, ctx.guild.id, reason,))
                 await ctx.send(f"You are now AFK for: `{reason}`")
             await db.commit()
 
     @commands.hybrid_command()
     async def iplookup(self, ctx, *, ipaddr: str = "9.9.9.9"):
         """Lookup an ip address."""
-        r = requests.get(
-            f"http://extreme-ip-lookup.com/json/{ipaddr}?key=BnhTX1mBfAK0y9v1gtvh"
-        )
+        r = requests.get(f"http://extreme-ip-lookup.com/json/{ipaddr}?key=BnhTX1mBfAK0y9v1gtvh")
         geo = r.json()
         e = discord.Embed(color=discord.Color.blurple())
         fields = [
@@ -161,9 +113,7 @@ class Utility(commands.Cog):
         e.colour = discord.Colour.blurple()
         e.description = revision
         e.set_author(icon_url=self.bot.user.avatar, name="Latest Github Changes:")
-        e.set_thumbnail(
-            url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4"
-        )
+        e.set_thumbnail(url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
         await ctx.send(embed=e)
 
     @commands.hybrid_command(aliases=["lls"])
@@ -183,38 +133,16 @@ class Utility(commands.Cog):
         memTotal = memStats.total
         memUsedGB = "{0:.1f}".format(((memUsed / 1024) / 1024) / 1024)
         memTotalGB = "{0:.1f}".format(((memTotal / 1024) / 1024) / 1024)
-        memPerc = str(
-            ((memTotal / 1024) / 1024) / 1024 / ((memUsed / 1024) / 1024) / 1024
-        ).split(".")[0]
-        online = len(
-            [
-                e.name
-                for e in self.bot.get_all_members()
-                if e.status == discord.Status.online
-            ]
-        )
-        idle = len(
-            [
-                e.name
-                for e in self.bot.get_all_members()
-                if e.status == discord.Status.idle
-            ]
-        )
-        dnd = len(
-            [
-                e.name
-                for e in self.bot.get_all_members()
-                if e.status == discord.Status.dnd
-            ]
-        )
+        memPerc = str(((memTotal / 1024) / 1024) / 1024 / ((memUsed / 1024) / 1024) / 1024).split(".")[0]
+        online = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.online])
+        idle = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.idle])
+        dnd = len([e.name for e in self.bot.get_all_members() if e.status == discord.Status.dnd])
         used = humanize.naturalsize(psutil.virtual_memory().used)
         free = humanize.naturalsize(psutil.virtual_memory().free)
         memory = f"**Used:** {used}\n"
         memory += f"**Free:** {free}\n"
         cpu = f"**Cores:** {os.cpu_count()}\n"
-        cpu += "**Cpu:** {}% of ({} {}) utilized\n".format(
-            cpuUsage, cpuThred, threadString
-        )
+        cpu += "**Cpu:** {}% of ({} {}) utilized\n".format(cpuUsage, cpuThred, threadString)
         cpu += "**Ram:** {} ({}%) of {}GB used\n".format(memUsedGB, memPerc, memTotalGB)
         members = f"{oe} {online} users online.\n"
         members += f"{ie} {idle} users idle.\n"
@@ -241,15 +169,13 @@ class Utility(commands.Cog):
     @commands.hybrid_group()
     async def info(self, ctx):
         """Info commands."""
-        if ctx.invoked_subcommand is None or isinstance(
-            ctx.invoked_subcommand, commands.Group
-        ):
+        if ctx.invoked_subcommand is None or isinstance(ctx.invoked_subcommand, commands.Group):
             await self.bot.send_sub_help(ctx, ctx.command)
 
     @info.command()
     async def lavalink(self, ctx):
         """Shows lavalink music stats."""
-        server_num = self.get_playing()
+        server_num = len([p for p in self.bot.lavalink.player_manager.players.values() if p.is_playing])
         server_ids = self.bot.lavalink.player_manager.players
         server_list = []
         number = 0
@@ -273,9 +199,7 @@ class Utility(commands.Cog):
         e.add_field(name="Players:", value=f"Playing in {len(server_list)} servers..")
         e.add_field(name="Users:", value=f"{users-len(server_list)} users listening..")
         e.add_field(name="Guilds:", value=servers, inline=False)
-        e.set_footer(
-            text=f"There is currently {len(server_ids)} players created in total."
-        )
+        e.set_footer(text=f"There is currently {len(server_ids)} players created in total.")
         e.set_thumbnail(url=self.bot.user.avatar)
         try:
             return await ctx.send(embed=e)
@@ -298,13 +222,9 @@ class Utility(commands.Cog):
             for name in files:
                 if name.endswith(".py"):
                     file_amount += 1
-                    with codecs.open(
-                        "./" + str(pathlib.PurePath(path, name)), "r", "utf-8"
-                    ) as f:
+                    with codecs.open("./" + str(pathlib.PurePath(path, name)), "r", "utf-8") as f:
                         for i, l in enumerate(f):
-                            if (
-                                l.strip().startswith("#") or len(l.strip()) == 0
-                            ):  # skip commented lines.
+                            if (l.strip().startswith("#") or len(l.strip()) == 0):  # skip commented lines.
                                 pass
                             else:
                                 total += 1
@@ -338,16 +258,8 @@ class Utility(commands.Cog):
         embed.add_field(name="ID", value=user.id)
         embed.add_field(name="Status", value=user.status)
         embed.add_field(name="Highest role", value=user.top_role.mention)
-        embed.add_field(
-            name="Created",
-            value=user.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
-        embed.add_field(
-            name="Joined",
-            value=user.joined_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
+        embed.add_field(name="Created", value=user.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(name="Joined", value=user.joined_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
         embed.set_thumbnail(url=user.avatar)
         await ctx.send(embed=embed)
 
@@ -359,16 +271,8 @@ class Utility(commands.Cog):
         embed.add_field(name="Owner", value=ctx.guild.owner.mention)
         embed.add_field(name="Members", value=ctx.guild.member_count)
         embed.add_field(name="Channels", value=len(ctx.guild.channels))
-        embed.add_field(
-            name="Created",
-            value=ctx.guild.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
-        embed.add_field(
-            name="Roles",
-            value=", ".join([e.mention for e in ctx.guild.roles]),
-            inline=False,
-        )
+        embed.add_field(name="Created", value=ctx.guild.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
+        embed.add_field(name="Roles", value=", ".join([e.mention for e in ctx.guild.roles]), inline=False)
         embed.set_thumbnail(url=ctx.guild.icon)
         await ctx.send(embed=embed)
 
@@ -382,11 +286,7 @@ class Utility(commands.Cog):
         embed.add_field(name="Position", value=role.position)
         embed.add_field(name="Hoist", value=role.hoist)
         embed.add_field(name="Mentionable", value=role.mentionable)
-        embed.add_field(
-            name="Created",
-            value=role.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
+        embed.add_field(name="Created", value=role.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
         embed.set_thumbnail(url=role.guild.icon)
         await ctx.send(embed=embed)
 
@@ -400,11 +300,7 @@ class Utility(commands.Cog):
         embed.add_field(name="ID", value=channel.id)
         embed.add_field(name="NSFW", value=channel.is_nsfw())
         embed.add_field(name="Position", value=channel.position)
-        embed.add_field(
-            name="Created",
-            value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
+        embed.add_field(name="Created", value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
         embed.add_field(name="Topic", value=channel.topic, inline=False)
         embed.set_thumbnail(url=channel.guild.icon)
         await ctx.send(embed=embed)
@@ -420,11 +316,7 @@ class Utility(commands.Cog):
         embed = discord.Embed(color=discord.Color.blurple())
         embed.add_field(name="Name", value=channel.name)
         embed.add_field(name="ID", value=channel.id)
-        embed.add_field(
-            name="Created",
-            value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"),
-            inline=False,
-        )
+        embed.add_field(name="Created", value=channel.created_at.strftime("%A, %B %d %Y @ %H:%M:%S %p"), inline=False)
         embed.set_thumbnail(url=channel.guild.icon)
         await ctx.send(embed=embed)
 
@@ -452,22 +344,12 @@ class Utility(commands.Cog):
             weather = await client.get(city)
             return weather
 
-    def get_playing(self):
-        return len(
-            [
-                p
-                for p in self.bot.lavalink.player_manager.players.values()
-                if p.is_playing
-            ]
-        )
-
     def get_bot_uptime(self, *, brief=False):
         now = datetime.datetime.utcnow()
         delta = now - self.bot.uptime
         hours, remainder = divmod(int(delta.total_seconds()), 3600)
         minutes, seconds = divmod(remainder, 60)
         days, hours = divmod(hours, 24)
-
         if not brief:
             fmt = "I've been online for {d} days, {h} hours, {m} minutes, and {s} seconds!"
         else:
