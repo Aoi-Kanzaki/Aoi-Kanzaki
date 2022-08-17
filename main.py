@@ -3,17 +3,29 @@ import os
 import json
 import aiohttp
 import datetime
+import random
 import asyncio
 import aiosqlite
 from colr import color
 from discord.ext import commands
 from utils._checks import check_commands
 from motor.motor_asyncio import AsyncIOMotorClient
+from rich.console import Console
+from rich.table import Table
 
+console = Console()
 starttime = datetime.datetime.now()
+
+if os.path.exists("config.json.example") and not os.path.exists("config.json"):
+    print(color("Please rename the config.json.example to config.json and set your config options before continuing.", fore=(189, 16, 16)))
+    os.abort()
+if not os.path.exists("config.json"):
+    print(color("Config is not found, please go to the github and look for the config exmaple.\nGithub: https://github.com/JonnyBoy2000/Fresh", fore=(189, 16, 16)))
+    os.abort()
+if not os.path.exists("./data/"):
+    os.makedirs("./data/")
 with open("config.json", "r") as config:
     _config = json.load(config)
-
 
 class Fresh(commands.AutoShardedBot):
     def __init__(self):
@@ -57,35 +69,27 @@ class Fresh(commands.AutoShardedBot):
             os.system("clear")
 
     async def load_modules(self):
-        try:
-            await self.load_extension("jishaku")
-            print(color("Loaded JSK on first try!", fore=self.colors["green"]))
-        except Exception as e:
-            print(color(f"Failed to load JSK! Reason:\n{e}", fore=self.colors["red"]))
-        dirs = ["./functions", "./cogs", "./utils"]
-        for d in dirs:
-            for module in os.listdir(d):
-                if module.endswith(".py"):
-                    name = module[:-3]
-                    if name in ("_checks", "_LavalinkVoiceClient", "_MusicButtons"):
+        modules_to_load = []
+        with console.status("Loading Fresh config and modules..") as status:
+            await asyncio.sleep(0.5)
+            status.update("Loading config...")
+            for key in _config['enabledModules']:
+                if _config['enabledModules'][key] == 1:
+                    modules_to_load.append(key)
+            await asyncio.sleep(0.5)
+            status.update("Loading modules...")
+            await asyncio.sleep(0.5)
+            for stat in modules_to_load:
+                status.update(f"Loading {stat}...")
+                try:
+                    await self.load_extension(f"{stat}")
+                except Exception as e:
+                    if isinstance(e, commands.ExtensionAlreadyLoaded):
                         pass
                     else:
-                        try:
-                            d = d.replace("./", "")
-                            await self.load_extension(f"{d}.{name}")
-                        except Exception as e:
-                            print(color(f"Failed to load {name}:\n{e}", fore=self.colors["red"]))
-
-    async def connect_to_db(self):
-        if _config["mongoURI"] != "Disabled.":
-            self.db = AsyncIOMotorClient(_config["mongoURI"])["db"]
-            print(color("Database Status    :", fore=self.colors["cyan"]), color("Should be connected!", fore=self.colors["purple"]))
-        else:
-            print(color("Database Status    :", fore=self.colors["cyan"]), color("Disabled, not connecting.", fore=self.colors["grey"]))
-        print(color("+-----------------------------------------------------------+", fore=self.colors["blue"]))
-        if not os.path.exists("./data/"):
-            os.makedirs("./data/")
-            print(color("Data folder was not found, the new directory was created!", fore=self.colors["green"]))
+                        console.print_exception(show_locals=False)
+                await asyncio.sleep(0.5)
+        await self.clear_screen()
 
     async def on_ready(self):
         await self.clear_screen()
@@ -94,12 +98,14 @@ class Fresh(commands.AutoShardedBot):
         channels = len([c for c in self.get_all_channels()])
         login_time = datetime.datetime.now() - starttime
         login_time = login_time.seconds + login_time.microseconds / 1e6
-        print(color("+-----------------------------------------------------------+", fore=self.colors["blue"]))
-        print(color("Login time         :", fore=self.colors["cyan"]), color(f"{login_time} milliseconds", fore=self.colors["purple"]))
-        print(color("Logged in as       :", fore=self.colors["cyan"]), color(f"{str(self.user.name)} ({self.user.id})", fore=self.colors["purple"]))
-        print(color("Connected to       :", fore=self.colors["cyan"]), color(f"{len(self.guilds)} guilds and {channels} channels", fore=self.colors["purple"]))
-        print(color("Python version     :", fore=self.colors["cyan"]), color("{}.{}.{}".format(*os.sys.version_info[:3]), fore=self.colors["purple"]))
-        print(color("Discord.py version :", fore=self.colors["cyan"]), color(f"{discord.__version__}", fore=self.colors["purple"]))
+        maintable = Table(style="blue")
+        maintable.add_column("F.res.h", style="cyan", no_wrap=True)
+        maintable.add_column("Developed By: Jonny#0181", style="magenta")
+        maintable.add_row("Login time", f"{login_time} milliseconds.")
+        maintable.add_row("Logged in as", f"{self.user.name} ({self.user.id})")
+        maintable.add_row("Connected to", f"{len(self.guilds)} guilds and {channels} channels.")
+        maintable.add_row("Python version", "{}.{}.{}".format(*os.sys.version_info[:3]))
+        maintable.add_row("Discord.py version", f"{discord.__version__}")
         await self.change_presence(
             status=discord.Status.dnd,
             activity=discord.Activity(
@@ -107,8 +113,30 @@ class Fresh(commands.AutoShardedBot):
                 name=f"f?help | {len(self.guilds)} guilds.."
             )
         )
-        await self.connect_to_db()
+        if _config["mongoURI"] != "Disabled.":
+            self.db = AsyncIOMotorClient(_config["mongoURI"])["db"]
+            maintable.add_row("Database Status", 'Should be connected!')
+        else:
+            maintable.add_row("Database Status", "Disabled, not connecting.")
         await self.load_modules()
+        modulestable = Table(style="blue")
+        loadedmodules = [c.__module__ for c in self.cogs.values()]
+        modulestable.add_column("Folder", style="cyan", justify="center")
+        modulestable.add_column("Module", style="magenta", justify="center")
+        modulestable.add_column("Loaded", justify="center", style="green")
+        for key in _config['enabledModules']:
+            if key != "jishaku":
+                name = key.split('.')[1]
+                folder = str(key.split('.')[0]).capitalize()
+            else:
+                name = "Jishaku"
+                folder = "Pip Cog"
+            if key in loadedmodules:
+                modulestable.add_row(folder, name, "✔ True")
+            else:
+                modulestable.add_row(folder, name, "❌ False")
+        console.print(maintable, justify="left")
+        console.print(modulestable)
         print(color("Syncing commands...", fore=self.colors["yellow"]))
         try:
             synced = await self.tree.sync()

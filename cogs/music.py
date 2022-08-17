@@ -12,6 +12,9 @@ from lavalink.models import AudioTrack
 from discord.ext import commands
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
 from utils._MusicButtons import event_hook_buttons, queue_msg_buttons, np_msg_buttons
+from rich.console import Console
+
+console = Console()
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -35,22 +38,25 @@ class Music(commands.Cog):
                     getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (guild.id,))
                     data = await getData.fetchone()
                     if data[1] ==1:
-                        channel = await guild.fetch_channel(data[2])
-                        msg = await channel.fetch_message(data[0])
-                        e = discord.Embed(color=discord.Color.blurple())
-                        e.title = "Nothing Currently Playing:"
-                        e.description = "Send a song `link` or `query` to play."
-                        e.description += "\nSend `pause` or `resume` to control the music."
-                        e.description += "\nSend `skip` to skip the current song."
-                        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                        e.description += "\nSend `search <query>` to search for a song."
-                        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                        await msg.edit(embed=e, view=None)
-                        await asyncio.sleep(1)
+                        try:
+                            channel = await guild.fetch_channel(data[2])
+                            msg = await channel.fetch_message(data[0])
+                            e = discord.Embed(color=discord.Color.blurple())
+                            e.title = "Nothing Currently Playing:"
+                            e.description = "Send a song `link` or `query` to play."
+                            e.description += "\nSend `pause` or `resume` to control the music."
+                            e.description += "\nSend `skip` to skip the current song."
+                            e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                            e.description += "\nSend `search <query>` to search for a song."
+                            e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                            await msg.edit(embed=e, view=None)
+                            await asyncio.sleep(1)
+                        except discord.errors.NotFound:
+                            pass
                 except Exception as e:
-                    print(e)
+                    console.print_exception(show_locals=False)
 
     async def cog_before_invoke(self, ctx):
         if ctx.guild is not None:
@@ -59,9 +65,11 @@ class Music(commands.Cog):
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
-            print(color(f"Error in command {ctx.command.name}\n{error}", fore=self.bot.colors["red"]))
+            console.print_exception(show_locals=False)
 
     async def ensure_voice(self, ctx):
+        if ctx.command.name in ('setup'):
+            return
         try:
             player = self.bot.lavalink.player_manager.create(ctx.guild.id, endpoint="us")
         except Exception as error:
@@ -171,6 +179,7 @@ class Music(commands.Cog):
                         except:
                             pass
 
+
     @commands.hybrid_command()
     @commands.cooldown(1, 5, commands.BucketType.guild)
     @commands.has_permissions(manage_guild=True)
@@ -182,32 +191,29 @@ class Music(commands.Cog):
             data = await getData.fetchone()
             if data is None:
                 if "fresh-music" in existing_channels:
-                    return await ctx.send("<:tickNo:697759586538749982> Please delete the `fresh-music` channel first.", delete_after=5)
+                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
+                    channel = await ctx.guild.fetch_channel(channelid)
+                    await channel.delete()
                 created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
                 msgid = await self.send_player_msg(created.id)
                 await db.execute("INSERT INTO musicSettings (musicMessage, musicToggle, musicChannel, musicRunning, guild) VALUES (?, ?, ?, ?, ?)", (msgid, 1, created.id, 0, ctx.guild.id,))
-                await ctx.send("<:tickYes:697759553626046546> Music channel setup complete. You can now move the channel to wherever you want.")
             elif data[0] == 1:
                 if "fresh-music" in existing_channels:
                     channel = await ctx.guild.fetch_channel(data[1])
                     await channel.delete()
-                    await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
-                    await ctx.send("<:tickYes:697759553626046546> Deleted fresh music channel and disabled the system.")
-                else:
-                    await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
-                    await ctx.send("<:tickYes:697759553626046546> The fresh music channel has already been deleted. But I disabled the system.")
+                await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
+                await ctx.send("<:tickYes:697759553626046546> Disabled the music channel.")
             else:
                 if "fresh-music" in existing_channels:
                     channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
-                    msgid = await self.send_player_msg(channelid)
-                    await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, channelid, ctx.guild.id,))
-                    await ctx.send("<:tickYes:697759553626046546> Music channel setup complete. You can now move the channel to wherever you want.")
-                else:
-                    created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
-                    msgid = await self.send_player_msg(created.id)
-                    await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, created.id, ctx.guild.id,))
-                    await ctx.send(f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
+                    channel = await ctx.guild.fetch_channel(channelid)
+                    await channel.delete()
+                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
+                msgid = await self.send_player_msg(created.id)
+                await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, created.id, ctx.guild.id,))
+                await ctx.send(f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
             await db.commit()
+
             
     async def send_player_msg(self, channelid):
         e = discord.Embed(color=discord.Color.blurple())

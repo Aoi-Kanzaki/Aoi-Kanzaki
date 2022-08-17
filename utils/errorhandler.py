@@ -1,5 +1,8 @@
 import discord
 from discord.ext import commands
+from rich.console import Console
+
+console = Console()
 
 class ErrorHandler(commands.Cog):
     def __init__(self, bot):
@@ -29,7 +32,7 @@ class ErrorHandler(commands.Cog):
             await ctx.send("<:tickNo:697759586538749982> I dont have permissions to execute this command.", delete_after=5)
         else:
             if ctx.command:
-                print(error)
+                console.print_exception(show_locals=False)
 
 async def setup(bot):
     await bot.add_cog(ErrorHandler(bot))

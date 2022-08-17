@@ -137,14 +137,14 @@ class Levels(commands.Cog):
             if levelsys:
                 if not levelsys[0] == 1:
                     return await ctx.send("The leveling system is not enabled in this server!")
-            get_data = await db.execute("SELECT level, xp, user FROM levels WHERE guild = ? ORDER BY level DESC, xp DESC LIMIT 10", (ctx.guild.id,))
+            get_data = await db.execute("SELECT level, xp, xpcap, user FROM levels WHERE guild = ? ORDER BY level DESC, xp DESC LIMIT 10", (ctx.guild.id,))
             data = await get_data.fetchall()
             if data:
                 e = discord.Embed(title="Leveling Leaderboard:")
                 count = 0
                 for table in data:
                     count += 1
-                    user = ctx.guild.get_member(table[2])
+                    user = ctx.guild.get_member(table[3])
                     e.add_field(name=f"{count}. {user.name}", value=f"Level-**{table[0]}** | XP-**{table[1]}**", inline=False)
                 return await ctx.send(embed=e)
             return await ctx.send("There are no users stored in this guild.")

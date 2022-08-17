@@ -1,0 +1,26 @@
+{
+    "guildid": "YOUR GUILD ID",
+    "prefix": "YOUR PREFIX",
+    "spotify_id": "YOUR SPOTIFY APP ID",
+    "spotify_secret": "YOUR SPOTIFY APP SECRET",
+    "token": "YOUR BOTS TOKEN",
+    "mongoURI": "Disabled.",
+
+    "TO DISABLED A MODULE SET THE 1 VALUE TO 0": "1 = Enabled. 0 = Disabled.",
+    "enabledModules": {
+        "cogs.dev": 1,
+        "cogs.economy": 1,
+        "cogs.fun": 1,
+        "cogs.levels": 1,
+        "cogs.mod": 1,
+        "cogs.music": 0,
+        "cogs.playlists": 0,
+        "cogs.utility": 1,
+        "functions.fresh_channel": 1,
+        "utils.errorhandler": 1,
+        "utils.help": 1,
+        "utils.leveling": 1,
+        "utils.support_join": 1,
+        "jishaku": 1
+    }
+}
