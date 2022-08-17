@@ -3,18 +3,30 @@ import os
 import json
 import aiohttp
 import datetime
-import random
+import logging
 import asyncio
 import aiosqlite
 from colr import color
 from discord.ext import commands
 from utils._checks import check_commands
+from rich.logging import RichHandler
 from motor.motor_asyncio import AsyncIOMotorClient
 from rich.console import Console
 from rich.table import Table
 
 console = Console()
 starttime = datetime.datetime.now()
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+ch = RichHandler(level=logging.DEBUG, show_level=True)
+ch.setLevel(logging.INFO)
+ch.setFormatter(logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', '%Y-%m-%d %H:%M'))
+logger.addHandler(ch)
+file_handler = logging.FileHandler('./data/commands.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', '%Y-%m-%d %H:%M'))
+logger.addHandler(file_handler)
 
 if os.path.exists("config.json.example") and not os.path.exists("config.json"):
     print(color("Please rename the config.json.example to config.json and set your config options before continuing.", fore=(189, 16, 16)))
@@ -36,6 +48,7 @@ class Fresh(commands.AutoShardedBot):
             case_insensitive=True,
             intents=discord.Intents.all(),
         )
+        self.logger = logger
         self.version = "v1.0.0"
         self.spotify_id = _config["spotify_id"]
         self.spotify_secret = _config["spotify_secret"]
@@ -137,12 +150,18 @@ class Fresh(commands.AutoShardedBot):
                 modulestable.add_row(folder, name, "❌ False")
         console.print(maintable, justify="left")
         console.print(modulestable)
-        print(color("Syncing commands...", fore=self.colors["yellow"]))
+        logger.warning("Attempting to sync application commands...")
         try:
             synced = await self.tree.sync()
-            print(color(f"Synced {len(synced)} commands globaly!", fore=self.colors["green"]))
+            logger.info(f"Synced {len(synced)} commands globaly!")
         except Exception as e:
-            print(color(f"Failed to sync commands! Reason:\n{e}", fore=self.colors["red"]))
+            logger.error(f"Failed to sync commands! Reason:\n{e}")
+
+    async def on_command_completion(self, ctx):
+        command = ctx.command.name
+        author = ctx.author
+        guild = ctx.guild
+        logger.info(f"Command {command} | Ran by {author.name} ({author.id}) in guild {guild.name}")
 
     async def send_sub_help(self, ctx, cmd):
         e = discord.Embed()

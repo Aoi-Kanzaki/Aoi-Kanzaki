@@ -13,7 +13,7 @@ class MusicChannel(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        query = str(message.content).lower()
+        query = str(message.content)
         if message.author.bot: return
         if message.guild != None:
             if message.content.startswith("ft?") or message.content.startswith("f?"): return

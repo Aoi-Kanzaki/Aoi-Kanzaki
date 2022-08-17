@@ -97,7 +97,7 @@ class Music(commands.Cog):
         if not hasattr(event, 'player'):
             return
         if isinstance(event, lavalink.events.NodeConnectedEvent):
-            print(color(f"Lavalink succesfully connected to node:", fore=self.bot.colors['cyan']), color(f"{event.node.name}", fore=self.bot.colors['purple']))
+            self.bot.logger.info(f"Lavalink succesfully connected to node: {event.node.name}")
         if isinstance(event, lavalink.events.QueueEndEvent):
             if event.player.fetch('channel') == data[2]:
                 channel = await self.bot.fetch_channel(data[2])
@@ -578,17 +578,17 @@ class Music(commands.Cog):
             slink = "https://accounts.spotify.com/api/token"
             async with self.bot.session.post(slink, data={"grant_type": "client_credentials"}, headers=headers) as r:
                 if r.status != 200:
-                    print(color(f"Issue making GET request to: [{url}] {r.status}{await r.json()}", fore=self.bot.colors["red"]))
+                    self.bot.logger.error(f"Issue making GET request to: [{url}] {r.status}{await r.json()}")
                 token = await r.json()
             if token is None:
-                print(color("Requested a token from Spotify, did not end up getting one.", fore=self.bot.colors["red"]))
+                self.bot.logger.error("Requested a token from Spotify, did not end up getting one.")
             token["expires_at"] = int(time.time()) + token["expires_in"]
             self.spotify_token = token
             token = self.spotify_token["access_token"]
-            print(color("Created a new access token for Spotify!", fore=self.bot.colors["green"]))
+            self.bot.logger.info("Created a new access token for Spotify!")
         async with self.bot.session.request("GET", url, headers={"Authorization": "Bearer {0}".format(token)}) as r:
             if r.status != 200:
-                print(color(f"Issue making GET request to: [{url}] {r.status}{await r.json()}", fore=self.bot.colors["red"]))
+                self.bot.logger.error(f"Issue making GET request to: [{url}] {r.status}{await r.json()}")
             return await r.json()
 
 async def setup(bot):
