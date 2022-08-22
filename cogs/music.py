@@ -184,7 +184,7 @@ class Music(commands.Cog):
         query = query.strip('<>')
         if "open.spotify.com" in query:
             query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
-            await self.queue_spotify(ctx, player, query)
+            return await self.queue_spotify(ctx, player, query)
         if not re.compile(r'https?://(?:www\.)?.+').match(query):
             query = f'ytsearch:{query}'
         results = await player.node.get_tracks(query)
