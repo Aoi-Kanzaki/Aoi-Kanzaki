@@ -13,6 +13,7 @@ class queue_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Prev Page", style=discord.ButtonStyle.blurple)
     async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button prev_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page-1
         if self.page < 1:
             self.page = math.ceil(len(self.player.queue) / 10)
@@ -32,6 +33,7 @@ class queue_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Next Page", style=discord.ButtonStyle.blurple)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button next_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page+1
         if self.page > math.ceil(len(self.player.queue) / 10):
             self.page = 1
@@ -51,6 +53,7 @@ class queue_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Done", style=discord.ButtonStyle.red)
     async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button done | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         return await interaction.message.delete()
 
 class np_msg_buttons(discord.ui.View):
@@ -62,6 +65,7 @@ class np_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Queue", style=discord.ButtonStyle.blurple)
     async def queue(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button queue | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if not self.player.queue:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
         if self.player.current.stream:
@@ -83,6 +87,7 @@ class np_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             await self.player.set_pause(not self.player.paused)
             e = discord.Embed(colour=discord.Color.blurple())
@@ -105,6 +110,7 @@ class np_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             await self.player.skip()
             return await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
@@ -113,6 +119,7 @@ class np_msg_buttons(discord.ui.View):
 
     @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             self.player.queue.clear()
             await self.player.stop()
@@ -126,9 +133,10 @@ class event_hook_buttons(discord.ui.View):
         super().__init__(timeout=None)
         self.bot = bot
         self.player = bot.lavalink.player_manager.get(guild_id)
-    
-    @discord.ui.button(label="Previous", style=discord.ButtonStyle.blurple)
+
+    @discord.ui.button(label="Previous", emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button previous | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.fetch("prev_song") is None:
             return await interaction.response.send_message(content="No previous track.", ephemeral=True)
         last_track = await self.player.node.get_tracks(self.player.fetch("prev_song"))
@@ -151,8 +159,15 @@ class event_hook_buttons(discord.ui.View):
                 embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
                 return await interaction.response.edit_message(embed=embed, view=None)
 
-    @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Pause", emoji="<:pause:1010305240672780348>", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        if self.player.paused is False:
+            button.emoji = "<:play:1010305312227606610>"
+            button.label = "Resume"
+        else:
+            button.emoji = "<:pause:1010305240672780348>"
+            button.label = "Pause"
         async with aiosqlite.connect("./data/music.db") as db:
             getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (interaction.guild.id,))
             data = await getData.fetchone()
@@ -193,7 +208,7 @@ class event_hook_buttons(discord.ui.View):
                     e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(self.player.current.requester)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                    return await interaction.response.edit_message(embed=e)
+                    return await interaction.response.edit_message(embed=e, view=self)
                 else:
                     if self.player.queue:
                         queue_list = ''
@@ -206,7 +221,7 @@ class event_hook_buttons(discord.ui.View):
                     e.description += f"{self.player.current.uri}\n"
                     e.set_image(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    return await interaction.response.edit_message(embed=e)
+                    return await interaction.response.edit_message(embed=e, view=self)
             else:
                 await self.player.set_pause(not self.player.paused)
                 e = discord.Embed(colour=discord.Color.blurple())
@@ -226,13 +241,15 @@ class event_hook_buttons(discord.ui.View):
                     e.add_field(name="Up Next:", value=upNext)
                 return await interaction.response.edit_message(embed=e)
 
-    @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Skip", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
         await self.player.skip()
 
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Stop", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.bot.logger.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         async with aiosqlite.connect("./data/music.db") as db:
             getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (self.player.guild_id,))
             data = await getData.fetchone()
@@ -252,8 +269,11 @@ class event_hook_buttons(discord.ui.View):
                 await msg.edit(embed=e, view=None)
                 self.player.queue.clear()
                 await self.player.stop()
-                await self.bot.get_guild(int(self.player.guild_id)).voice_client.disconnect(force=True)
+                vc = self.bot.get_guild(int(self.player.guild_id)).voice_client
+                if vc:
+                    await self.bot.get_guild(int(self.player.guild_id)).voice_client.disconnect(force=True)
                 self.bot.lavalink.player_manager.remove(self.player.guild_id)
+                self.bot.logger.info(f"Fresh Channel | Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)

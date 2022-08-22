@@ -1,5 +1,5 @@
 easy_pil
-git+https://github.com/Rapptz/Discord.py
+discord.py
 humanize
 colr
 aiosqlite

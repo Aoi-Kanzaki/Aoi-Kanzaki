@@ -5,7 +5,7 @@ class HelpSelect(discord.ui.Select):
     def __init__(self, bot):
         self.bot = bot
         options = []
-        ignore_cogs = ['Jishaku', 'Help', 'Leveling', 'ErrorHandler', 'JoinMsg', 'MusicChannel']
+        ignore_cogs = ['Jishaku', 'Help', 'Leveling', 'ErrorHandler', 'JoinMsg']
         emotes = ['1⃣', '2⃣', '3⃣', '4⃣', '5⃣', '6⃣', '7⃣', '8⃣', '9⃣', '🔟']
         number = 0
         for cog in self.bot.cogs:

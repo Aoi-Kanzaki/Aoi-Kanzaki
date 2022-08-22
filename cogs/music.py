@@ -1,20 +1,17 @@
-import base64
-import time
-import re
-import math
 import asyncio
+import base64
+import math
+import re
+import time
+import aiosqlite
 import discord
 import lavalink
-import aiosqlite
-from colr import color
-from lavalink.utils import format_time
-from lavalink.models import AudioTrack
 from discord.ext import commands
-from utils._LavalinkVoiceClient import LavalinkVoiceClient
-from utils._MusicButtons import event_hook_buttons, queue_msg_buttons, np_msg_buttons
+from lavalink.models import AudioTrack
+from lavalink.utils import format_time
 from rich.console import Console
-
-console = Console()
+from utils._LavalinkVoiceClient import LavalinkVoiceClient
+from utils._MusicButtons import event_hook_buttons, np_msg_buttons, queue_msg_buttons
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -56,7 +53,7 @@ class Music(commands.Cog):
                         except discord.errors.NotFound:
                             pass
                 except Exception as e:
-                    console.print_exception(show_locals=False)
+                    Console().print_exception(show_locals=False)
 
     async def cog_before_invoke(self, ctx):
         if ctx.guild is not None:
@@ -65,7 +62,7 @@ class Music(commands.Cog):
 
     async def cog_command_error(self, ctx, error):
         if isinstance(error, commands.CommandInvokeError):
-            console.print_exception(show_locals=False)
+            Console().print_exception(show_locals=False)
 
     async def ensure_voice(self, ctx):
         if ctx.command.name in ('setup'):
@@ -178,56 +175,6 @@ class Music(commands.Cog):
                             event.player.store('npmsg', message.id)
                         except:
                             pass
-
-
-    @commands.hybrid_command()
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    @commands.has_permissions(manage_guild=True)
-    async def setup(self, ctx):
-        """Toggles the music channel on and off."""
-        existing_channels = [e.name for e in ctx.guild.channels]
-        async with aiosqlite.connect("./data/music.db") as db:
-            getData = await db.execute("SELECT musicToggle, musicChannel FROM musicSettings WHERE guild = ?", (ctx.guild.id,))
-            data = await getData.fetchone()
-            if data is None:
-                if "fresh-music" in existing_channels:
-                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
-                    channel = await ctx.guild.fetch_channel(channelid)
-                    await channel.delete()
-                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
-                msgid = await self.send_player_msg(created.id)
-                await db.execute("INSERT INTO musicSettings (musicMessage, musicToggle, musicChannel, musicRunning, guild) VALUES (?, ?, ?, ?, ?)", (msgid, 1, created.id, 0, ctx.guild.id,))
-            elif data[0] == 1:
-                if "fresh-music" in existing_channels:
-                    channel = await ctx.guild.fetch_channel(data[1])
-                    await channel.delete()
-                await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
-                await ctx.send("<:tickYes:697759553626046546> Disabled the music channel.")
-            else:
-                if "fresh-music" in existing_channels:
-                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
-                    channel = await ctx.guild.fetch_channel(channelid)
-                    await channel.delete()
-                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
-                msgid = await self.send_player_msg(created.id)
-                await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, created.id, ctx.guild.id,))
-                await ctx.send(f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
-            await db.commit()
-
-            
-    async def send_player_msg(self, channelid):
-        e = discord.Embed(color=discord.Color.blurple())
-        e.title = "Nothing Currently Playing:"
-        e.description = "Send a song `link` or `query` to play."
-        e.description += "\nSend `pause` or `resume` to control the music."
-        e.description += "\nSend `skip` to skip the current song."
-        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-        e.description += "\nSend `search <query>` to search for a song."
-        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-        msg = await self.bot.get_channel(channelid).send(embed=e)
-        return msg.id
 
     @commands.hybrid_command(aliases=['p'])
     @commands.cooldown(1, 5, commands.BucketType.guild)

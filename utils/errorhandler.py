@@ -31,8 +31,7 @@ class ErrorHandler(commands.Cog):
         elif isinstance(error, discord.Forbidden):
             await ctx.send("<:tickNo:697759586538749982> I dont have permissions to execute this command.", delete_after=5)
         else:
-            if ctx.command:
-                console.print_exception(show_locals=False)
+            print(error)
 
 async def setup(bot):
     await bot.add_cog(ErrorHandler(bot))
