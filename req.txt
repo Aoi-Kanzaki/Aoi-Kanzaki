@@ -8,3 +8,4 @@ git+https://github.com/devoxin/lavalink.py@dev
 motor
 python-weather
 rich
+jishaku

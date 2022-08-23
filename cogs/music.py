@@ -34,24 +34,25 @@ class Music(commands.Cog):
                 try:
                     getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (guild.id,))
                     data = await getData.fetchone()
-                    if data[1] ==1:
-                        try:
-                            channel = await guild.fetch_channel(data[2])
-                            msg = await channel.fetch_message(data[0])
-                            e = discord.Embed(color=discord.Color.blurple())
-                            e.title = "Nothing Currently Playing:"
-                            e.description = "Send a song `link` or `query` to play."
-                            e.description += "\nSend `pause` or `resume` to control the music."
-                            e.description += "\nSend `skip` to skip the current song."
-                            e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                            e.description += "\nSend `search <query>` to search for a song."
-                            e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                            await msg.edit(embed=e, view=None)
-                            await asyncio.sleep(1)
-                        except discord.errors.NotFound:
-                            pass
+                    if data is not None:
+                        if data[1] == 1:
+                            try:
+                                channel = await guild.fetch_channel(data[2])
+                                msg = await channel.fetch_message(data[0])
+                                e = discord.Embed(color=discord.Color.blurple())
+                                e.title = "Nothing Currently Playing:"
+                                e.description = "Send a song `link` or `query` to play."
+                                e.description += "\nSend `pause` or `resume` to control the music."
+                                e.description += "\nSend `skip` to skip the current song."
+                                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                                e.description += "\nSend `search <query>` to search for a song."
+                                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                                await msg.edit(embed=e, view=None)
+                                await asyncio.sleep(1)
+                            except discord.errors.NotFound:
+                                pass
                 except Exception as e:
                     Console().print_exception(show_locals=False)
 
