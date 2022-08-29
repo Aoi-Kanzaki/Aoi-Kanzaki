@@ -324,35 +324,36 @@ class Music(commands.Cog):
             event.player.store("requester", event.player.current.requester)
             channel = event.player.fetch('channel')
             if event.player.fetch('channel'):
-                if data[2] == event.player.fetch('channel'):
-                    if event.player.queue:
-                        queue_list = ''
-                        for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                            queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                    else:
-                        queue_list = "Join a voice channel and queue songs by name or url in here."
-                    if event.player.current.stream:
-                        dur = 'LIVE'
-                    else:
-                        dur = format_time(event.player.current.duration)
-                    e = discord.Embed(color=discord.Color.blurple())
-                    kek = f"{event.player.current.title}\n{event.player.current.uri}"
-                    e.add_field(name="Currently Playing:", value=kek, inline=False)
-                    e.add_field(name="Author:", value=event.player.current.author)
-                    e.add_field(name="Duration:", value=dur)
-                    e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    if "open.spotify.com" in str(event.player.current.uri):
-                        url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
-                        async with request("GET", url) as response:
-                            json = await response.json()
-                            e.set_image(url=f"{json['thumbnail_url']}")
-                    else:
-                        e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
-                    requester = self.bot.get_user(event.player.current.requester)
-                    e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                    channel = await self.bot.fetch_channel(data[2])
-                    msg = await channel.fetch_message(data[0])
-                    await msg.edit(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
+                if data:
+                    if data[2] == event.player.fetch('channel'):
+                        if event.player.queue:
+                            queue_list = ''
+                            for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                        else:
+                            queue_list = "Join a voice channel and queue songs by name or url in here."
+                        if event.player.current.stream:
+                            dur = 'LIVE'
+                        else:
+                            dur = format_time(event.player.current.duration)
+                        e = discord.Embed(color=discord.Color.blurple())
+                        kek = f"{event.player.current.title}\n{event.player.current.uri}"
+                        e.add_field(name="Currently Playing:", value=kek, inline=False)
+                        e.add_field(name="Author:", value=event.player.current.author)
+                        e.add_field(name="Duration:", value=dur)
+                        e.add_field(name="Queue List:", value=queue_list, inline=False)
+                        if "open.spotify.com" in str(event.player.current.uri):
+                            url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
+                            async with request("GET", url) as response:
+                                json = await response.json()
+                                e.set_image(url=f"{json['thumbnail_url']}")
+                        else:
+                            e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
+                        requester = self.bot.get_user(event.player.current.requester)
+                        e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+                        channel = await self.bot.fetch_channel(data[2])
+                        msg = await channel.fetch_message(data[0])
+                        await msg.edit(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
                 else:
                     if event.player.fetch('npmsg') != None:
                         try:
