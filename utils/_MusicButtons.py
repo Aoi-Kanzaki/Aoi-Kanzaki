@@ -358,7 +358,7 @@ class event_hook(discord.ui.View):
                         number += 1
                         upNext += f"`{number})` {track.title}\n"
                     e.add_field(name="Up Next:", value=upNext)
-                return await interaction.response.edit_message(embed=e)
+                return await interaction.response.edit_message(embed=e, view=self)
 
     @discord.ui.button(label="Skip", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
