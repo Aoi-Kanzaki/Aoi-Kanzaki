@@ -39,8 +39,8 @@ class Music(commands.Cog):
             """ Searches and plays a song from a given query. """
             checkVoice = await self.ensure_voice(interaction)
             if checkVoice:
-                player.store('channel', interaction.channel.id)
                 player = self.bot.lavalink.player_manager.players.get(interaction.guild.id)
+                player.store('channel', interaction.channel.id)
                 query = query.strip('<>')
                 e = discord.Embed(color=discord.Color.blurple())
                 if not url_rx.match(query) and not query.startswith('spotify:'):
