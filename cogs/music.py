@@ -40,7 +40,6 @@ class Music(commands.Cog):
             checkVoice = await self.ensure_voice(interaction)
             if checkVoice:
                 player = self.bot.lavalink.player_manager.players.get(interaction.guild.id)
-                player.store('channel', interaction.channel.id)
                 query = query.strip('<>')
                 e = discord.Embed(color=discord.Color.blurple())
                 if not url_rx.match(query) and not query.startswith('spotify:'):
@@ -66,7 +65,7 @@ class Music(commands.Cog):
                         e.title = "Track Enqueued!"
                         e.description = f"{track.title}\n{track.uri}"
                         await interaction.response.send_message(embed=e, ephemeral=True)
-
+                player.store('channel', interaction.channel.id)
                 if not player.is_playing:
                     await player.play()
 
@@ -191,7 +190,13 @@ class Music(commands.Cog):
             if checkVoice:
                 player = self.bot.lavalink.player_manager.get(interaction.guild.id)
                 if player.is_connected:
-                    await interaction.voice_client.disconnect(force=True)
+                    if player.fetch('npmsg') != None:
+                        try:
+                            msg = await self.bot.get_channel(player.fetch('channel')).fetch_message(player.fetch('npmsg'))
+                            await msg.delete()
+                        except:
+                            pass
+                    await interaction.guild.voice_client.disconnect(force=True)
                     await interaction.response.send_message("Disconnected...", ephemeral=True)
                     return self.bot.lavalink.player_manager.remove(interaction.guild.id)
                 else:
@@ -317,6 +322,7 @@ class Music(commands.Cog):
             event.player.store("prev_requester", requester)
             event.player.store("playing_song", event.player.current.uri)
             event.player.store("requester", event.player.current.requester)
+            channel = event.player.fetch('channel')
             if event.player.fetch('channel'):
                 if data[2] == event.player.fetch('channel'):
                     if event.player.queue:
