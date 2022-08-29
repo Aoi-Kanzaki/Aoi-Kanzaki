@@ -1,33 +1,18 @@
-import discord
 import os
 import json
-import aiohttp
-from datetime import datetime
-import logging
+import discord
 import asyncio
-import aiosqlite
+import aiohttp
+import logging
 from colr import color
-from discord.ext import commands
-from utils._checks import check_commands
-from rich.logging import RichHandler
-from motor.motor_asyncio import AsyncIOMotorClient
-from rich.console import Console
+import pymongo
 from rich.table import Table
-
-console = Console()
-starttime = datetime.now()
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-dt_fmt = '%Y-%m-%d %H:%M:%S'
-ch = RichHandler(level=logging.DEBUG, show_level=True)
-ch.setLevel(logging.INFO)
-ch.setFormatter(logging.Formatter('[{asctime}] {message}', dt_fmt, style='{'))
-logger.addHandler(ch)
-file_handler = logging.FileHandler(f'./data/logs/{datetime.now().date()}-commands.log')
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('[{asctime}] [{levelname}] {message}', dt_fmt, style='{'))
-logger.addHandler(file_handler)
+from datetime import datetime
+from rich.console import Console
+from discord import app_commands
+from discord.ext import commands
+from rich.logging import RichHandler
+from utils._checks import check_commands
 
 if os.path.exists("config.json.example") and not os.path.exists("config.json"):
     print(color("Please rename the config.json.example to config.json and set your config options before continuing.", fore=(189, 16, 16)))
@@ -41,18 +26,30 @@ if not os.path.exists("./data/"):
 with open("config.json", "r") as config:
     _config = json.load(config)
 
-class Fresh(commands.AutoShardedBot):
-    def __init__(self):
+console = Console()
+starttime = datetime.now()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+dt_fmt = '%Y-%m-%d %H:%M:%S'
+ch = RichHandler(level=logging.DEBUG, show_level=True)
+ch.setLevel(logging.INFO)
+ch.setFormatter(logging.Formatter('[{asctime}] {message}', dt_fmt, style='{'))
+logger.addHandler(ch)
+file_handler = logging.FileHandler(f'./data/logs/{datetime.now().date()}-commands.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('[{asctime}] [{levelname}] {message}', dt_fmt, style='{'))
+logger.addHandler(file_handler)
+
+class Fresh(commands.Bot):
+    def __init__(self) -> None:
         super().__init__(
-            command_prefix=commands.when_mentioned_or(self.get_prefix),
-            description="",
+            command_prefix=commands.when_mentioned,
             pm_help=None,
-            case_insensitive=True,
-            intents=discord.Intents.all()
+            intents=discord.Intents.all(),
+            tree_cls=app_commands.CommandTree
         )
         self.add_check(check_commands)
         self.logger = logger
-        self.prefix = self.get_prefix
         self.version = "v1.0.0"
         self.spotify_id = _config["spotify_id"]
         self.spotify_secret = _config["spotify_secret"]
@@ -66,15 +63,6 @@ class Fresh(commands.AutoShardedBot):
             "yellow": (163, 187, 3),
             "grey": (110, 108, 108)
         }
-
-    async def get_prefix(bot, message):
-        async with aiosqlite.connect("./data/prefixes.db") as db:
-            getData = await db.execute("SELECT * FROM prefixs WHERE guild = ?", (message.guild.id,))
-            data = await getData.fetchone()
-            if data is None:
-                return _config["prefix"]
-            else:
-                return data[0]
 
     async def clear_screen(self):
         if os.name == "nt":
@@ -96,8 +84,8 @@ class Fresh(commands.AutoShardedBot):
                     name = "Jishaku"
                     folder = "Pip Cog"
                 else:
-                    name = key.split('.')[1]
-                    folder = str(key.split('.')[0]).capitalize()
+                    name = key.split('.')[1].capitalize()
+                    folder = str(key.split('.')[0])
                 if _config['enabledModules'][key] == 1:
                     modules_to_load.append(key)
                     status.update(f"Loading {key}...")
@@ -135,8 +123,9 @@ class Fresh(commands.AutoShardedBot):
         maintable.add_row("Connected to", f"{len(self.guilds)} guilds and {channels} channels.")
         maintable.add_row("Python version", "{}.{}.{}".format(*os.sys.version_info[:3]))
         maintable.add_row("Discord.py version", f"{discord.__version__}")
-        if _config["mongoURI"] != "Disabled.":
-            self.db = AsyncIOMotorClient(_config["mongoURI"])["db"]
+        if _config["mongoURI"] != "Disabled.":            
+            self.db = pymongo.MongoClient(_config["mongoURI"])
+            self.db = self.db['testing']
             maintable.add_row("Database Status", 'Should be connected!')
         else:
             maintable.add_row("Database Status", "Disabled, not connecting.")
@@ -149,12 +138,6 @@ class Fresh(commands.AutoShardedBot):
             logger.info(f"Synced {len(synced)} commands globaly!")
         except Exception as e:
             logger.error(f"Failed to sync commands! Reason:\n{e}")
-
-    async def on_command_completion(self, ctx):
-        command = ctx.command.name
-        author = ctx.author
-        guild = ctx.guild
-        logger.info(f"Command {command} | Ran by {author.name} ({author.id}) in guild {guild.name}")
 
     async def send_sub_help(self, ctx, cmd):
         e = discord.Embed()
@@ -170,7 +153,7 @@ class Fresh(commands.AutoShardedBot):
         try:
             super().run(_config["token"])
         except Exception as e:
-            print(color(f"Failed to login:\n{e}", fore=self.colors["red"]))
+            print(f"Failed to login:\n{e}")
 
 if __name__ == "__main__":
     Fresh().run()

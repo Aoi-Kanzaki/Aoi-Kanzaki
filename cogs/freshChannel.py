@@ -2,14 +2,50 @@ import re
 import discord
 import aiosqlite
 import asyncio
+from aiohttp import request
+from rich.console import Console
 from discord.ext import commands
-from lavalink.models import AudioTrack
 from lavalink.utils import format_time
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
+from utils._MusicButtons import search_msg, event_hook
 
 class MusicChannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def cog_load(self):
+        async with aiosqlite.connect("./data/music.db") as db:
+            await db.execute("CREATE TABLE IF NOT EXISTS musicSettings (musicMessage INTEGER, musicToggle INTEGER, musicChannel INTEGER, musicRunning INTEGER, guild INTEGER)")
+            await db.commit()
+
+    async def cog_unload(self):
+        self.bot.lavalink._event_hooks.clear()
+        async with aiosqlite.connect("./data/music.db") as db:
+            for guild in self.bot.guilds:
+                try:
+                    getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (guild.id,))
+                    data = await getData.fetchone()
+                    if data is not None:
+                        if data[1] == 1:
+                            try:
+                                channel = await guild.fetch_channel(data[2])
+                                msg = await channel.fetch_message(data[0])
+                                e = discord.Embed(color=discord.Color.blurple())
+                                e.title = "Nothing Currently Playing:"
+                                e.description = "Send a song `link` or `query` to play."
+                                e.description += "\nSend `pause` or `resume` to control the music."
+                                e.description += "\nSend `skip` to skip the current song."
+                                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                                e.description += "\nSend `search <query>` to search for a song."
+                                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                                await msg.edit(embed=e, view=None)
+                                await asyncio.sleep(1)
+                            except discord.errors.NotFound:
+                                pass
+                except Exception as e:
+                    Console().print_exception(show_locals=False)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -54,7 +90,7 @@ class MusicChannel(commands.Cog):
                             if int(index) > len(player.queue) or int(index) < 1:
                                 return await send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
                             player.queue.pop(int(index)-1)
-                            await self.update_player_msg(player, playerMsg, "basic")
+                            await self.update_player_msg(player, message.guild, playerMsg, "basic")
                             return await send(f"<:tickYes:697759553626046546> Removed song {index} from the queue.", delete_after=5)
                     else:
                         return await send("<:tickNo:697759586538749982> Index must be 1 or inside the queue index.", delete_after=5)
@@ -77,7 +113,7 @@ class MusicChannel(commands.Cog):
                     self.bot.logger.info(f"Fresh Channel | Command pause/resume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
                     if player.is_playing:
                         await player.set_pause(not player.paused)
-                        return await self.update_player_msg(player, playerMsg, "pause/resume")
+                        return await self.update_player_msg(player, message.guild, playerMsg, "pause/resume")
             elif msg.startswith('skip'):
                 if inVoice:
                     self.bot.logger.info(f"Fresh Channel | Command skip | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
@@ -88,7 +124,7 @@ class MusicChannel(commands.Cog):
                     self.bot.logger.info(f"Fresh Channel | Command disconnect | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
                     if inVoice:
                         await message.guild.voice_client.disconnect(force=True)
-                        await self.update_player_msg(player, playerMsg, "main")
+                        await self.update_player_msg(player, message.guild, playerMsg, "main")
                         return self.bot.lavalink.player_manager.remove(message.guild.id)
             elif msg.startswith('help'):
                 e = discord.Embed(color=discord.Color.blurple())
@@ -209,7 +245,7 @@ class MusicChannel(commands.Cog):
         await db.commit()
         return await message.channel.fetch_message(msg.id)
 
-    async def update_player_msg(self, player, playerMsg, status):
+    async def update_player_msg(self, player, guild, playerMsg, status):
         if status == "main":
             e = discord.Embed(color=discord.Colour.blurple())
             e.title = "Nothing Currently Playing:"
@@ -222,7 +258,7 @@ class MusicChannel(commands.Cog):
             e.description += "\nSend `search <query>` to search for a song."
             e.description += "\nSend `stop` to stop the player."
             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-            return await playerMsg.edit(embed=e)
+            await playerMsg.edit(embed=e, view=event_hook(self.bot, guild.id))
         else:
             if player.queue:
                 queue_list = ''
@@ -236,11 +272,17 @@ class MusicChannel(commands.Cog):
                 dur = format_time(player.current.duration)
             current = f"{player.current.title}\n{player.current.uri}"
             e = discord.Embed(color=discord.Colour.blurple())
+            if "open.spotify.com" in str(player.current.uri):
+                url = f"https://open.spotify.com/oembed?url={player.current.uri}"
+                async with request("GET", url) as response:
+                    json = await response.json()
+                    e.set_image(url=f"{json['thumbnail_url']}")
+            else:
+                e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
             if status == 'pause/resume':
                 if player.paused == True:
                     e.title = "The music is currently paused"
                     e.add_field(name="Title:", value=player.current.title, inline=False)
-                    e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(player.current.requester)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                 else:
@@ -248,7 +290,6 @@ class MusicChannel(commands.Cog):
                     e.add_field(name="Author:", value=player.current.author)
                     e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(player.current.requester)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
             elif status == "basic":
@@ -256,77 +297,51 @@ class MusicChannel(commands.Cog):
                 e.add_field(name="Author:", value=player.current.author)
                 e.add_field(name="Duration:", value=dur)
                 e.add_field(name="Queue List:", value=queue_list, inline=False)
-                e.set_image(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
                 requester = self.bot.get_user(player.current.requester)
                 e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-            return await playerMsg.edit(embed=e)
+            await playerMsg.edit(embed=e, view=event_hook(self.bot, guild.id))
 
     async def query_request(self, message, player, playerMsg, query: str.strip('<>')):
-        if "open.spotify.com" in query:
-            query = "{}".format(re.sub(r"(http[s]?:\/\/)?(open.spotify.com)\/", "", query).replace("/", ":"))
-            await self.bot.get_cog('Music').queue_spotify(message, player, query)
-            if player.queue:
-                return await self.update_player_msg(player, playerMsg, 'basic')
-        else:
-            if not re.compile(r'https?://(?:www\.)?.+').match(query):
-                query = f'ytsearch:{query}'
-            results = await player.node.get_tracks(query)
-            if not results or not results['tracks']:
-                return await message.channel.send('Nothing found!', delete_after=5)
-            if results['loadType'] == 'LOAD_FAILED':
-                return await message.channel.send('Oh no, something failed. Please try again.', delete_after=5)
-            if results['loadType'] == 'PLAYLIST_LOADED':
-                for track in results['tracks']:
-                    player.add(requester=message.author.id, track=track)
-                if not player.is_playing:
-                    await player.play()
-                await self.update_player_msg(player, playerMsg, 'basic')
-            else:
-                track = AudioTrack(results['tracks'][0], message.author.id, recommended=True)
+        player = self.bot.lavalink.player_manager.players.get(message.guild.id)
+        query = query.strip('<>')
+        e = discord.Embed(color=discord.Color.blurple())
+        if not re.compile(r'https?:\/\/(?:www\.)?.+').match(query) and not query.startswith('spotify:'):
+            query = f'spsearch:{query}'
+        results = await self.bot.lavalink.get_tracks(query, check_local=True)
+        if not results or not results.tracks:
+            return await message.channel.send('Nothing found!', delete_after=5)
+        if results.load_type == 'PLAYLIST_LOADED':
+            tracks = results.tracks
+            for track in tracks:
                 player.add(requester=message.author.id, track=track)
-                if not player.is_playing:
-                    await player.play()
-                if player.queue:
-                    await self.update_player_msg(player, playerMsg, 'basic')
+            e.title = "Playlist Enqueued!"
+            e.description = f"{results.playlist_info.name} with {len(tracks)} tracks."
+            await message.channel.send(embed=e, delete_after=5)
+        else:
+            track = results.tracks[0]
+            player.add(requester=message.author.id, track=track)
+            if player.queue:
+                e.title = "Track Enqueued!"
+                e.description = f"{track.title}\n{track.uri}"
+                await message.channel.send(embed=e, delete_after=5)
+        if not player.is_playing:
+            player.store('channel', message.channel.id)
+            await player.play()
+        await self.update_player_msg(player, message.guild, playerMsg, 'basic')
 
-    async def create_search(self, message, player, playerMsg,  query):
+    async def create_search(self, message, player, playerMsg, query):
         results = await self.bot.lavalink.get_tracks(f'ytsearch:{query}')
         if not results or not results['tracks']:
             return await message.channel.send('<:tickNo:697759586538749982> Nothing found!', delete_after=5)
-        number = 0
-        e = discord.Embed(colour=discord.Colour.blurple())
-        e.description = ""
-        for r in results['tracks']:
-            number += 1
-            e.description += f"**{number})** {r['info']['title']}\n"
-        e.description += "\nPlease choose a result. Examples: `start 1` to play, `cancel` to cancel this search and delete messages."
-        m = await message.channel.send(embed=e)
-        def check(m):
-            return m.channel == message.channel and m.author == message.author
-        while True:
-            try:
-                msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-            except asyncio.TimeoutError:
-                return await m.delete()
-            if msg.content == 'cancel':
-                return await m.delete()
-            elif msg.content.startswith('start'):
-                content = msg.content.replace('start ', '')
-                if content.isdigit():
-                    if int(content) > number:
-                        await message.channel.send("<:tickNo:697759586538749982> Invalid number, try again.", delete_after=2)
-                    else:
-                        await m.delete()
-                        e = discord.Embed(color=discord.Color.blurple())
-                        track = results['tracks'][int(content)-1]
-                        track = AudioTrack(track, message.author.id, recommended=True)
-                        player.add(requester=message.author.id, track=track)
-                        if not player.is_playing:
-                            await player.play()
-                        if player.queue:
-                            return await self.update_player_msg(player, playerMsg, 'basic')
-                        else:
-                            return await message.channel.send(f"<:tickYes:697759553626046546> Added song {content} to queue.", delete_after=5)
+        else:
+            e = discord.Embed(color=discord.Color.blurple())
+            e.title = 'Search Results'
+            e.description = f'{results["tracks"][0]["info"]["title"]}\n{results["tracks"][0]["info"]["uri"]}'
+            e.add_field(name="Author", value=results["tracks"][0]["info"]["author"])
+            e.add_field(name="Duration", value=format_time(results["tracks"][0]["info"]["duration"]))
+            picID = results["tracks"][0]["info"]["identifier"]
+            e.set_thumbnail(url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")
+            await message.channel.send(embed=e, view=search_msg(self.bot, message.guild.id, results))
 
 async def setup(bot):
     await bot.add_cog(MusicChannel(bot))

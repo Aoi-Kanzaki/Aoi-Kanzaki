@@ -1,9 +1,78 @@
 import math
 import discord
 import aiosqlite
+from aiohttp import request
 from lavalink.utils import format_time
+from lavalink.models import AudioTrack
 
-class queue_msg_buttons(discord.ui.View):
+class search_msg(discord.ui.View):
+    def __init__(self, bot, guild_id, results) -> None:
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.guild_id = guild_id
+        self.player = bot.lavalink.player_manager.get(self.guild_id)
+        self.index = 0
+        self.results = results
+
+    @discord.ui.button(label='Last Result', emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
+    async def last_result(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index -= 1
+        if self.index < 0:
+            self.index = 0
+        e = discord.Embed(color=discord.Color.blurple())
+        e.title = 'Search Results'
+        e.description = f'{self.results["tracks"][self.index]["info"]["title"]}\n{self.results["tracks"][self.index]["info"]["uri"]}'
+        e.add_field(name="Author", value=self.results["tracks"][0]["info"]["author"])
+        e.add_field(name="Duration", value=format_time(self.results["tracks"][self.index]["info"]["duration"]))
+        picID = self.results["tracks"][self.index]["info"]["identifier"]
+        e.set_thumbnail(url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")
+        return await interaction.response.edit_message(embed=e)
+
+    @discord.ui.button(label="Play", emoji="<:play:1010305312227606610>", style=discord.ButtonStyle.blurple)
+    async def play_result(self, interaction: discord.Interaction, button: discord.ui.Button):
+        track = self.results['tracks'][self.index]
+        embed = discord.Embed(color=discord.Color.blurple())
+        embed.title = 'Track Enqueued'
+        embed.description = f'[{track["info"]["title"]}]({track["info"]["uri"]})'
+        track = AudioTrack(track, interaction.user.id, recommended=True)
+        self.player.add(requester=interaction.user.id, track=track)
+        if not self.player.is_playing:
+            await self.player.play()
+        await interaction.response.send_message("<:tickYes:697759553626046546> Enqueued track.", ephemeral=True)
+        await interaction.message.delete()
+        async with aiosqlite.connect("./data/music.db") as db:
+            getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (self.player.guild_id,))
+            data = await getData.fetchone()
+            if data:
+                if data[2] == self.player.fetch('channel'):
+                    playerMsg = await interaction.channel.fetch_message(data[0])
+                    if not playerMsg:
+                        playerMsg = await self.bot.get_cog('MusicChannel').create_player_msg(interaction.message, db, data)
+                    if self.player.current is not None:
+                        return await self.bot.get_cog('MusicChannel').update_player_msg(self.player, interaction.guild, playerMsg, 'basic')
+
+    @discord.ui.button(label="Next Result", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
+    async def next_result(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.index += 1
+        if self.index >= len(self.results["tracks"]):
+            self.index = 0
+        e = discord.Embed(color=discord.Color.blurple())
+        e.title = 'Search Results'
+        e.description = f'{self.results["tracks"][self.index]["info"]["title"]}\n{self.results["tracks"][self.index]["info"]["uri"]}'
+        e.add_field(name="Author", value=self.results["tracks"][0]["info"]["author"])
+        e.add_field(name="Duration", value=format_time(self.results["tracks"][self.index]["info"]["duration"]))
+        picID = self.results["tracks"][self.index]["info"]["identifier"]
+        e.set_thumbnail(url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")
+        return await interaction.response.edit_message(embed=e)
+
+    @discord.ui.button(label="Cancel", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            return await interaction.delete_original_response()
+        except:
+            return await interaction.message.delete()
+
+class queue_msg(discord.ui.View):
     def __init__(self, bot, guild_id, page) -> None:
         super().__init__(timeout=None)
         self.bot = bot
@@ -11,7 +80,7 @@ class queue_msg_buttons(discord.ui.View):
         self.guild_id = guild_id
         self.player = bot.lavalink.player_manager.get(self.guild_id)
 
-    @discord.ui.button(label="Prev Page", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Prev Page", emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button prev_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page-1
@@ -28,10 +97,16 @@ class queue_msg_buttons(discord.ui.View):
         e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
         e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
         e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+        if "open.spotify.com" in str(self.player.current.uri):
+            url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+            async with request("GET", url) as response:
+                json = await response.json()
+                e.set_thumbnail(url=f"{json['thumbnail_url']}")
+        else:
+            e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
         return await interaction.response.edit_message(embed=e)
 
-    @discord.ui.button(label="Next Page", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Next Page", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button next_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page+1
@@ -48,22 +123,28 @@ class queue_msg_buttons(discord.ui.View):
         e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
         e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
         e.set_footer(text=f'Page {self.page}/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+        if "open.spotify.com" in str(self.player.current.uri):
+            url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+            async with request("GET", url) as response:
+                json = await response.json()
+                e.set_thumbnail(url=f"{json['thumbnail_url']}")
+        else:
+            e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
         return await interaction.response.edit_message(embed=e)
 
-    @discord.ui.button(label="Done", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Done", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button done | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         return await interaction.message.delete()
 
-class np_msg_buttons(discord.ui.View):
+class np_msg(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
         self.bot = bot
         self.guild_id = guild_id
         self.player = bot.lavalink.player_manager.get(self.guild_id)
 
-    @discord.ui.button(label="Queue", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Queue", emoji="<:queue:1011747675491811458>", style=discord.ButtonStyle.blurple)
     async def queue(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button queue | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if not self.player.queue:
@@ -79,14 +160,26 @@ class np_msg_buttons(discord.ui.View):
         e.add_field(name="Currently Playing:", value=f"{self.player.current.title}\n{self.player.current.uri}\n{draw_time} `[{pos}/{dur}]`")
         e.add_field(name="Up Next:", value=f"{draw_queue}", inline=False)
         e.set_footer(text=f'Page 1/{math.ceil(len(self.player.queue) / 10)} | {len(self.player.queue)} tracks')
-        e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+        if "open.spotify.com" in str(self.player.current.uri):
+            url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+            async with request("GET", url) as response:
+                json = await response.json()
+                e.set_thumbnail(url=f"{json['thumbnail_url']}")
+        else:
+            e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
         if len(self.player.queue) > 10:
-            return await interaction.response.edit_message(embed=e, view=queue_msg_buttons(self.bot, self.guild_id, 1))
+            return await interaction.response.edit_message(embed=e, view=queue_msg(self.bot, self.guild_id, 1))
         else:
             return await interaction.response.edit_message(embed=e, view=None)
 
-    @discord.ui.button(label="Pause/Resume", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Pause", emoji="<:pause:1010305240672780348>", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.player.paused is False:
+            button.emoji = "<:play:1010305312227606610>"
+            button.label = "Resume"
+        else:
+            button.emoji = "<:pause:1010305240672780348>"
+            button.label = "Pause"
         self.bot.logger.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             await self.player.set_pause(not self.player.paused)
@@ -103,12 +196,18 @@ class np_msg_buttons(discord.ui.View):
             e.description = f"{self.player.current.title}\n"
             e.description += f"{draw_time} `[{format_time(self.player.position)}/{dur}]`\n"
             e.description += f"{self.player.current.uri}\n"
-            e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
-            return await interaction.response.edit_message(embed=e)
+            if "open.spotify.com" in str(self.player.current.uri):
+                url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                async with request("GET", url) as response:
+                    json = await response.json()
+                    e.set_thumbnail(url=f"{json['thumbnail_url']}")
+            else:
+                e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
+            return await interaction.response.edit_message(embed=e, view=self)
         else:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
-    @discord.ui.button(label="Skip", style=discord.ButtonStyle.blurple)
+    @discord.ui.button(label="Skip", emoji= "<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
@@ -117,7 +216,7 @@ class np_msg_buttons(discord.ui.View):
         else:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
-    @discord.ui.button(label="Stop", style=discord.ButtonStyle.red)
+    @discord.ui.button(label="Stop", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
@@ -128,7 +227,7 @@ class np_msg_buttons(discord.ui.View):
         else:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
-class event_hook_buttons(discord.ui.View):
+class event_hook(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
         self.bot = bot
@@ -205,7 +304,13 @@ class event_hook_buttons(discord.ui.View):
                     e.add_field(name="Author:", value=self.player.current.author)
                     e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
+                    if "open.spotify.com" in str(self.player.current.uri):
+                        url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                        async with request("GET", url) as response:
+                            json = await response.json()
+                            e.set_thumbnail(url=f"{json['thumbnail_url']}")
+                    else:
+                        e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                     requester = self.bot.get_user(self.player.current.requester)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                     return await interaction.response.edit_message(embed=e, view=self)
@@ -219,7 +324,13 @@ class event_hook_buttons(discord.ui.View):
                     e.title = "Paused:"
                     e.description = f"{self.player.current.title}\n"
                     e.description += f"{self.player.current.uri}\n"
-                    e.set_image(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+                    if "open.spotify.com" in str(self.player.current.uri):
+                        url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                        async with request("GET", url) as response:
+                            json = await response.json()
+                            e.set_image(url=f"{json['thumbnail_url']}")
+                    else:
+                        e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
                     return await interaction.response.edit_message(embed=e, view=self)
             else:
@@ -231,7 +342,13 @@ class event_hook_buttons(discord.ui.View):
                     e.title = "Now Playing:"
                 e.description = f"{self.player.current.title}\n"
                 e.description += f"{self.player.current.uri}\n"
-                e.set_thumbnail(url=f'https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg')
+                if "open.spotify.com" in str(self.player.current.uri):
+                    url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                    async with request("GET", url) as response:
+                        json = await response.json()
+                        e.set_thumbnail(url=f"{json['thumbnail_url']}")
+                else:
+                    e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                 if self.player.queue:
                     number = 0
                     upNext = ""
