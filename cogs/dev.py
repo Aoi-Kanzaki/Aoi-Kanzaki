@@ -101,7 +101,7 @@ class Dev(commands.Cog):
             e.add_field(name="Libraries:", value=f"{discordi}\n{python}")
             e.add_field(name="Latest Changes:", value=revision, inline=False)
             e.add_field(name="Code Information:", value=code)
-            e.set_author(name=f"F.res.h {self.bot.version}", icon_url=ctx.author.avatar)
+            e.set_author(name=f"F.res.h {self.bot.version}", icon_url=interaction.user.avatar)
             e.set_thumbnail(url=self.bot.user.avatar)
             await interaction.response.send_message(embed=e)
 

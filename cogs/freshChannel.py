@@ -50,8 +50,6 @@ class MusicChannel(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         send = message.channel.send
-        if message.guild:
-            guildPrefix = await self.bot.prefix(message)
         try:
             musicChannel, db, data = await self.check_channel(message)
         except:
@@ -64,7 +62,7 @@ class MusicChannel(commands.Cog):
             else:
                 msg = message.content.lower()
             await message.delete()
-            if msg.startswith(guildPrefix):
+            if msg.startswith("f?"):
                 return
             try:
                 inVoice = await self.check_voice(message)

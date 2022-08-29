@@ -43,7 +43,7 @@ logger.addHandler(file_handler)
 class Fresh(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
-            command_prefix=commands.when_mentioned,
+            command_prefix=commands.when_mentioned_or("f?"),
             pm_help=None,
             intents=discord.Intents.all(),
             tree_cls=app_commands.CommandTree
