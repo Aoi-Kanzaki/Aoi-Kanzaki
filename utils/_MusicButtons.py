@@ -252,11 +252,12 @@ class event_hook(discord.ui.View):
         async with aiosqlite.connect("./data/music.db") as db:
             getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (interaction.guild.id,))
             data = await getData.fetchone()
-            if data[2] == self.player.fetch('channel'):
-                return await interaction.response.send_message(content="<:tickYes:697759553626046546> Replaying Track.", ephemeral=True)
-            else:
-                embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
-                return await interaction.response.edit_message(embed=embed, view=None)
+            if data:
+                if data[2] == self.player.fetch('channel'):
+                    return await interaction.response.send_message(content="<:tickYes:697759553626046546> Replaying Track.", ephemeral=True)
+                else:
+                    embed = discord.Embed(colour=discord.Color.blurple(), title="Replaying Track", description=f"**[{self.player.current.title}]({self.player.current.uri})**")
+                    return await interaction.response.edit_message(embed=embed, view=None)
 
     @discord.ui.button(label="Pause", emoji="<:pause:1010305240672780348>", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -270,69 +271,70 @@ class event_hook(discord.ui.View):
         async with aiosqlite.connect("./data/music.db") as db:
             getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (interaction.guild.id,))
             data = await getData.fetchone()
-            if data[2] == self.player.fetch('channel'):
-                await self.player.set_pause(not self.player.paused)
-                playermsg = await interaction.channel.fetch_message(data[0])
-                e = discord.Embed(color=discord.Color.blurple())
-                if not playermsg:
-                    e.title = "Nothing Currently Playing:"
-                    e.description = "Send a song `link` or `query` to play."
-                    e.description += "\nSend `pause` or `resume` to control the music."
-                    e.description += "\nSend `skip` to skip the current song."
-                    e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                    e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                    e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                    e.description += "\nSend `search <query>` to search for a song."
-                    e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                    msg = await self.bot.get_channel(data[2]).send(embed=e)
-                    await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, interaction.guild.id,))
-                    await db.commit()
-                    playermsg = await interaction.channel.fetch_message(msg.id)
-                if self.player.paused == False:
-                    if self.player.current.stream:
-                        dur = 'LIVE'
+            if data:
+                if data[2] == self.player.fetch('channel'):
+                    await self.player.set_pause(not self.player.paused)
+                    playermsg = await interaction.channel.fetch_message(data[0])
+                    e = discord.Embed(color=discord.Color.blurple())
+                    if not playermsg:
+                        e.title = "Nothing Currently Playing:"
+                        e.description = "Send a song `link` or `query` to play."
+                        e.description += "\nSend `pause` or `resume` to control the music."
+                        e.description += "\nSend `skip` to skip the current song."
+                        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                        e.description += "\nSend `search <query>` to search for a song."
+                        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                        msg = await self.bot.get_channel(data[2]).send(embed=e)
+                        await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, interaction.guild.id,))
+                        await db.commit()
+                        playermsg = await interaction.channel.fetch_message(msg.id)
+                    if self.player.paused == False:
+                        if self.player.current.stream:
+                            dur = 'LIVE'
+                        else:
+                            dur = format_time(self.player.current.duration)
+                        if self.player.queue:
+                            queue_list = ''
+                            for i, track in enumerate(self.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                                queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                        else:
+                            queue_list = "Join a voice channel and queue songs by name or url in here."
+                        kek = f"{self.player.current.title}\n{self.player.current.uri}"
+                        e.add_field(name="Currently Playing:", value=kek, inline=False)
+                        e.add_field(name="Author:", value=self.player.current.author)
+                        e.add_field(name="Duration:", value=dur)
+                        e.add_field(name="Queue List:", value=queue_list, inline=False)
+                        if "open.spotify.com" in str(self.player.current.uri):
+                            url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                            async with request("GET", url) as response:
+                                json = await response.json()
+                                e.set_thumbnail(url=f"{json['thumbnail_url']}")
+                        else:
+                            e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
+                        requester = self.bot.get_user(self.player.current.requester)
+                        e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+                        return await interaction.response.edit_message(embed=e, view=self)
                     else:
-                        dur = format_time(self.player.current.duration)
-                    if self.player.queue:
-                        queue_list = ''
-                        for i, track in enumerate(self.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                            queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                    else:
-                        queue_list = "Join a voice channel and queue songs by name or url in here."
-                    kek = f"{self.player.current.title}\n{self.player.current.uri}"
-                    e.add_field(name="Currently Playing:", value=kek, inline=False)
-                    e.add_field(name="Author:", value=self.player.current.author)
-                    e.add_field(name="Duration:", value=dur)
-                    e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    if "open.spotify.com" in str(self.player.current.uri):
-                        url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
-                        async with request("GET", url) as response:
-                            json = await response.json()
-                            e.set_thumbnail(url=f"{json['thumbnail_url']}")
-                    else:
-                        e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
-                    requester = self.bot.get_user(self.player.current.requester)
-                    e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                    return await interaction.response.edit_message(embed=e, view=self)
-                else:
-                    if self.player.queue:
-                        queue_list = ''
-                        for i, track in enumerate(self.player.queue[(1 - 1) * 10:(1 - 1) * 10 + 10], start=(1 - 1) * 10):
-                            queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                    else:
-                        queue_list = "Join a voice channel and queue songs by name or url in here."
-                    e.title = "Paused:"
-                    e.description = f"{self.player.current.title}\n"
-                    e.description += f"{self.player.current.uri}\n"
-                    if "open.spotify.com" in str(self.player.current.uri):
-                        url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
-                        async with request("GET", url) as response:
-                            json = await response.json()
-                            e.set_image(url=f"{json['thumbnail_url']}")
-                    else:
-                        e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
-                    e.add_field(name="Queue List:", value=queue_list, inline=False)
-                    return await interaction.response.edit_message(embed=e, view=self)
+                        if self.player.queue:
+                            queue_list = ''
+                            for i, track in enumerate(self.player.queue[(1 - 1) * 10:(1 - 1) * 10 + 10], start=(1 - 1) * 10):
+                                queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+                        else:
+                            queue_list = "Join a voice channel and queue songs by name or url in here."
+                        e.title = "Paused:"
+                        e.description = f"{self.player.current.title}\n"
+                        e.description += f"{self.player.current.uri}\n"
+                        if "open.spotify.com" in str(self.player.current.uri):
+                            url = f"https://open.spotify.com/oembed?url={self.player.current.uri}"
+                            async with request("GET", url) as response:
+                                json = await response.json()
+                                e.set_image(url=f"{json['thumbnail_url']}")
+                        else:
+                            e.set_image(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
+                        e.add_field(name="Queue List:", value=queue_list, inline=False)
+                        return await interaction.response.edit_message(embed=e, view=self)
             else:
                 await self.player.set_pause(not self.player.paused)
                 e = discord.Embed(colour=discord.Color.blurple())
@@ -370,27 +372,28 @@ class event_hook(discord.ui.View):
         async with aiosqlite.connect("./data/music.db") as db:
             getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (self.player.guild_id,))
             data = await getData.fetchone()
-            if self.player.fetch('channel') == data[2]:
-                channel = await self.bot.fetch_channel(data[2])
-                msg = await channel.fetch_message(data[0])
-                e = discord.Embed(color=discord.Color.blurple())
-                e.title = "Nothing Currently Playing:"
-                e.description = "Send a song `link` or `query` to play."
-                e.description += "\nSend `pause` or `resume` to control the music."
-                e.description += "\nSend `skip` to skip the current song."
-                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                e.description += "\nSend `search <query>` to search for a song."
-                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                await msg.edit(embed=e, view=None)
-                self.player.queue.clear()
-                await self.player.stop()
-                vc = self.bot.get_guild(int(self.player.guild_id)).voice_client
-                if vc:
-                    await self.bot.get_guild(int(self.player.guild_id)).voice_client.disconnect(force=True)
-                self.bot.lavalink.player_manager.remove(self.player.guild_id)
-                self.bot.logger.info(f"Fresh Channel | Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+            if data:
+                if self.player.fetch('channel') == data[2]:
+                    channel = await self.bot.fetch_channel(data[2])
+                    msg = await channel.fetch_message(data[0])
+                    e = discord.Embed(color=discord.Color.blurple())
+                    e.title = "Nothing Currently Playing:"
+                    e.description = "Send a song `link` or `query` to play."
+                    e.description += "\nSend `pause` or `resume` to control the music."
+                    e.description += "\nSend `skip` to skip the current song."
+                    e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                    e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                    e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                    e.description += "\nSend `search <query>` to search for a song."
+                    e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                    await msg.edit(embed=e, view=None)
+                    self.player.queue.clear()
+                    await self.player.stop()
+                    vc = self.bot.get_guild(int(self.player.guild_id)).voice_client
+                    if vc:
+                        await self.bot.get_guild(int(self.player.guild_id)).voice_client.disconnect(force=True)
+                    self.bot.lavalink.player_manager.remove(self.player.guild_id)
+                    self.bot.logger.info(f"Fresh Channel | Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
