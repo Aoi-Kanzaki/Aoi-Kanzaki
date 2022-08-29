@@ -53,7 +53,7 @@ class MusicChannel(commands.Cog):
         try:
             musicChannel, db, data = await self.check_channel(message)
         except:
-            pass
+            return
         if message.author.bot or message.guild is None:
             return
         if musicChannel:
