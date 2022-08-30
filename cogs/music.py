@@ -1,6 +1,5 @@
 import math
 import re
-import aiosqlite
 import discord
 import lavalink
 from aiohttp import request
@@ -9,7 +8,7 @@ from lavalink.models import AudioTrack
 from lavalink.utils import format_time
 from utils._Spotify import SpotifySource
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
-from utils._MusicButtons import event_hook, np_msg, queue_msg, search_msg
+from utils._MusicButtons import event_hook, np_msg, queue_msg, search_msg, favorites
 from lavalink.events import QueueEndEvent, TrackExceptionEvent, TrackStartEvent, TrackEndEvent, NodeConnectedEvent
 
 url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
@@ -33,6 +32,7 @@ class Music(commands.Cog):
         bot.lavalink._event_hooks.clear()
         bot.lavalink.add_event_hooks(self)
         self.reload_sources()
+        self.db = self.bot.db.fresh_channel
 
         @fresh.command(name="play")
         async def play(interaction: discord.Interaction, query: str):
@@ -280,7 +280,13 @@ class Music(commands.Cog):
                     e.description = f"{player.current.title}\n"
                     e.description += f"{await self.draw_time(interaction.guild.id)} `[{format_time(player.position)}/{dur}]`\n"
                     e.description += f"{player.current.uri}\n"
-                    e.set_thumbnail(url=f'https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg')
+                    if "open.spotify.com" in str(player.current.uri):
+                        url = f"https://open.spotify.com/oembed?url={player.current.uri}"
+                        async with request("GET", url) as response:
+                            json = await response.json()
+                            e.set_image(url=f"{json['thumbnail_url']}")
+                    else:
+                        e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
                     await interaction.response.send_message(embed=e, view=np_msg(self.bot, interaction.guild.id))
                 else:
                     if player.is_connected:
@@ -307,84 +313,74 @@ class Music(commands.Cog):
 
     @lavalink.listener(TrackStartEvent)
     async def on_track_start(self, event: TrackStartEvent):
-        async with aiosqlite.connect("./data/music.db") as db:
-            try:
-                getData = await db.execute(
-                    "SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", 
-                    (event.player.guild_id,)
-                )
-                data = await getData.fetchone()
-            except:
-                pass
-            playing_song = event.player.fetch("playing_song")
-            requester = event.player.fetch("requester")
-            event.player.store("prev_song", playing_song)
-            event.player.store("prev_requester", requester)
-            event.player.store("playing_song", event.player.current.uri)
-            event.player.store("requester", event.player.current.requester)
-            channel = event.player.fetch('channel')
-            if event.player.fetch('channel'):
-                if data:
-                    if data[2] == event.player.fetch('channel'):
-                        if event.player.queue:
-                            queue_list = ''
-                            for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
-                                queue_list += '`{}.` {}\n'.format(i + 1, track.title)
-                        else:
-                            queue_list = "Join a voice channel and queue songs by name or url in here."
-                        if event.player.current.stream:
-                            dur = 'LIVE'
-                        else:
-                            dur = format_time(event.player.current.duration)
-                        e = discord.Embed(color=discord.Color.blurple())
-                        kek = f"{event.player.current.title}\n{event.player.current.uri}"
-                        e.add_field(name="Currently Playing:", value=kek, inline=False)
-                        e.add_field(name="Author:", value=event.player.current.author)
-                        e.add_field(name="Duration:", value=dur)
-                        e.add_field(name="Queue List:", value=queue_list, inline=False)
-                        if "open.spotify.com" in str(event.player.current.uri):
-                            url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
-                            async with request("GET", url) as response:
-                                json = await response.json()
-                                e.set_image(url=f"{json['thumbnail_url']}")
-                        else:
-                            e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
-                        requester = self.bot.get_user(event.player.current.requester)
-                        e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
-                        channel = await self.bot.fetch_channel(data[2])
-                        msg = await channel.fetch_message(data[0])
-                        await msg.edit(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
-                else:
-                    if event.player.fetch('npmsg') != None:
-                        try:
-                            msg = await self.bot.get_channel(event.player.fetch('channel')).fetch_message(event.player.fetch('npmsg'))
-                            await msg.delete()
-                        except:
-                            pass
-                    if self.bot.get_channel(event.player.fetch('channel')):
-                        try:
-                            e = discord.Embed(colour=discord.Color.blurple())
-                            e.title = "Now Playing:"
-                            e.description = f"{event.player.current.title}\n"
-                            e.description += f"{event.player.current.uri}\n"
-                            if "open.spotify.com" in str(event.player.current.uri):
-                                url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
-                                async with request("GET", url) as response:
-                                    json = await response.json()
-                                    e.set_thumbnail(url=f"{json['thumbnail_url']}")
-                            else:
-                                e.set_thumbnail(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
-                            if event.player.queue:
-                                number = 0
-                                upNext = ""
-                                for track in event.player.queue[0:5]:
-                                    number += 1
-                                    upNext += f"`{number})` {track.title}\n"
-                                e.add_field(name="Up Next:", value=upNext)
-                            message = await self.bot.get_channel(event.player.fetch('channel')).send(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
-                            event.player.store('npmsg', message.id)
-                        except:
-                            pass
+        playing_song = event.player.fetch("playing_song")
+        requester = event.player.fetch("requester")
+        event.player.store("prev_song", playing_song)
+        event.player.store("prev_requester", requester)
+        event.player.store("playing_song", event.player.current.uri)
+        event.player.store("requester", event.player.current.requester)
+        channel = event.player.fetch('channel')
+        data = self.db.find_one({"_id": event.player.guild_id})
+        if data is not None and channel == data['channel']:
+            if event.player.queue:
+                queue_list = ''
+                for i, track in enumerate(event.player.queue[(1 - 1) * 5:(1 - 1) * 5 + 5], start=(1 - 1) * 5):
+                    queue_list += '`{}.` {}\n'.format(i + 1, track.title)
+            else:
+                queue_list = "Join a voice channel and queue songs by name or url in here."
+            if event.player.current.stream:
+                dur = 'LIVE'
+            else:
+                dur = format_time(event.player.current.duration)
+            e = discord.Embed(color=discord.Color.blurple())
+            kek = f"{event.player.current.title}\n{event.player.current.uri}"
+            e.add_field(name="Currently Playing:", value=kek, inline=False)
+            e.add_field(name="Author:", value=event.player.current.author)
+            e.add_field(name="Duration:", value=dur)
+            e.add_field(name="Queue List:", value=queue_list, inline=False)
+            if "open.spotify.com" in str(event.player.current.uri):
+                url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
+                async with request("GET", url) as response:
+                    json = await response.json()
+                    e.set_image(url=f"{json['thumbnail_url']}")
+            else:
+                e.set_image(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
+            requester = self.bot.get_user(event.player.current.requester)
+            e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
+            channel = await self.bot.fetch_channel(data['channel'])
+            msg = await channel.fetch_message(data['message'])
+            await msg.edit(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
+        else:
+            if event.player.fetch('npmsg') != None:
+                try:
+                    msg = await self.bot.get_channel(event.player.fetch('channel')).fetch_message(event.player.fetch('npmsg'))
+                    await msg.delete()
+                except:
+                    pass
+            if self.bot.get_channel(event.player.fetch('channel')):
+                try:
+                    e = discord.Embed(colour=discord.Color.blurple())
+                    e.title = "Now Playing:"
+                    e.description = f"{event.player.current.title}\n"
+                    e.description += f"{event.player.current.uri}\n"
+                    if "open.spotify.com" in str(event.player.current.uri):
+                        url = f"https://open.spotify.com/oembed?url={event.player.current.uri}"
+                        async with request("GET", url) as response:
+                            json = await response.json()
+                            e.set_thumbnail(url=f"{json['thumbnail_url']}")
+                    else:
+                        e.set_thumbnail(url=f"https://img.youtube.com/vi/{event.player.current.identifier}/hqdefault.jpg")
+                    if event.player.queue:
+                        number = 0
+                        upNext = ""
+                        for track in event.player.queue[0:5]:
+                            number += 1
+                            upNext += f"`{number})` {track.title}\n"
+                        e.add_field(name="Up Next:", value=upNext)
+                    message = await self.bot.get_channel(event.player.fetch('channel')).send(embed=e, view=event_hook(self.bot, int(event.player.guild_id)))
+                    event.player.store('npmsg', message.id)
+                except:
+                    pass
 
     @lavalink.listener(TrackEndEvent)
     async def on_track_end(self, event: TrackEndEvent):
@@ -397,18 +393,11 @@ class Music(commands.Cog):
 
     @lavalink.listener(QueueEndEvent)
     async def on_queue_end(self, event: QueueEndEvent):
-        async with aiosqlite.connect("./data/music.db") as db:
-            try:
-                getData = await db.execute(
-                    "SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?",
-                    (event.player.guild_id,)
-                )
-                data = await getData.fetchone()
-            except:
-                pass
-            if event.player.fetch('channel') == data[2]:
-                channel = await self.bot.fetch_channel(data[2])
-                msg = await channel.fetch_message(data[0])
+        data = self.db.find_one({"_id": event.player.guild_id})
+        if data is not None:
+            if event.player.fetch('channel') == data['channel']:
+                channel = await self.bot.fetch_channel(data['channel'])
+                msg = await channel.fetch_message(data['message'])
                 e = discord.Embed(color=discord.Color.blurple())
                 e.title = "Nothing Currently Playing:"
                 e.description = "Send a song `link` or `query` to play."
@@ -419,9 +408,9 @@ class Music(commands.Cog):
                 e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
                 e.description += "\nSend `search <query>` to search for a song."
                 e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                await msg.edit(embed=e, view=None)
-            await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
-            self.bot.lavalink.player_manager.remove(event.player.guild_id)
+                await msg.edit(embed=e, view=favorites(self.bot))
+        await self.bot.get_guild(int(event.player.guild_id)).voice_client.disconnect(force=True)
+        self.bot.lavalink.player_manager.remove(event.player.guild_id)
 
     @lavalink.listener(NodeConnectedEvent)
     async def on_node_connected(self, event: NodeConnectedEvent):

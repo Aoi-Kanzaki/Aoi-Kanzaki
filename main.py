@@ -129,7 +129,7 @@ class Fresh(commands.Bot):
         maintable.add_row("Discord.py version", f"{discord.__version__}")
         if _config["mongoURI"] != "Disabled.":            
             self.db = pymongo.MongoClient(_config["mongoURI"])
-            self.db = self.db['testing2']
+            self.db = self.db['main']
             maintable.add_row("Database Status", 'Should be connected!')
         else:
             maintable.add_row("Database Status", "Disabled, not connecting.")

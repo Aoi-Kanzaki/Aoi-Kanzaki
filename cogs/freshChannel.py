@@ -1,181 +1,175 @@
 import re
 import discord
-import aiosqlite
 import asyncio
 from aiohttp import request
 from rich.console import Console
 from discord.ext import commands
 from lavalink.utils import format_time
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
-from utils._MusicButtons import search_msg, event_hook
+from utils._MusicButtons import search_msg, event_hook, favorites
 
 class MusicChannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        fresh = bot.tree
+        self.db = self.bot.db.fresh_channel
+        self.bot.add_view(favorites(self.bot))
 
-    async def cog_load(self):
-        async with aiosqlite.connect("./data/music.db") as db:
-            await db.execute("CREATE TABLE IF NOT EXISTS musicSettings (musicMessage INTEGER, musicToggle INTEGER, musicChannel INTEGER, musicRunning INTEGER, guild INTEGER)")
-            await db.commit()
+        @fresh.command(name="setup")
+        async def setup(interaction: discord.Interaction):
+            """Enables or disables the music channel in your guild."""
+            existing_channels = [e.name for e in interaction.guild.channels]
+            data = self.db.find_one({"_id": interaction.guild.id})
+            if data is None:
+                if "fresh-music" in existing_channels:
+                    channelid = [e.id for e in interaction.guild.channels if e.name == 'fresh-music'][0]
+                    channel = await interaction.guild.fetch_channel(channelid)
+                    await channel.delete()
+                created = await interaction.guild.create_text_channel(
+                    name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
+                msgid = await self.create_initial_player_message(created.id, interaction.guild)
+                self.db.insert_one({"_id": interaction.guild.id, "message": msgid, "channel": created.id, "toggle": True})
+            else:
+                if data['toggle'] is True:
+                    if "fresh-music" in existing_channels:
+                        channel = await interaction.guild.fetch_channel(data['channel'])
+                        await channel.delete()
+                    data['toggle'] = False
+                    self.db.update_one({"_id": interaction.guild.id}, {"$set": data})
+                    return await interaction.response.send_message(
+                        "<:tickYes:697759553626046546> Disabled the music channel.")
+                else:
+                    if "fresh-music" in existing_channels:
+                        channelid = [e.id for e in interaction.guild.channels if e.name == 'fresh-music'][0]
+                        channel = await interaction.guild.fetch_channel(channelid)
+                        await channel.delete()
+                    created = await interaction.guild.create_text_channel(
+                        name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
+                    msgid = await self.create_initial_player_message(created.id, interaction.guild)
+                    self.db.update_one({"_id": interaction.guild.id}, {"$set": {"toggle": True, "message": msgid, "channel": created.id}})
+                    return await interaction.response.send_message(
+                        f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
 
     async def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
-        async with aiosqlite.connect("./data/music.db") as db:
-            for guild in self.bot.guilds:
-                try:
-                    getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (guild.id,))
-                    data = await getData.fetchone()
-                    if data is not None:
-                        if data[1] == 1:
-                            try:
-                                channel = await guild.fetch_channel(data[2])
-                                msg = await channel.fetch_message(data[0])
-                                e = discord.Embed(color=discord.Color.blurple())
-                                e.title = "Nothing Currently Playing:"
-                                e.description = "Send a song `link` or `query` to play."
-                                e.description += "\nSend `pause` or `resume` to control the music."
-                                e.description += "\nSend `skip` to skip the current song."
-                                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                                e.description += "\nSend `search <query>` to search for a song."
-                                e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                                await msg.edit(embed=e, view=None)
-                                await asyncio.sleep(1)
-                            except discord.errors.NotFound:
-                                pass
-                except Exception as e:
-                    Console().print_exception(show_locals=False)
+        for guild in self.bot.guilds:
+            try:
+                data = self.db.find_one({"_id": guild.id})
+                if data != None:
+                    if data['toggle'] is True:
+                        channel = await guild.fetch_channel(data['channel'])
+                        msg = await channel.fetch_message(data['message'])
+                        e = discord.Embed(color=discord.Color.blurple())
+                        e.title = "Nothing Currently Playing:"
+                        e.description = "Send a song `link` or `query` to play."
+                        e.description += "\nSend `pause` or `resume` to control the music."
+                        e.description += "\nSend `skip` to skip the current song."
+                        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                        e.description += "\nSend `search <query>` to search for a song."
+                        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                        await msg.edit(embed=e, view=favorites(self.bot))
+                        await asyncio.sleep(1)
+            except Exception as e:
+                Console().print_exception(show_locals=False)
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        send = message.channel.send
-        try:
-            musicChannel, db, data = await self.check_channel(message)
-        except:
-            return
-        if message.author.bot or message.guild is None:
-            return
-        if musicChannel:
-            if not re.compile(r'/https?:\/\/(?:www\.)?.+/gm').match(message.content):
-                msg = message.content
-            else:
-                msg = message.content.lower()
-            await message.delete()
-            if msg.startswith("f?"):
-                return
-            try:
+        if message.author.bot or message.guild is None: return
+        if message.content.startswith("f?"): return
+        data = self.db.find_one({"_id": message.guild.id})
+        if data is not None:
+            if message.channel.id == data['channel']:
+                if not re.compile(r'/https?:\/\/(?:www\.)?.+/gm').match(message.content):
+                    msg = message.content
+                else:
+                    msg = message.content.lower()
+                await message.delete()
                 inVoice = await self.check_voice(message)
-            except:
-                pass
-            if inVoice:
-                player = await self.create_player(message)  
-            playerMsg = await message.channel.fetch_message(data[0])
-            if not playerMsg:
-                playerMsg = await self.create_player_msg(message, db, data)
-            if msg.startswith('cancel') or msg.startswith('start'):
-                return
-            elif msg.startswith('search'):
                 if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command search | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                    return await self.create_search(message, player, playerMsg, msg.replace('search', ''))
-            elif msg.startswith('rem') or msg.startswith('remove'):
-                if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command remove | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                    index = msg.replace('rem', '').replace('ove', '').replace(' ', '')
-                    if index.isdigit():
-                        if player.queue:
-                            if int(index) > len(player.queue) or int(index) < 1:
-                                return await send('<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
-                            player.queue.pop(int(index)-1)
-                            await self.update_player_msg(player, message.guild, playerMsg, "basic")
-                            return await send(f"<:tickYes:697759553626046546> Removed song {index} from the queue.", delete_after=5)
-                    else:
-                        return await send("<:tickNo:697759586538749982> Index must be 1 or inside the queue index.", delete_after=5)
-            elif msg.startswith('vol') or msg.startswith('volume'):
-                if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command volume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                    volume = msg.replace('vol').replace('ume').replace(' ', '')
-                    if volume == "":
-                        return await message.channel.send(f'🔈 | {player.volume}%', delete_after=5)
-                    if volume.isdigit():
-                        volume = int(volume)
-                        if volume > 100:
-                            volume = 100
-                        await player.set_volume(volume)
-                        return await message.channel.send(f'🔈 | Set to {player.volume}%', delete_after=5)
-                    else:
-                        return await send("<:tickNo:697759586538749982> Volume must be a number.", delete_after=5)
-            elif msg.startswith('pause') or msg.startswith('resume'):
-                if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command pause/resume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                    if player.is_playing:
-                        await player.set_pause(not player.paused)
-                        return await self.update_player_msg(player, message.guild, playerMsg, "pause/resume")
-            elif msg.startswith('skip'):
-                if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command skip | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                    if player.is_playing:
-                        return await player.skip()
-            elif msg.startswith('dc') or msg.startswith('disconnect'):
-                if inVoice:
-                    self.bot.logger.info(f"Fresh Channel | Command disconnect | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                    player = await self.create_player(message)
+                playerMsg = await message.channel.fetch_message(data['message'])
+                if not playerMsg:
+                    playerMsg = await self.create_player_msg()
+                if msg.startswith('cancel') or msg.startswith('start'): return
+                elif msg.startswith('search'):
                     if inVoice:
-                        await message.guild.voice_client.disconnect(force=True)
-                        await self.update_player_msg(player, message.guild, playerMsg, "main")
-                        return self.bot.lavalink.player_manager.remove(message.guild.id)
-            elif msg.startswith('help'):
-                e = discord.Embed(color=discord.Color.blurple())
-                e.description = "Send a song `link` or `query` to play."
-                e.description += "\nSend `pause` or `resume` to control the music."
-                e.description += "\nSend `skip` to skip the current song."
-                e.description += "\nSend `prev` or `previous` to skip to the previous song."
-                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                e.description += "\nSend `search <query>` to search for a song."
-                e.description += "\nSend `stop` to stop the player."
-                e.set_footer(text="This message will delete in 30 seconds.")
-                return await send(embed=e, delete_after=30)
-            else:
-                if inVoice:
-                    return await self.query_request(message, player, playerMsg, msg)
-
-    @commands.hybrid_command()
-    @commands.cooldown(1, 5, commands.BucketType.guild)
-    @commands.has_permissions(manage_guild=True)
-    async def setup(self, ctx):
-        """Toggles the music channel on and off."""
-        existing_channels = [e.name for e in ctx.guild.channels]
-        async with aiosqlite.connect("./data/music.db") as db:
-            getData = await db.execute("SELECT musicToggle, musicChannel FROM musicSettings WHERE guild = ?", (ctx.guild.id,))
-            data = await getData.fetchone()
-            if data is None:
-                if "fresh-music" in existing_channels:
-                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
-                    channel = await ctx.guild.fetch_channel(channelid)
-                    await channel.delete()
-                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
-                msgid = await self.create_initial_player_message(created.id)
-                await db.execute("INSERT INTO musicSettings (musicMessage, musicToggle, musicChannel, musicRunning, guild) VALUES (?, ?, ?, ?, ?)", (msgid, 1, created.id, 0, ctx.guild.id,))
-            elif data[0] == 1:
-                if "fresh-music" in existing_channels:
-                    channel = await ctx.guild.fetch_channel(data[1])
-                    await channel.delete()
-                await db.execute("UPDATE musicSettings SET musicToggle = ? WHERE guild = ?", (0, ctx.guild.id,))
-                await ctx.send("<:tickYes:697759553626046546> Disabled the music channel.")
-            else:
-                if "fresh-music" in existing_channels:
-                    channelid = [e.id for e in ctx.guild.channels if e.name == 'fresh-music'][0]
-                    channel = await ctx.guild.fetch_channel(channelid)
-                    await channel.delete()
-                created = await ctx.guild.create_text_channel(name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
-                msgid = await self.create_initial_player_message(created.id)
-                await db.execute("UPDATE musicSettings SET musicMessage = ?, musicToggle = ?, musicChannel = ? WHERE guild = ?", (msgid, 1, created.id, ctx.guild.id,))
-                await ctx.send(f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
-            await db.commit()
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command search | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        return await self.create_search(message, msg.replace('search', ''))
+                elif msg.startswith('rem') or msg.startswith('remove'):
+                    if inVoice:
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command remove | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        index = msg.replace('rem', '').replace('ove', '').replace(' ', '')
+                        if index.isdigit():
+                            if player.queue:
+                                if int(index) > len(player.queue) or int(index) < 1:
+                                    return await message.channel.send(
+                                        '<:tickNo:697759586538749982> Song number must be greater than 1 and within the queue limit.', delete_after=5)
+                                player.queue.pop(int(index)-1)
+                                await self.update_player_msg(player, message.guild, playerMsg, "basic")
+                                return await message.channel.send(
+                                    f"<:tickYes:697759553626046546> Removed song {index} from the queue.", delete_after=5)
+                        else:
+                            return await message.channel.send(
+                                "<:tickNo:697759586538749982> Index must be 1 or inside the queue index.", delete_after=5)
+                elif msg.startswith('vol') or msg.startswith('volume'):
+                    if inVoice:
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command volume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        volume = msg.replace('vol').replace('ume').replace(' ', '')
+                        if volume == "":
+                            return await message.channel.send(f'🔈 | {player.volume}%', delete_after=5)
+                        if volume.isdigit():
+                            volume = int(volume)
+                            if volume > 100:
+                                volume = 100
+                            await player.set_volume(volume)
+                            return await message.channel.send(f'🔈 | Set to {player.volume}%', delete_after=5)
+                        else:
+                            return await message.channel.send(
+                                "<:tickNo:697759586538749982> Volume must be a number.", delete_after=5)
+                elif msg.startswith('pause') or msg.startswith('resume'):
+                    if inVoice:
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command pause/resume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        if player.is_playing:
+                            await player.set_pause(not player.paused)
+                            return await self.update_player_msg(player, message.guild, playerMsg, "pause/resume")
+                elif msg.startswith('skip'):
+                    if inVoice:
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command skip | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        if player.is_playing:
+                            return await player.skip()
+                elif msg.startswith('dc') or msg.startswith('disconnect'):
+                    if inVoice:
+                        self.bot.logger.info(
+                            f"Fresh Channel | Command disconnect | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
+                        if inVoice:
+                            await message.guild.voice_client.disconnect(force=True)
+                            await self.update_player_msg(player, message.guild, playerMsg, "main")
+                            return self.bot.lavalink.player_manager.remove(message.guild.id)
+                elif msg.startswith('help'):
+                    e = discord.Embed(color=discord.Color.blurple())
+                    e.description = "Send a song `link` or `query` to play."
+                    e.description += "\nSend `pause` or `resume` to control the music."
+                    e.description += "\nSend `skip` to skip the current song."
+                    e.description += "\nSend `prev` or `previous` to skip to the previous song."
+                    e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
+                    e.description += "\nSend `vol 10` or `volume 10` to change the volume."
+                    e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
+                    e.description += "\nSend `search <query>` to search for a song."
+                    e.description += "\nSend `stop` to stop the player."
+                    e.set_footer(text="This message will delete in 30 seconds.")
+                    return await message.channel.send(embed=e, delete_after=30)
+                else:
+                    if inVoice:
+                        return await self.query_request(message, player, playerMsg, msg)
             
-    async def create_initial_player_message(self, channelid):
+    async def create_initial_player_message(self, channelid, guild):
         e = discord.Embed(color=discord.Color.blurple())
         e.title = "Nothing Currently Playing:"
         e.description = "Send a song `link` or `query` to play."
@@ -186,23 +180,8 @@ class MusicChannel(commands.Cog):
         e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
         e.description += "\nSend `search <query>` to search for a song."
         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-        msg = await self.bot.get_channel(channelid).send(embed=e)
+        msg = await self.bot.get_channel(channelid).send(embed=e, view=favorites(self.bot))
         return msg.id
-
-    async def check_channel(self, message):
-        if message.guild:
-            async with aiosqlite.connect("./data/music.db") as db:
-                getData = await db.execute("SELECT musicMessage, musicToggle, musicChannel, musicRunning FROM musicSettings WHERE guild = ?", (message.guild.id,))
-                data = await getData.fetchone()
-                if not data:
-                    return
-                if data[1] == 1:
-                    if message.channel.id == data[2]:
-                        return True, db, data
-                    else:
-                        return False, db, data
-        else:
-            return False, None, None
 
     async def create_player(self, message):
         inVoice = await self.check_voice(message)
@@ -226,7 +205,8 @@ class MusicChannel(commands.Cog):
             return False
         return True
 
-    async def create_player_msg(self, message, db, data):
+    async def create_player_msg(self, message):
+        data = self.db.find_one({"_id": message.guild.id})
         e = discord.Embed(color=discord.Color.blurple())
         e.title = "Nothing Currently Playing:"
         e.description = "Send a song `link` or `query` to play."
@@ -238,9 +218,8 @@ class MusicChannel(commands.Cog):
         e.description += "\nSend `search <query>` to search for a song."
         e.description += "\nSend `stop` to stop the player."
         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-        msg = await self.bot.get_channel(data[2]).send(embed=e)
-        await db.execute("UPDATE musicSettings SET musicMessage = ? WHERE guild = ?", (msg.id, message.guild.id,))
-        await db.commit()
+        msg = await self.bot.get_channel(data['channel']).send(embed=e, view=favorites(self.bot))
+        self.db.update_one({"_id": message.guild.id}, {"$set": {"message": msg.id}})
         return await message.channel.fetch_message(msg.id)
 
     async def update_player_msg(self, player, guild, playerMsg, status):
@@ -256,7 +235,7 @@ class MusicChannel(commands.Cog):
             e.description += "\nSend `search <query>` to search for a song."
             e.description += "\nSend `stop` to stop the player."
             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-            await playerMsg.edit(embed=e, view=event_hook(self.bot, guild.id))
+            await playerMsg.edit(embed=e, view=favorites(self.bot))
         else:
             if player.queue:
                 queue_list = ''
@@ -318,7 +297,7 @@ class MusicChannel(commands.Cog):
         else:
             track = results.tracks[0]
             player.add(requester=message.author.id, track=track)
-            if player.queue:
+            if player.is_playing:
                 e.title = "Track Enqueued!"
                 e.description = f"{track.title}\n{track.uri}"
                 await message.channel.send(embed=e, delete_after=5)
@@ -327,7 +306,7 @@ class MusicChannel(commands.Cog):
             await player.play()
         await self.update_player_msg(player, message.guild, playerMsg, 'basic')
 
-    async def create_search(self, message, player, playerMsg, query):
+    async def create_search(self, message, query):
         results = await self.bot.lavalink.get_tracks(f'ytsearch:{query}')
         if not results or not results['tracks']:
             return await message.channel.send('<:tickNo:697759586538749982> Nothing found!', delete_after=5)
