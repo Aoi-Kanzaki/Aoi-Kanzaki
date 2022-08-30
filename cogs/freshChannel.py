@@ -29,6 +29,8 @@ class MusicChannel(commands.Cog):
                     name="fresh-music", topic="THIS IS IN BETA, PLEASE REPORT BUGS TO Jonny#0181")
                 msgid = await self.create_initial_player_message(created.id, interaction.guild)
                 self.db.insert_one({"_id": interaction.guild.id, "message": msgid, "channel": created.id, "toggle": True})
+                return await interaction.response.send_message(
+                        f"<:tickYes:697759553626046546> Music channel setup complete. You can now move <#{created.id}> to wherever you want.")
             else:
                 if data['toggle'] is True:
                     if "fresh-music" in existing_channels:
