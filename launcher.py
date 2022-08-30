@@ -4,7 +4,13 @@ import json
 import pip
 import time
 import subprocess
-from colr import color
+try:
+    from colr import color
+except:
+    print("Colr module is not installed, installing...")
+    time.sleep(2)
+    pip.main(["install", "colr"])
+    from colr import color
 
 colors = {
     "blue": (4, 95, 185),
@@ -74,7 +80,7 @@ def main_menu():
             clear_screen()
         elif choice == "4":
             clear_screen()
-            os.abort()
+            exit()
         else:
             input(color("\nInvalid choice. Press enter to continue.", fore=colors["red"]))
 

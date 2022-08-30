@@ -9,7 +9,6 @@ import asyncio
 import aiohttp
 session = aiohttp.ClientSession()
 
-
 class RequestWrapper:
     __slots__ = ('_req_url', '_req_args', '_req_kwargs')
 

@@ -1,18 +1,22 @@
-import os
-import json
-import discord
-import asyncio
-import aiohttp
-import logging
-from colr import color
-import pymongo
-from rich.table import Table
-from datetime import datetime
-from rich.console import Console
-from discord import app_commands
-from discord.ext import commands
-from rich.logging import RichHandler
-from utils._checks import check_commands
+try:
+    import os
+    import json
+    import discord
+    import asyncio
+    import aiohttp
+    import logging
+    from colr import color
+    import pymongo
+    from rich.table import Table
+    from datetime import datetime
+    from rich.console import Console
+    from discord import app_commands
+    from discord.ext import commands
+    from rich.logging import RichHandler
+    from utils._checks import check_commands
+except ImportError:
+    print("[ERROR] Missing dependency(s)! Please install required dependencies using the launcher.py script.")
+    exit()
 
 if os.path.exists("config.json.example") and not os.path.exists("config.json"):
     print(color("Please rename the config.json.example to config.json and set your config options before continuing.", fore=(189, 16, 16)))
@@ -125,7 +129,7 @@ class Fresh(commands.Bot):
         maintable.add_row("Discord.py version", f"{discord.__version__}")
         if _config["mongoURI"] != "Disabled.":            
             self.db = pymongo.MongoClient(_config["mongoURI"])
-            self.db = self.db['testing']
+            self.db = self.db['testing2']
             maintable.add_row("Database Status", 'Should be connected!')
         else:
             maintable.add_row("Database Status", "Disabled, not connecting.")

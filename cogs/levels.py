@@ -3,7 +3,6 @@ import discord
 from discord.ext import commands
 from easy_pil import Editor, Canvas, load_image_async, Font
 
-
 class Levels(commands.Cog):
     def __init__(self, bot):
         fresh = bot.tree
@@ -18,7 +17,7 @@ class Levels(commands.Cog):
             if settings is not None and settings["toggle"] != False:
                 if member is None:
                     member = interaction.user
-                data = self.db.find_one({"_id": member.id})
+                data = self.db.find_one({"_id": member.id, "guild": interaction.guild.id})
                 if data is None:
                     data = {"_id": member.id, "level": 0, "xp": 0, "xpcap": 1000, "guild": interaction.guild.id}
                     self.db.insert_one(data)
@@ -70,7 +69,7 @@ class Levels(commands.Cog):
             return
         settings = self.settings.find_one({"_id": message.guild.id})
         if settings is not None and settings['toggle'] != False:
-            data = self.db.find_one({"_id": message.author.id})
+            data = self.db.find_one({"_id": message.author.id, "guild": message.guild.id})
             if data is None:
                 data = {"_id": message.author.id, "level": 0, "xp": 0, "xpcap": 1000, "guild": message.guild.id}
                 self.db.insert_one(data)

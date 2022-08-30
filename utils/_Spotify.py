@@ -5,7 +5,6 @@ I WILL CREATE MY OWN CODE FOR THIS AS SOON AS I FIGURE OUT HOW TO DO IT.
 
 """
 
-
 import re
 from base64 import b64encode
 from lavalink.models import DeferredAudioTrack, LoadResult, LoadType, PlaylistInfo, Source
@@ -16,10 +15,8 @@ TRACK_URI_REGEX = re.compile(r'^(?:https?://(?:open\.)?spotify\.com|spotify)([/:
 PLAYLIST_URI_REGEX = re.compile(r'^(?:https?://(?:open\.)?spotify\.com(?:/user/[a-zA-Z0-9_]+)?|spotify)([/:])playlist\1([a-zA-Z0-9]+)')
 ALBUM_URI_REGEX = re.compile(r'^(?:https?://(?:open\.)?spotify\.com|spotify)([/:])album\1([a-zA-Z0-9]+)')
 
-
 class LoadError(Exception):
     pass
-
 
 class SpotifyAudioTrack(DeferredAudioTrack):
     @classmethod
@@ -47,7 +44,6 @@ class SpotifyAudioTrack(DeferredAudioTrack):
         b64 = result.tracks[0].track
         self.track = b64
         return b64
-
 
 class SpotifySource(Source):
     def __init__(self, client_id, client_secret):

@@ -2,7 +2,6 @@ from easy_pil import Editor, Canvas, load_image_async, Font
 import discord
 from discord.ext import commands
 
-
 class JoinMsg(commands.Cog):
     def __init(self, bot):
         self.bot = bot
