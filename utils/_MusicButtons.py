@@ -278,7 +278,7 @@ class event_hook(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
         self.bot = bot
-        self.db = self.bot.db.favorites
+        self.fav = self.bot.db.favorites
         self.player = bot.lavalink.player_manager.get(guild_id)
         self.db = self.bot.db.fresh_channel
         self.data = self.db.find_one({"_id": guild_id})
@@ -286,11 +286,11 @@ class event_hook(discord.ui.View):
     @discord.ui.button(label="Love", emoji="🤍", style=discord.ButtonStyle.blurple)
     async def love_song(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button love | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = self.fav.find_one({"_id": interaction.user.id})
         if data is None:
-            self.db.insert_one({"_id": interaction.user.id})
-            self.db.update_one({"_id": interaction.user.id}, {"$set": {"songs": []}})
-        self.db.update_one({"_id": interaction.user.id}, {"$push": {"songs": self.player.current.uri}})
+            self.fav.insert_one({"_id": interaction.user.id})
+            self.fav.update_one({"_id": interaction.user.id}, {"$set": {"songs": []}})
+        self.fav.update_one({"_id": interaction.user.id}, {"$push": {"songs": self.player.current.uri}})
         return await interaction.response.send_message(
             "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
 
