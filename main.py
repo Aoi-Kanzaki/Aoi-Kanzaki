@@ -55,8 +55,8 @@ class Fresh(commands.Bot):
         self.add_check(check_commands)
         self.logger = logger
         self.version = "v1.0.0"
-        self.spotify_id = _config["spotify_id"]
-        self.spotify_secret = _config["spotify_secret"]
+        self.spotify_id = _config["spotify"]["id"]
+        self.spotify_secret = _config["spotify"]["secret"]
         self.uptime = datetime.utcnow()
         self.colors = {
             "blue": (4, 95, 185),
@@ -127,10 +127,10 @@ class Fresh(commands.Bot):
         maintable.add_row("Connected to", f"{len(self.guilds)} guilds and {channels} channels.")
         maintable.add_row("Python version", "{}.{}.{}".format(*os.sys.version_info[:3]))
         maintable.add_row("Discord.py version", f"{discord.__version__}")
-        if _config["mongoURI"] != "Disabled.":            
-            self.db = pymongo.MongoClient(_config["mongoURI"])
-            self.db = self.db['main']
-            maintable.add_row("Database Status", 'Should be connected!')
+        if _config["database"]["enabled"] != False:            
+            self.db = pymongo.MongoClient(_config["database"]["uri"])
+            self.db = self.db[_config["database"]["collection"]]
+            maintable.add_row("Database Status", f'Connected to {_config["database"]["collection"]}!')
         else:
             maintable.add_row("Database Status", "Disabled, not connecting.")
         modulestable = await self.load_modules()
