@@ -366,14 +366,9 @@ class event_hook(discord.ui.View):
             playermsg = await interaction.channel.fetch_message(self.data['message'])
             e = discord.Embed(color=discord.Color.blurple())
             if not playermsg:
-                e.title = "Nothing Currently Playing:"
-                e.description = "Send a song `link` or `query` to play."
-                e.description += "\nSend `pause` or `resume` to control the music."
-                e.description += "\nSend `skip` to skip the current song."
-                e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                e.description += "\nSend `search <query>` to search for a song."
+                e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+                e.description = "Send a song link or query to start playing music!\n"
+                e.description += "Or click the button to start you favorite songs!"
                 e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
                 msg = await self.bot.get_channel(self.data['channel']).send(embed=e, view=favorites(self.bot))
                 self.db.update_one({"_id": interaction.guild.id}, {"$set": {"message": msg.id}})
@@ -461,14 +456,9 @@ class event_hook(discord.ui.View):
             channel = await self.bot.fetch_channel(self.data['channel'])
             msg = await channel.fetch_message(self.data['message'])
             e = discord.Embed(color=discord.Color.blurple())
-            e.title = "Nothing Currently Playing:"
-            e.description = "Send a song `link` or `query` to play."
-            e.description += "\nSend `pause` or `resume` to control the music."
-            e.description += "\nSend `skip` to skip the current song."
-            e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-            e.description += "\nSend `search <query>` to search for a song."
+            e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+            e.description = "Send a song link or query to start playing music!\n"
+            e.description += "Or click the button to start you favorite songs!"
             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
             await msg.edit(embed=e, view=favorites(self.bot))
             self.player.queue.clear()

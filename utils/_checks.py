@@ -5,7 +5,6 @@ async def is_owner(ctx):
         await ctx.send("Command is locked to developers, sorry.", delete_after=10)
         return False
 
-
 async def check_commands(ctx):
     if ctx.author.bot:
         return

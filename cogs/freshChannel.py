@@ -55,26 +55,20 @@ class MusicChannel(commands.Cog):
     async def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
         for guild in self.bot.guilds:
-            try:
-                data = self.db.find_one({"_id": guild.id})
-                if data != None:
-                    if data['toggle'] is True:
-                        channel = await guild.fetch_channel(data['channel'])
-                        msg = await channel.fetch_message(data['message'])
-                        e = discord.Embed(color=discord.Color.blurple())
-                        e.title = "Nothing Currently Playing:"
-                        e.description = "Send a song `link` or `query` to play."
-                        e.description += "\nSend `pause` or `resume` to control the music."
-                        e.description += "\nSend `skip` to skip the current song."
-                        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-                        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-                        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-                        e.description += "\nSend `search <query>` to search for a song."
-                        e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
-                        await msg.edit(embed=e, view=favorites(self.bot))
-                        await asyncio.sleep(1)
-            except Exception as e:
-                Console().print_exception(show_locals=False)
+            data = self.db.find_one({"_id": guild.id})
+            if data != None and data['toggle'] is True:
+                try:
+                    channel = await guild.fetch_channel(data['channel'])
+                    msg = await channel.fetch_message(data['message'])
+                    e = discord.Embed(color=discord.Color.blurple())
+                    e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+                    e.description = "Send a song link or query to start playing music!\n"
+                    e.description += "Or click the button to start you favorite songs!"
+                    e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
+                    await msg.edit(embed=e, view=favorites(self.bot))
+                    await asyncio.sleep(1)
+                except discord.errors.NotFound:
+                    pass
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -174,14 +168,9 @@ class MusicChannel(commands.Cog):
             
     async def create_initial_player_message(self, channelid, guild):
         e = discord.Embed(color=discord.Color.blurple())
-        e.title = "Nothing Currently Playing:"
-        e.description = "Send a song `link` or `query` to play."
-        e.description += "\nSend `pause` or `resume` to control the music."
-        e.description += "\nSend `skip` to skip the current song."
-        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-        e.description += "\nSend `search <query>` to search for a song."
+        e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+        e.description = "Send a song link or query to start playing music!\n"
+        e.description += "Or click the button to start you favorite songs!"
         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
         msg = await self.bot.get_channel(channelid).send(embed=e, view=favorites(self.bot))
         return msg.id
@@ -211,15 +200,9 @@ class MusicChannel(commands.Cog):
     async def create_player_msg(self, message):
         data = self.db.find_one({"_id": message.guild.id})
         e = discord.Embed(color=discord.Color.blurple())
-        e.title = "Nothing Currently Playing:"
-        e.description = "Send a song `link` or `query` to play."
-        e.description += "\nSend `pause` or `resume` to control the music."
-        e.description += "\nSend `skip` to skip the current song."
-        e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-        e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-        e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-        e.description += "\nSend `search <query>` to search for a song."
-        e.description += "\nSend `stop` to stop the player."
+        e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+        e.description = "Send a song link or query to start playing music!\n"
+        e.description += "Or click the button to start you favorite songs!"
         e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
         msg = await self.bot.get_channel(data['channel']).send(embed=e, view=favorites(self.bot))
         self.db.update_one({"_id": message.guild.id}, {"$set": {"message": msg.id}})
@@ -228,15 +211,9 @@ class MusicChannel(commands.Cog):
     async def update_player_msg(self, player, guild, playerMsg, status):
         if status == "main":
             e = discord.Embed(color=discord.Colour.blurple())
-            e.title = "Nothing Currently Playing:"
-            e.description = "Send a song `link` or `query` to play."
-            e.description += "\nSend `pause` or `resume` to control the music."
-            e.description += "\nSend `skip` to skip the current song."
-            e.description += "\nSend `dc` or `disconnect` to disconnect from the voice channel."
-            e.description += "\nSend `vol 10` or `volume 10` to change the volume."
-            e.description += "\nSend `rem 1` or `remove 1` to remove a song from the queue."
-            e.description += "\nSend `search <query>` to search for a song."
-            e.description += "\nSend `stop` to stop the player."
+            e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+            e.description = "Send a song link or query to start playing music!\n"
+            e.description += "Or click the button to start you favorite songs!"
             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
             await playerMsg.edit(embed=e, view=favorites(self.bot))
         else:
