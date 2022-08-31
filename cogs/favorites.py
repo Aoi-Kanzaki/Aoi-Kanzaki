@@ -37,6 +37,11 @@ class Favorites(commands.Cog):
                 return await interaction.response.send_message(
                     "<:tickNo:697759586538749982> You don't have any favorite songs!")
             else:
+                try:
+                    lavalink = self.bot.lavalink
+                except AttributeError:
+                    return await interaction.response.send_message(
+                        "Music commands are currently unavaliable!", ephemeral=True)
                 e = discord.Embed(colour=discord.Color.blurple())
                 e.set_author(
                     icon_url=interaction.user.display_avatar.url,
@@ -47,7 +52,7 @@ class Favorites(commands.Cog):
                 for song in data['songs'][0:5]:
                     if not url_rx.match(song):
                         song = f'spsearch:{song}'
-                    result = await self.bot.lavalink.get_tracks(song, check_local=True)
+                    result = await lavalink.get_tracks(song, check_local=True)
                     e.description += f"`{number}.` {result['tracks'][0]['title']}\n"
                     number += 1
                 if len(data['songs']) > 5:

@@ -1,10 +1,22 @@
 {
-    "guildid": "YOUR GUILD ID",
-    "prefix": "YOUR PREFIX",
-    "spotify_id": "YOUR SPOTIFY APP ID",
-    "spotify_secret": "YOUR SPOTIFY APP SECRET",
-    "token": "YOUR BOTS TOKEN",
-    "mongoURI": "Disabled.",
+    "prefix": "your prefix",
+    "token": "your token",
+
+    "slashCommands": {
+        "mode": "global",
+        "guildID": "your guild id"
+    },
+
+    "database": {
+        "uri": "Your mongoURI",
+        "collection": "the name of the db",
+        "enabled": true
+    },
+
+    "spotify": {
+        "secret": "your spotify secret",
+        "id": "your spotify id"
+    },
 
     "TO DISABLED A MODULE SET THE 1 VALUE TO 0": "1 = Enabled. 0 = Disabled.",
     "enabledModules": {
@@ -14,13 +26,12 @@
         "cogs.levels": 1,
         "cogs.mod": 1,
         "cogs.music": 1,
-        "cogs.playlists": "Not finished, will not work.",
+        "cogs.favorites": 1,
         "cogs.utility": 1,
         "cogs.freshChannel": 1,
         "utils.errorhandler": 1,
-        "utils.help": 1,
-        "utils.leveling": 1,
-        "utils.support_join": 1,
+        "utils.help": 0,
+        "utils.support_join": 0,
         "jishaku": 1
     }
 }

@@ -32,8 +32,13 @@ class Dev(commands.Cog):
         @fresh.command(name="lavalinkstats")
         async def lavalink(interaction: discord.Interaction):
             """Shows lavalink music stats."""
-            server_num = len([p for p in self.bot.lavalink.player_manager.players.values() if p.is_playing])
-            server_ids = self.bot.lavalink.player_manager.players
+            try:
+                lavalink = self.bot.lavalink
+            except AttributeError:
+                return interaction.response.send_message(
+                    "Music is not enabled to I'm not playing in any servers!", ephemeral=True)
+            server_num = len([p for p in lavalink.player_manager.players.values() if p.is_playing])
+            server_ids = lavalink.player_manager.players
             server_list = []
             number = 0
             users = 0

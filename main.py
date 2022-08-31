@@ -47,7 +47,7 @@ logger.addHandler(file_handler)
 class Fresh(commands.Bot):
     def __init__(self) -> None:
         super().__init__(
-            command_prefix=commands.when_mentioned_or("f?"),
+            command_prefix=commands.when_mentioned_or(_config['prefix']),
             pm_help=None,
             intents=discord.Intents.all(),
             tree_cls=app_commands.CommandTree
@@ -152,6 +152,19 @@ class Fresh(commands.Bot):
         e.set_thumbnail(url=self.user.avatar.url)
         e.set_author(name=f"Commands for {cmd.name}", icon_url=self.user.avatar.url)
         return await ctx.send(embed=e)
+
+    #Let's try to add a fallback for the music channel when music is not enabled.
+    async def on_message(self, message: discord.Message):
+        if message.author.bot or message.guild is None: return
+        data = self.db.fresh_channel.find_one({"_id": message.guild.id})
+        if data is not None:
+            if message.channel.id == data['channel']:
+                if self.get_cog('MusicChannel') is None or self.get_cog('Music') is None:
+                    msg = await message.reply(
+                        content="<:tickNo:697759586538749982> This music channel is currently disabled! It should be back up soon tho!")
+                    await message.delete()
+                    await asyncio.sleep(15)
+                    await msg.delete()
 
     def run(self):
         try:
