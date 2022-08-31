@@ -91,9 +91,10 @@ class MusicChannel(commands.Cog):
                 inVoice = await self.check_voice(message)
                 if inVoice:
                     player = await self.create_player(message)
-                playerMsg = await message.channel.fetch_message(data['message'])
-                if not playerMsg:
-                    playerMsg = await self.create_player_msg()
+                try:
+                    playerMsg = await message.channel.fetch_message(data['message'])
+                except discord.errors.NotFound:
+                    playerMsg = await self.create_player_msg(message)
                 if msg.startswith('cancel') or msg.startswith('start'): return
                 elif msg.startswith('search'):
                     if inVoice:

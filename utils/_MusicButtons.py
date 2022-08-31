@@ -15,7 +15,7 @@ class favorites(discord.ui.View):
     async def start_fav(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.bot.logger.info(f"Button Start Favs | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
-        if data is None:
+        if data is None or data['songs'] == []:
             return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
         else:
             try:
@@ -274,6 +274,29 @@ class np_msg(discord.ui.View):
         else:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
 
+class ensure_choice(discord.ui.View):
+    def __init__(self, bot, uri) -> None:
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.song = uri
+
+    @discord.ui.button(label="Yes", emoji="<:tickYes:697759553626046546>", style=discord.ButtonStyle.green)
+    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
+        data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        if self.song in data['songs']:
+            self.bot.db.favorites.update_one({"_id": interaction.user.id}, {"$pull": {"songs": self.song}})
+            return await interaction.response.edit_message(
+                content="<:tickYes:697759553626046546> I have removed the song from your favorites!", embed=None, view=None)
+        else:
+            return await interaction.response.edit_message(
+                content="<:tickNo:697759586538749982> There must be an issue because I don't see this song in your favorites!",
+                view=None, embed=None)
+
+    @discord.ui.button(label="No", emoji="<:tickNo:697759586538749982>", style=discord.ButtonStyle.red)
+    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
+        return await interaction.response.edit_message(
+            content="Great, the song will stay!", view=None, embed=None)
+
 class event_hook(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
@@ -285,14 +308,27 @@ class event_hook(discord.ui.View):
 
     @discord.ui.button(label="Love", emoji="🤍", style=discord.ButtonStyle.blurple)
     async def love_song(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button love | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        self.bot.logger.info(
+            f"Button love | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.fav.find_one({"_id": interaction.user.id})
         if data is None:
             self.fav.insert_one({"_id": interaction.user.id})
-            self.fav.update_one({"_id": interaction.user.id}, {"$set": {"songs": []}})
-        self.fav.update_one({"_id": interaction.user.id}, {"$push": {"songs": self.player.current.uri}})
-        return await interaction.response.send_message(
-            "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
+            self.fav.update_one({"_id": interaction.user.id}, {"$set": {"songs": [self.player.current.uri]}})
+            return await interaction.response.send_message(
+                "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
+        else:
+            if self.player.current.uri in data['songs']:
+                e = discord.Embed(colour=discord.Colour.blurple())
+                e.set_author(
+                    name=interaction.user.display_name, icon_url=interaction.user.display_avatar)
+                e.description = "This song seems to already be in your favorite songs?\n"
+                e.description += "Would you like to remove it?"
+                await interaction.response.send_message(
+                    embed=e, view=ensure_choice(self.bot, self.player.current.uri), ephemeral=True)
+            else:
+                self.fav.update_one({"_id": interaction.user.id}, {"$push": {"songs": self.player.current.uri}})
+                return await interaction.response.send_message(
+                    "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
 
     @discord.ui.button(label="Previous", emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):

@@ -21,6 +21,9 @@ class Favorites(commands.Cog):
                 if not url_rx.match(link):
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> You need to pass a valid link to add to your favorites!")
+                elif link in data['songs']:
+                    return await interaction.response.send_message(
+                        "<:tickNo:697759586538749982> This song is already in your favorites!")
                 else:
                     self.db.update_one({"_id": interaction.user.id}, {"$push": {"songs": link}})
                     return await interaction.response.send_message(
