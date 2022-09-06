@@ -1,11 +1,13 @@
 import math
 import discord
 import lavalink
+import logging
 from aiohttp import request
 from lavalink.utils import format_time
 from lavalink.models import AudioTrack
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
 
+log = logging.getLogger(__name__)
 class favorites(discord.ui.View):
     def __init__(self, bot) -> None:
         super().__init__(timeout=None)
@@ -13,7 +15,7 @@ class favorites(discord.ui.View):
 
     @discord.ui.button(label="Start My Favorites", custom_id="start_fav", style=discord.ButtonStyle.green)
     async def start_fav(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button Start Favs | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button Start Favs | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
             return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
@@ -23,7 +25,7 @@ class favorites(discord.ui.View):
             except Exception as error:
                 print(error)
                 if isinstance(error, lavalink.errors.NodeError):
-                    self.bot.logger.error(f"Tried to join a voice channel in {interaction.guild.name} but there are no avaliable nodes.")
+                    log.error(f"Tried to join a voice channel in {interaction.guild.name} but there are no avaliable nodes.")
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
             if not interaction.user.voice or not interaction.user.voice.channel:
@@ -129,7 +131,7 @@ class queue_msg(discord.ui.View):
 
     @discord.ui.button(label="Prev Page", emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button prev_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button prev_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page-1
         if self.page < 1:
             self.page = math.ceil(len(self.player.queue) / 10)
@@ -155,7 +157,7 @@ class queue_msg(discord.ui.View):
 
     @discord.ui.button(label="Next Page", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button next_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button next_page | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.page = self.page+1
         if self.page > math.ceil(len(self.player.queue) / 10):
             self.page = 1
@@ -181,7 +183,7 @@ class queue_msg(discord.ui.View):
 
     @discord.ui.button(label="Done", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button done | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button done | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         return await interaction.message.delete()
 
 class np_msg(discord.ui.View):
@@ -193,7 +195,7 @@ class np_msg(discord.ui.View):
 
     @discord.ui.button(label="Queue", emoji="<:queue:1011747675491811458>", style=discord.ButtonStyle.blurple)
     async def queue(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button queue | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button queue | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if not self.player.queue:
             return await interaction.response.send_message(content="Nothing playing.", ephemeral=True)
         if self.player.current.stream:
@@ -227,7 +229,7 @@ class np_msg(discord.ui.View):
         else:
             button.emoji = "<:pause:1010305240672780348>"
             button.label = "Pause"
-        self.bot.logger.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             await self.player.set_pause(not self.player.paused)
             e = discord.Embed(colour=discord.Color.blurple())
@@ -256,7 +258,7 @@ class np_msg(discord.ui.View):
 
     @discord.ui.button(label="Skip", emoji= "<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             await self.player.skip()
             return await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
@@ -265,7 +267,7 @@ class np_msg(discord.ui.View):
 
     @discord.ui.button(label="Stop", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.is_playing:
             self.player.queue.clear()
             await self.player.stop()
@@ -308,7 +310,7 @@ class event_hook(discord.ui.View):
 
     @discord.ui.button(label="Love", emoji="🤍", style=discord.ButtonStyle.blurple)
     async def love_song(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(
+        log.info(
             f"Button love | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.fav.find_one({"_id": interaction.user.id})
         if data is None:
@@ -332,7 +334,7 @@ class event_hook(discord.ui.View):
 
     @discord.ui.button(label="Previous", emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def previous(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button previous | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button previous | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.fetch("prev_song") is None:
             return await interaction.response.send_message(content="No previous track.", ephemeral=True)
         last_track = await self.player.node.get_tracks(self.player.fetch("prev_song"))
@@ -354,7 +356,7 @@ class event_hook(discord.ui.View):
 
     @discord.ui.button(label="Pause", emoji="<:pause:1010305240672780348>", style=discord.ButtonStyle.blurple)
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button pause/resume | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.player.paused is False:
             button.emoji = "<:play:1010305312227606610>"
             button.label = "Resume"
@@ -445,13 +447,13 @@ class event_hook(discord.ui.View):
 
     @discord.ui.button(label="Skip", emoji="<:skip:1010321396301299742>", style=discord.ButtonStyle.blurple)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button skip | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         await interaction.response.send_message(content="<:tickYes:697759553626046546> Skipped.", ephemeral=True)
         await self.player.skip()
 
     @discord.ui.button(label="Stop", emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.bot.logger.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        log.info(f"Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         if self.data != None and interaction.channel.id == self.data['channel']:
             channel = await self.bot.fetch_channel(self.data['channel'])
             msg = await channel.fetch_message(self.data['message'])
@@ -467,7 +469,7 @@ class event_hook(discord.ui.View):
             if vc:
                 await self.bot.get_guild(int(self.player.guild_id)).voice_client.disconnect(force=True)
             self.bot.lavalink.player_manager.remove(self.player.guild_id)
-            self.bot.logger.info(f"Fresh Channel | Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+            log.info(f"Fresh Channel | Button stop | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)

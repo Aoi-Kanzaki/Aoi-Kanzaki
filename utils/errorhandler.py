@@ -1,8 +1,7 @@
+import sys
 import discord
+import traceback
 from discord.ext import commands
-from rich.console import Console
-
-console = Console()
 
 class ErrorHandler(commands.Cog):
     def __init__(self, bot):
@@ -30,8 +29,12 @@ class ErrorHandler(commands.Cog):
             await ctx.send('<:tickNo:697759586538749982> Mate you can\'t use that command in DMS, please invite me to a server or go to one I\'m in.', delete_after=10)
         elif isinstance(error, discord.Forbidden):
             await ctx.send("<:tickNo:697759586538749982> I dont have permissions to execute this command.", delete_after=5)
-        else:
-            print(error)
+        elif isinstance(error, commands.CommandInvokeError):
+            origin_ = error.original
+            if not isinstance(origin_, discord.HTTPException):
+                print(f"In {ctx.command.qualified_name}:", file=sys.stderr)
+                traceback.print_tb(origin_.__traceback__)
+                print(f"{origin_.__class__.__name__}: {origin_}", file=sys.stderr)
 
 async def setup(bot):
     await bot.add_cog(ErrorHandler(bot))
