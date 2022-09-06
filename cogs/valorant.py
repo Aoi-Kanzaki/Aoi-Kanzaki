@@ -100,6 +100,8 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
                         return await interaction.followup.send(embed=e, file=image)
                     except:
                         return await interaction.followup.send(embed=e)
+                else:
+                    return await interaction.followup.send(embed=e)
             else:
                 return await interaction.followup.send(embed=e)
         else:
@@ -144,6 +146,8 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
                         return await interaction.followup.send(embed=e)
                 else:
                     return await interaction.followup.send(embed=e)
+            else:
+                return await interaction.followup.send(embed=e)
         else:
             return await interaction.followup.send(embed=e)
 
