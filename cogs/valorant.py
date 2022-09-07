@@ -1,16 +1,62 @@
 import json
+from sqlite3 import Time
 import aiohttp
 import discord
-import numpy as np
+import numpy
 from discord.ext import commands
-from matplotlib import pyplot as plt
+from matplotlib import pyplot
 from discord import app_commands as Fresh
 from playwright.async_api import async_playwright
 
 class Valorant(commands.GroupCog, name="valorant", description="All valorant related commands."):
     def __init__(self, bot):
+        fresh = bot.tree
         self.bot = bot
         self.db = self.bot.db.valorant
+
+        @fresh.context_menu(name="Valorant Stats")
+        async def val_stats_context(interaction: discord.Interaction, member: discord.Member):
+            await interaction.response.defer()
+            if member is None: member = interaction.user
+            account = self.db.find_one({"_id": member.id})
+            if account is None:
+                return await interaction.followup.send(
+                    f"<:tickNo:697759586538749982> No account found for {member.mention}")
+            e = discord.Embed(colour=discord.Colour.blurple())
+            stats = await self.get_stats(account['data']['name'], account['data']['tag'])
+            if stats == "Private":
+                return await interaction.followup.send(
+                    "<:tickNo:697759586538749982> Account is private, I cannot view stats.")
+            e.set_thumbnail(url=stats["avatarUrl"])
+            e.set_author(name=stats['user'], icon_url=stats["avatarUrl"])
+            e.add_field(name="Win %", value=stats["win_pct"])
+            e.add_field(name="Headshot %", value=stats["hs_pct"])
+            e.add_field(name="K/D Ratio", value=stats["kd_ratio"])
+            rank = await self.get_rank(account['data']['name'], account['data']['tag'], account['data']['region'])
+            if rank != "Failed to get comp data.":
+                if rank['games_needed_for_rating'] == 0:
+                    rankName = f"{rank['currenttierpatched']}, with {rank['ranking_in_tier']}/100 RR."
+                    e.add_field(name="Competitive", value=rankName, inline=False)
+                    compData = await self.comp_history(
+                        account['data']['name'], account['data']['tag'], account['data']['region'])
+                    if compData != None:
+                        ratings = []
+                        try:
+                            for match in compData['data']:
+                                ratings.append(match['mmr_change_to_last_game'])
+                            await self.draw_graph(ratings)
+                            image = discord.File("ratings.png",filename="ratings.png")
+                            e.set_image(url=f"attachment://ratings.png")
+                            e.set_thumbnail(url=account['data']['card']['small'])
+                            return await interaction.followup.send(embed=e, file=image)
+                        except:
+                            return await interaction.followup.send(embed=e)
+                    else:
+                        return await interaction.followup.send(embed=e)
+                else:
+                    return await interaction.followup.send(embed=e)
+            else:
+                return await interaction.followup.send(embed=e)
 
     @Fresh.command(name="link")
     async def val_link(self, interaction: discord.Interaction, username: str, tag: str):
@@ -58,7 +104,8 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
             e.set_image(url=f"attachment://ratings.png")
             e.set_thumbnail(url=account['data']['card']['small'])
             return await interaction.followup.send(embed=e, file=image)
-        except:
+        except Exception as e:
+            print(e)
             return await interaction.followup.send(
                 "<:tickNo:697759586538749982> I have failed to fetch your comp data!")
 
@@ -72,7 +119,11 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
             return await interaction.followup.send(
                 f"<:tickNo:697759586538749982> No account found for {member.mention}")
         e = discord.Embed(colour=discord.Colour.blurple())
-        stats = await self.get_stats(account['data']['name'], account['data']['tag'])
+        try:
+            stats = await self.get_stats(account['data']['name'], account['data']['tag'])
+        except TimeoutError:
+            return await interaction.followup.send(
+                "I was unable to get player stats.")
         if stats == "Private":
             return await interaction.followup.send(
                 "<:tickNo:697759586538749982> Account is private, I cannot view stats.")
@@ -116,7 +167,11 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
             return await interaction.followup.send(
                 "<:tickNo:697759586538749982> No account found with that username and tag.")
         e = discord.Embed(colour=discord.Colour.blurple())
-        stats = await self.get_stats(account['data']['name'], account['data']['tag'])
+        try:
+            stats = await self.get_stats(account['data']['name'], account['data']['tag'])
+        except TimeoutError:
+            return await interaction.followup.send(
+                "I was unable to get player stats.")
         if stats == "Private":
             return await interaction.followup.send(
                 "<:tickNo:697759586538749982> Account is private, I cannot view stats.")
@@ -173,72 +228,70 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
                 return data
 
     async def get_stats(self, username, tag):
-        async with async_playwright() as p: 
-            for browser_type in [p.firefox]: 
-                browser = await browser_type.launch() 
-                page = await browser.new_page()
-                await page.goto(f"https://api.tracker.gg/api/v2/valorant/standard/profile/riot/{username}%23{tag}")
-                data = json.loads(await page.inner_text('pre'))
+        async with async_playwright() as p:
+            browser = await p.firefox.launch() 
+            page = await browser.new_page()
+            await page.goto(f"https://api.tracker.gg/api/v2/valorant/standard/profile/riot/{username}%23{tag}")
+            data = json.loads(await page.inner_text('pre'))
+            try:
+                if data['errors'][0]['message'] == 'This profile is still private.':
+                    return "Private"
+            except KeyError:
+                user = data['data']["platformInfo"]["platformUserHandle"]
+                avatarUrl = data['data']["platformInfo"]["avatarUrl"]
+
+                stats = data['data']["segments"][0]["stats"]
+                win_pct = stats["matchesWinPct"]["displayValue"]
+                hs_pct = stats["headshotsPercentage"]["displayValue"]
+                kd_ratio = stats["kDRatio"]["displayValue"]
+                aces = stats["aces"]["displayValue"]
+                time_played = stats["timePlayed"]["displayValue"]
                 try:
-                    if data['errors'][0]['message']=='This profile is still private.':
-                        return "Private"
-                except KeyError:
-                    user = data['data']["platformInfo"]["platformUserHandle"]
-                    avatarUrl = data['data']["platformInfo"]["avatarUrl"]
+                    rank = stats["rank"]["metadata"]["tierName"]
+                    rankIconUrl = stats["rank"]["metadata"]["iconUrl"]
+                except:
+                    rank = "Unrated"
+                    rankIconUrl = "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/0/smallicon.png"
 
-                    stats = data['data']["segments"][0]["stats"]
-                    win_pct = stats["matchesWinPct"]["displayValue"]
-                    hs_pct = stats["headshotsPercentage"]["displayValue"]
-                    kd_ratio = stats["kDRatio"]["displayValue"]
-                    aces = stats["aces"]["displayValue"]
-                    time_played = stats["timePlayed"]["displayValue"]
-                    try:
-                        rank = stats["rank"]["metadata"]["tierName"]
-                        rankIconUrl = stats["rank"]["metadata"]["iconUrl"]
-                    except:
-                        rank = "Unrated"
-                        rankIconUrl = "https://media.valorant-api.com/competitivetiers/564d8e28-c226-3180-6285-e48a390db8b1/0/smallicon.png"
-
-                    DATA = dict(
-                        user=user,
-                        avatarUrl=avatarUrl,
-                        win_pct=win_pct,
-                        hs_pct=hs_pct,
-                        kd_ratio=kd_ratio,
-                        aces=aces,
-                        time_played=time_played,
-                        rank=rank,
-                        rankIconUrl=rankIconUrl,
-                    )
-                    return DATA
+                DATA = dict(
+                    user=user,
+                    avatarUrl=avatarUrl,
+                    win_pct=win_pct,
+                    hs_pct=hs_pct,
+                    kd_ratio=kd_ratio,
+                    aces=aces,
+                    time_played=time_played,
+                    rank=rank,
+                    rankIconUrl=rankIconUrl,
+                )
+                return DATA
 
     async def draw_graph(self, ratings):
-        plt.clf()
-        fig, ax = plt.subplots(figsize =(12,5),dpi=200)
-        colors = ["#fe7478" if i < 0 else "#41d391" for i in ratings]
-        ax.bar(np.arange(0,len(ratings)/2,0.5),ratings, color=colors,zorder=2,width=0.35)
-        for s in ['top', 'bottom', 'right']:
-            ax.spines[s].set_visible(False)
-        ax.spines['left'].set_color('white')
-        plt.axhline(y=0, color='white', linestyle='-')
-        ax.tick_params(colors='white')
-        ax.axes.xaxis.set_visible(False)
-        plt.yticks(range(min(ratings)-5, max(ratings) + 7,5))
-        ax.grid(b = True, color ='white',
-                linestyle ='-', linewidth = 0.5,
-                alpha = 0.2,zorder=0)
-        for i in ax.patches:
-            #print(i)
-            if i.get_height()>0:
-                plt.text(i.get_x()+0.1, i.get_height()+1, '+' + str(round(i.get_height())),
-                    fontsize = 15, fontweight ='bold',
-                    color ='white')
+        pyplot.clf()
+        color = ["#fe7478" if i < 0 else "#41d391" for i in ratings]
+        figure, axes = pyplot.subplots(figsize=(10, 2.5), dpi=150)
+        axes.tick_params(colors='white')
+        axes.axes.xaxis.set_visible(False)
+        axes.bar(numpy.arange(0, len(ratings) / 2,0.5), ratings, color=color, zorder=1, width=.4)
+        for spine in ['top', 'bottom', 'right', 'left']:
+            if spine == 'left':
+                axes.spines['left'].set_color('white')
             else:
-                plt.text(i.get_x()+0.11, i.get_height()-3, str(round(i.get_height())),
-                    fontsize = 15, fontweight ='bold',
-                    color ='white')
-        plt.savefig('ratings.png',transparent=True)
-        plt.close()
+                axes.spines[spine].set_visible(False)
+        pyplot.axhline(color='white', linestyle='-')
+        pyplot.yticks(range(min(ratings)-5, max(ratings) + 7,5))
+        axes.grid(color='white', alpha=0.1)
+        for bar in axes.patches:
+            x = bar.get_x()
+            height = bar.get_height()
+            if height > 0:
+                pyplot.text(x + .06, height + 1.5, '+' + str(round(height)),
+                    fontsize=10, color='white')
+            else:
+                pyplot.text(x + .06, height - 3.5, str(round(height)),
+                    fontsize=10, color='white')
+        pyplot.savefig('ratings.png', transparent=True)
+        pyplot.close()
 
 async def setup(bot):
     await bot.add_cog(Valorant(bot))

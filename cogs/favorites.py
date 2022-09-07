@@ -2,16 +2,18 @@ import re
 import discord
 from typing import List
 from discord.ext import commands
+from discord import app_commands
 from discord import app_commands as Fresh
 
 url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
 
-class Favorites(commands.Cog):
+class Favorites(commands.GroupCog, name="favorites", description="All fav songs related commands."):
     def __init__(self, bot):
+        fresh = bot.tree
         self.bot = bot
         self.db = self.bot.db.favorites
 
-        @Fresh.context_menu(name="Favorite Songs")
+        @fresh.context_menu(name="Favorite Songs")
         async def fav_songs_context(interaction: discord.Interaction, member: discord.Member):
             """Show's a users favorite songs."""
             data = self.db.find_one({"_id": member.id})
@@ -29,7 +31,11 @@ class Favorites(commands.Cog):
                 for song in data['songs'][0:5]:
                     if not url_rx.match(song):
                         song = f'spsearch:{song}'
-                    result = await self.bot.lavalink.get_tracks(song, check_local=True)
+                    try:
+                        result = await self.bot.lavalink.get_tracks(song, check_local=True)
+                    except:
+                        return await interaction.response.send_message(
+                            "The music module is not enabled! Or I have encountered a more serious error.", ephemeral=True)
                     e.description += f"`{number}.` {result['tracks'][0]['title']}\n"
                     number += 1
                 if len(data['songs']) > 5:
@@ -37,7 +43,7 @@ class Favorites(commands.Cog):
                     e.description += f"\nNot showing **{total}** more songs..."
                 return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="favadd")
+    @Fresh.command(name="add")
     async def fav_add(self, interaction: discord.Interaction, link: str):
         """Adds a song to your favorites."""
         data = self.db.find_one({"_id": interaction.user.id})
@@ -56,7 +62,7 @@ class Favorites(commands.Cog):
                 return await interaction.response.send_message(
                     "<:tickYes:697759553626046546> Done, it's now added to your favorites!")
 
-    @Fresh.command(name="favshow")
+    @Fresh.command(name="show")
     async def fav_show(self, interaction: discord.Interaction):
         """Show's how many favorite you have."""
         data = self.db.find_one({"_id": interaction.user.id})

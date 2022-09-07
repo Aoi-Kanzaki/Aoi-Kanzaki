@@ -9,3 +9,6 @@ motor
 python-weather
 rich
 jishaku
+numpy
+matplotlib
+requests_oauthlib

@@ -15,10 +15,11 @@ class favorites(discord.ui.View):
 
     @discord.ui.button(label="Start My Favorites", custom_id="start_fav", style=discord.ButtonStyle.green)
     async def start_fav(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
         log.info(f"Button Start Favs | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
-            return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
+            return await interaction.followup.send("You don't have any favorite songs.")
         else:
             try:
                 player = self.bot.lavalink.player_manager.create(interaction.guild.id, endpoint="us")
@@ -26,22 +27,22 @@ class favorites(discord.ui.View):
                 print(error)
                 if isinstance(error, lavalink.errors.NodeError):
                     log.error(f"Tried to join a voice channel in {interaction.guild.name} but there are no avaliable nodes.")
-                    return await interaction.response.send_message(
-                        "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
+                    return await interaction.followup.send(
+                        "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.")
             if not interaction.user.voice or not interaction.user.voice.channel:
-                return await interaction.response.send_message(
-                    '<:tickNo:697759586538749982> Join a voicechannel first.', ephemeral=True)
+                return await interaction.followup.send(
+                    '<:tickNo:697759586538749982> Join a voicechannel first.')
             if not player.is_connected:
                 if (not interaction.user.voice.channel.permissions_for(interaction.guild.me).connect or not 
                         interaction.user.voice.channel.permissions_for(interaction.guild.me).speak):
-                    return await interaction.response.send_message(
-                        '<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.', ephemeral=True)
+                    return await interaction.followup.send(
+                        '<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.')
                 player.store('channel', interaction.channel.id)
                 await interaction.user.voice.channel.connect(cls=LavalinkVoiceClient)
             else:
                 if int(player.channel_id) != interaction.user.voice.channel.id:
-                    return await interaction.response.send_message(
-                        '<:tickNo:697759586538749982> You need to be in my voicechannel.', ephemeral=True)
+                    return await interaction.followup.send(
+                        '<:tickNo:697759586538749982> You need to be in my voicechannel.')
             for song in data['songs']:
                 results = await self.bot.lavalink.get_tracks(song, check_local=True)
                 if results.load_type == 'PLAYLIST_LOADED':
@@ -54,7 +55,7 @@ class favorites(discord.ui.View):
             player.store('channel', interaction.channel.id)
             if not player.is_playing:
                 await player.play()
-            return await interaction.response.send_message("I have started your favorite songs!", ephemeral=True)
+            return await interaction.followup.send("I have started your favorite songs!")
 
 class search_msg(discord.ui.View):
     def __init__(self, bot, guild_id, results) -> None:

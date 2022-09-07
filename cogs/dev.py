@@ -4,10 +4,8 @@ import glob
 import time
 import codecs
 import pathlib
-from typing import List
 import discord
-import traceback
-from utils import _checks
+import asyncio
 from discord.ext import commands
 from discord import app_commands as Fresh
 
@@ -59,6 +57,8 @@ class Dev(commands.Cog):
     @Fresh.command(name="botinfo")
     async def botinfo(self, interaction: discord.Interaction):
         """Shows info about the bot."""
+        await interaction.response.defer(thinking=False)
+        await asyncio.sleep(3)
         total = 0
         file_amount = 0
         pyvi = sys.version_info
@@ -94,7 +94,7 @@ class Dev(commands.Cog):
         e.add_field(name="Code Information:", value=code)
         e.set_author(name=f"F.res.h {self.bot.version}", icon_url=interaction.user.avatar)
         e.set_thumbnail(url=self.bot.user.avatar)
-        await interaction.response.send_message(embed=e)
+        await interaction.followup.send(embed=e)
 
     @Fresh.command()
     async def ping(self, interaction: discord.Interaction):
