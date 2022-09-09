@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Fresh Dashboard</title>
+    <meta name="title" content="Fresh Panel">
+    <link rel="icon" type="image/png" href="static/images/profilePic.png">
+    <link rel="stylesheet" type="text/css" href="static/index.css">
+    <meta property="og:title" content="Fresh Panel"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="http://jonnythedev.com"/>
+    <meta property="og:image" content="http://jonnythedev.com/static/images/profilePic.png"/>
+    <meta property="og:description" content="Manage your account or server settings with the all new Fresh panel!"/>
+    <meta name="theme-color" content="#0e9a51">
+  </head>
+  <body>
+    <h1>Fresh Dashboard!</h1>
+
+    <h2>Fresh is in: {{guild_count}} servers</h2>
+    <div class="picker">
+      <h3>Hello, {{username}}! Please select a server to get started</h3>
+      <hr />
+      <section class="cards">
+        {% for guild in guilds %}
+        <div class="card">
+          <a href="/dashboard/{{guild.id}}">
+            {% if guild.icon_url is not none %}
+            <img src="{{guild.icon_url}}" class="{{guild.class_color}}" />
+            {% else %}
+            <img
+              src="https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png"
+              class="{{guild.class_color}}"
+            />
+            {% endif %}
+          </a>
+          <br />
+          {{ guild.name }}
+        </div>
+        {% endfor %}
+      </section>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fresh Panel</title>
+    <meta name="title" content="Fresh Panel">
+    <link rel="icon" type="image/png" href="static/images/profilePic.png">
+    <link rel="stylesheet" type="text/css" href="static/index.css">
+    <meta property="og:title" content="Fresh Panel"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:url" content="http://jonnythedev.com"/>
+    <meta property="og:image" content="http://jonnythedev.com/static/images/profilePic.png"/>
+    <meta property="og:description" content="Manage your account or server settings with the all new Fresh panel!"/>
+    <meta name="theme-color" content="#0e9a51">
+</head>
+<body>
+    <h1>Welcome to Fresh!</h1>
+    <p align="center">
+        {% if not authorized %}
+        <a href="/login"><button>Login with Discord</button></a>
+        {% else %}
+        <a href="/dashboard"><button>Open Dashboard</button></a>
+        {% endif %}
+    </p>
+</body>
+</html>
