@@ -11,7 +11,7 @@ ipc = Client(secret_key=config['secret_key'])
 app.config["SECRET_KEY"] = config['secret_key']
 app.config["DISCORD_CLIENT_ID"] = 834979964062662656
 app.config["DISCORD_CLIENT_SECRET"] = "LTjg8Ognzdcmqj2L84EWtKLuIO9E3i7E"
-app.config["DISCORD_REDIRECT_URI"] = "http://127.0.0.1:5000/callback"
+app.config["DISCORD_REDIRECT_URI"] = "http://jonnythedev.com/callback"
 discord = DiscordOAuth2Session(app)
 
 @app.route("/")
