@@ -166,9 +166,9 @@ class Fresh(commands.Bot):
         maintable.add_row("Python version", "{}.{}.{}".format(*os.sys.version_info[:3]))
         maintable.add_row("Discord.py version", f"{discord.__version__}")
         if _config["database"]["enabled"] != False:            
-            self.db = pymongo.MongoClient(_config["database"]["uri"])
-            self.db = self.db[_config["database"]["collection"]]
-            maintable.add_row("Database Status", f'Connected to {_config["database"]["collection"]}!')
+            collection = _config["database"]["collection"]
+            self.db = pymongo.MongoClient(_config["database"]["uri"])[collection]
+            maintable.add_row("Database Status", f'Connected to {collection}!')
         else:
             maintable.add_row("Database Status", "Disabled, not connecting.")
         modulestable = await self.load_modules()

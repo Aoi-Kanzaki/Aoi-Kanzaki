@@ -1,73 +1,241 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,700);
+
+:root {
+	font-size: 10px;
+}
+
 body {
-    background-image: url("/static/images/background.jpg");
-    background-repeat: no-repeat;
-    background-size: 100%;
-    color: white
+	font-family: "Roboto", Arial, sans-serif;
+	background-color: #101010;
+  color: white;
 }
 
-h1, h2 {
-    text-align: center;
+.welcome {
+  position: absolute;
+  display: block;
+  margin: 5rem 13rem;
+  top: 30rem;
+}
+.loginbutton {
+  color: #1fcb4c;
+  background: none;
+  border: 2px solid;
+  font: inherit;
+  line-height: 1;
+  margin: 0.5em;
+  padding: 1em 2em;
+  transition: 0.25s;
+}
+.loginbutton:hover,
+.loginbutton:focus {
+  box-shadow: 0 0.5em 0.5em -0.4em #02b360;
+  transform: translateY(-0.25em);
+  border-color: #02b360;
+  color: white;
 }
 
-button {
-    background-color: #0e9a51;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    border-radius: 12px;
-}
-button:hover {
-    transform: scale(1.1);
-    cursor: pointer;
+header {
+  z-index: 999;
+  left: -1px;
+	position: fixed;
+	width: 100%;
+	height: 30em;
 }
 
-.picker {
-  margin: 2em;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-  background-color: #23272a;
-  border-radius: 3px;
+header::before {
+	content: "";
+	display: block;
+	position: absolute;
+	left: 0;
+	bottom: 6em;
+	width: 100%;
+	height: 40em;
+	z-index: -1;
+	transform: skewY(-3.5deg);
+	background: 
+		linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,.6)),
+		url(/static/images/background.jpg) no-repeat center,
+		linear-gradient(#4e4376, #2b5876);
+	background-size: cover;
+  border-bottom: 0.2em solid #2c7640;
 }
 
-.picker h3 {
-  text-align: center;
-  padding-top: 2%;
-  font-family: Georgia, "Times New Roman", Times, serif;
-  font-size: 1.5em;
+header h1 {
+	font-size: calc(2.8em + 2.6vw);
+	font-weight: 700;
+	letter-spacing: .01em;
+	padding: 10rem 0 0 4.5rem;
+	text-shadow: .022em .022em .022em #111;
+	color: #2c7640;
+}
+
+p {
+	font-size: calc(2em + .25vw);
+	font-weight: 400;
+	line-height: 2;
+	margin-bottom: 1.5em;
+	color: #fcfcfc;
+}
+
+.cards .card figcaption {
+  position: absolute;
 }
 
 .cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  justify-items: center;
+  display: flex;
+  flex-flow: row wrap;
 }
 
-.card {
-  margin: 0.5em;
-  display: grid;
-  grid-template-rows: 1fr 0.2fr;
-  justify-items: center;
+.cards .card {
+  margin: 20px;
+  width: 180px;
+  height: 270px;
+  overflow: hidden;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.8);
+  transform-origin: center top;
+  transform-style: preserve-3d;
+  transform: translateZ(0);
+  transition: 0.3s;
+}
+.cards .card img {
+  width: 100%;
+  min-height: 100%;
 }
 
-.card:hover {
-  box-shadow: rgba(2, 8, 20, 0.1) 0px 0.35em 1.175em,
-    rgba(2, 8, 20, 0.08) 0px 0.175em 0.5em;
-  transform: scale(1.1);
+.cards .card figcaption {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  padding-bottom: 10px;
+  font-size: 20px;
+  background: none;
+  color: #fff;
+  transform: translateY(100%);
+  transition: 0.3s;
 }
 
-.card img {
-  border-radius: 50%;
-  width: 7em;
-  height: 7em;
+.cards .card:hover,
+.cards .card:focus,
+.cards .card:active {
+  box-shadow: 0 8px 16px 3px rgba(0,0,0,0.6);
+  transform: translateY(-3px) scale(1.05) rotateX(15deg);
 }
 
-.green-border {
-  border: 4px solid rgb(106, 255, 170);
+.cards .card:hover figcaption,
+.cards .card:focus figcaption,
+.cards .card:active figcaption {
+  transform: none;
 }
 
-.red-border {
-  border: 4px solid rgb(255, 103, 90);
+.guild-wrapper {
+  position: absolute;
+  top: 70vh;
+  width: 90vw;
+  margin: 5rem 10rem;
+}
+.guild-wrapper h2 {
+  font-size: 25px;
+  margin: 20px 25px;
+}
+
+.account-wrapper {
+  position: absolute;
+  top: 40vh;
+  left: 7vw;
+}
+
+.account-wrapper h2 {
+  position: initial;
+  font-size: 30px;
+  margin-top: -15px;
+}
+
+.account-wrapper h3 {
+  font-size: 24px;
+  margin: 8px 33px;
+}
+
+.account-wrapper h6 {
+  font-size: 12px;
+  margin: 11px 50px;
+}
+
+.account-wrapper .profile {
+  top: 5rem;
+  position: absolute !important;
+  background-color: #2c7640;
+  border-radius: 5px;
+  box-shadow: 0px 10px 20px -10px rgb(0 0 0 / 75%);
+  color: #B3B8CD;
+  padding: 35px 47px 16px 23px;
+  position: absolute;
+  width: 120px;
+  text-align: center;
+}
+
+.account-wrapper .picture {
+	padding: 7px;
+  border-radius: 50% !important;
+}
+
+.favorites {
+  position: absolute;
+  left: 12vw;
+  width: 25vw;
+  background-color: #0a0909;
+  height: 20vh;
+  border-radius: 5px;
+  padding: 35px 25px;
+  box-shadow: 0 5px 10px rgb(0 0 0 / 80%);
+}
+
+.favorites h1 {
+  position: absolute;
+  top: 6px;
+  font-size: 25px;
+  padding: 2px;
+}
+
+.favorites li {
+  position: relative;
+  font-size: 17px;
+  top: 25px;
+  left: 3px;
+  padding: 3px;
+}
+
+.spotify-card {
+  background-color: #0a0909;
+  position: relative;
+  left: 41vw;
+  width: 14vw;
+  box-shadow: 0 5px 4px rgb(0 0 0 / 80%);
+  border-radius: 4px;
+  padding: 23px;
+  border: 4px solid #2c7640;
+  top: 2px;
+}
+.spotify-card img {
+  height: 7vh;
+  opacity: 0.7;
+}
+.spotify-card h1 {
+  position: absolute;
+  font-size: 30px;
+  top: 20px;
+  margin: 20px 5vw;
+}
+.spotify-card h2 {
+  position: absolute;
+  font-size: 25px;
+  top: 7px;
+  margin: 20px 5vw;
+}
+
+.guildS-main p {
+  position: absolute;
+  top: 35vh;
+  font-size: 42px;
+  margin: 3rem 10rem;
 }

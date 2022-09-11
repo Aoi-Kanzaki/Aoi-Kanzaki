@@ -13,30 +13,51 @@
     <meta name="theme-color" content="#0e9a51">
   </head>
   <body>
-    <h1>Fresh Dashboard!</h1>
-
-    <h2>Fresh is in: {{guild_count}} servers</h2>
-    <div class="picker">
-      <h3>Hello, {{username}}! Please select a server to get started</h3>
-      <hr />
-      <section class="cards">
-        {% for guild in guilds %}
-        <div class="card">
-          <a href="/dashboard/{{guild.id}}">
-            {% if guild.icon_url is not none %}
-            <img src="{{guild.icon_url}}" class="{{guild.class_color}}" />
-            {% else %}
-            <img
-              src="https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png"
-              class="{{guild.class_color}}"
-            />
-            {% endif %}
-          </a>
-          <br />
-          {{ guild.name }}
-        </div>
+    <header>
+        <h1>Hello, {{user.name}}!</h1>
+    </header>
+    <div class="account-wrapper">
+      <h2>Account Settings:</h2>
+      <div class="profile">
+        <img class="picture" src="{{user.avatar_url}}"/>
+        <h3>{{user.name}}</h3>
+        <h6>#{{user.discriminator}}</h6>
+      </div>
+      <div class="favorites">
+        <h1>Your Favorite Songs:</h1>
+        {% if favsongs is not none %}
+        {% for song in favsongs %}
+        <li>{{ song }} </li>
         {% endfor %}
-      </section>
+        {% else %}
+        <li>You dont have any favorites songs! Try adding some in discord!</li>
+        {% endif %}
+      </div>
+      <div class="spotify-card">
+        <img src="/static/images/spotify.png"/>
+        {% if spotify_account is not none %}
+        <h1>Connected</h1>
+        {% else %}
+        <h2>Connect Account</h2>
+        {% endif %}
+      </div>
+    </div>
+    <div class="guild-wrapper">
+      <h2>Please select a server, if you would like to change guild settings.</h2>
+        <div class="cards">
+			{% for guild in guilds %}
+      <figure class="card">
+			  <a href="/dashboard/{{guild.id}}">
+					{% if guild.icon_url is not none %}
+          <img src="{{guild.icon_url}}" />
+					{% else %}
+					<img src="https://discordapp.com/assets/322c936a8c8be1b803cd94861bdfa868.png" />
+					{% endif %}
+          <figcaption>{{ guild.name }}</figcaption>
+			    </a>
+	    </figure>
+			{% endfor %}
+        </div>
     </div>
   </body>
 </html>

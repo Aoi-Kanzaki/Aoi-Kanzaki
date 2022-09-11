@@ -12,3 +12,5 @@ jishaku
 numpy
 matplotlib
 requests_oauthlib
+pymongo[srv]
+playwright

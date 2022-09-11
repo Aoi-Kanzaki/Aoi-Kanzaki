@@ -4,7 +4,7 @@
     <title>Fresh Panel</title>
     <meta name="title" content="Fresh Panel">
     <link rel="icon" type="image/png" href="static/images/profilePic.png">
-    <link rel="stylesheet" type="text/css" href="static/index.css">
+    <link rel="stylesheet" type="text/css" href="/static/index.css">
     <meta property="og:title" content="Fresh Panel"/>
     <meta property="og:type" content="website"/>
     <meta property="og:url" content="http://jonnythedev.com"/>
@@ -14,17 +14,10 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Fresh!</h1>
+        <h1>{{ guild.name }}</h1>
     </header>
-    <div class="welcome">
-        <p>Hi there! Welcome, I'm glad to see you here. This dashboard is in very very very early development! Hopefully it will be done soon and you will be able to adjust your server settings from here! But for now there is nothing here!</p>
-        <p align="center">
-            {% if not authorized %}
-            <a href="/login"><button class="loginbutton">Login with Discord</button></a>
-            {% else %}
-            <a href="/dashboard"><button class="loginbutton">Open Dashboard</button></a>
-            {% endif %}
-        </p>
+    <div class="guildS-main">
+        <p>This is where all guild settings will be! But it's not finished yet!</p>
     </div>
 </body>
 </html>
