@@ -128,11 +128,15 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 "You do not have a spotify account connected! If you would like to connect yours please use the command `/spotify connect`! <3",
                 ephemeral=True)
         else:
-            liked = "not done" #await self.get_liked_songs(interaction)
+            liked = await self.get_liked_songs(interaction)
             if liked == "Failed":
                 return await interaction.response.send_message(
                         "I failed to get your liked songs...")
             else:
+                tracks = []
+                for track in liked['items']:
+                    tracks.append(track['track']['external_urls']['spotify'])
+                print(tracks)
                 return await interaction.response.send_message("Not done implementing. <3")
 
 

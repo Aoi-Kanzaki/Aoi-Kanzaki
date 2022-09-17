@@ -119,7 +119,7 @@ class MusicChannel(commands.Cog):
                     if inVoice:
                         log.info(
                             f"Fresh Channel | Command volume | Ran by {message.author.name} ({message.author.id}) in guild {message.guild.name}")
-                        volume = msg.replace('vol').replace('ume').replace(' ', '')
+                        volume = msg.replace('vol', '').replace('ume', '').replace(' ', '')
                         if volume == "":
                             return await message.channel.send(f'🔈 | {player.volume}%', delete_after=5)
                         if volume.isdigit():
@@ -236,14 +236,16 @@ class MusicChannel(commands.Cog):
                 url = f"https://open.spotify.com/oembed?url={player.current.uri}"
                 async with request("GET", url) as response:
                     json = await response.json()
-                    e.set_image(url=f"{json['thumbnail_url']}")
+                    image = json['thumbnail_url']
             else:
-                e.set_image(url=f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg")
+                image = f"https://img.youtube.com/vi/{player.current.identifier}/hqdefault.jpg"
             if status == 'pause/resume':
                 if player.paused == True:
-                    e.title = "The music is currently paused"
-                    e.add_field(name="Title:", value=player.current.title, inline=False)
+                    e.title = "Paused:"
+                    e.description = f"{player.current.title}\n{player.current.uri}"
+                    e.add_field(name="Queue List:", value=queue_list)
                     requester = self.bot.get_user(player.current.requester)
+                    e.set_thumbnail(url=image)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                 else:
                     e.add_field(name="Currently Playing:", value=current, inline=False)
@@ -251,6 +253,7 @@ class MusicChannel(commands.Cog):
                     e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Queue List:", value=queue_list, inline=False)
                     requester = self.bot.get_user(player.current.requester)
+                    e.set_image(url=image)
                     e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
             elif status == "basic":
                 e.add_field(name="Currently Playing:", value=current, inline=False)
@@ -258,6 +261,7 @@ class MusicChannel(commands.Cog):
                 e.add_field(name="Duration:", value=dur)
                 e.add_field(name="Queue List:", value=queue_list, inline=False)
                 requester = self.bot.get_user(player.current.requester)
+                e.set_image(url=image)
                 e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
             await playerMsg.edit(embed=e, view=event_hook(self.bot, guild.id))
 

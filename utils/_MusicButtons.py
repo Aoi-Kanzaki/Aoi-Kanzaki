@@ -2,22 +2,30 @@ import math
 import discord
 import lavalink
 import logging
+import asyncio
 from aiohttp import request
 from lavalink.utils import format_time
 from lavalink.models import AudioTrack
 from utils._LavalinkVoiceClient import LavalinkVoiceClient
 
 log = logging.getLogger(__name__)
-class favorites(discord.ui.View):
+
+class spotify_like(discord.ui.View):
     def __init__(self, bot) -> None:
         super().__init__(timeout=None)
         self.bot = bot
 
+class favorites(discord.ui.View):
+    def __init__(self, bot) -> None:
+        super().__init__(timeout=None)
+        self.bot = bot
+        self.db = self.bot.db.spotifyOauth
+
     @discord.ui.button(label="Start My Favorites", custom_id="start_fav", style=discord.ButtonStyle.green)
     async def start_fav(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.defer(ephemeral=True)
         log.info(f"Button Start Favs | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
         data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        await interaction.response.defer(ephemeral=True)
         if data is None or data['songs'] == []:
             return await interaction.followup.send("You don't have any favorite songs.")
         else:
@@ -43,6 +51,7 @@ class favorites(discord.ui.View):
                 if int(player.channel_id) != interaction.user.voice.channel.id:
                     return await interaction.followup.send(
                         '<:tickNo:697759586538749982> You need to be in my voicechannel.')
+            msg = await interaction.channel.send("<a:loading:697759686509985814> Starting your fav songs..")
             for song in data['songs']:
                 results = await self.bot.lavalink.get_tracks(song, check_local=True)
                 if results.load_type == 'PLAYLIST_LOADED':
@@ -55,7 +64,55 @@ class favorites(discord.ui.View):
             player.store('channel', interaction.channel.id)
             if not player.is_playing:
                 await player.play()
-            return await interaction.followup.send("I have started your favorite songs!")
+            await msg.edit(content="<:tickYes:697759553626046546> I have started your favorite songs!")
+            await asyncio.sleep(5)
+            return await msg.delete()
+
+    @discord.ui.button(label="Start Spotify Liked", custom_id="spotify_liked", style=discord.ButtonStyle.green)
+    async def spotify_liked(self, interaction: discord.Interaction, button: discord.ui.Button):
+        log.info(f"Button Spotify Liked | Ran by {interaction.user.name} ({interaction.user.id}) in guild {interaction.guild.name}")
+        data = self.db.find_one({"_id": interaction.user.id})
+        if data is None:
+            return await interaction.response.send_message("You don't have a spotify account connected!", ephemeral=True)
+        liked = await self.bot.get_cog('spotify').get_liked_songs(interaction)
+        if liked == "Failed":
+            return interaction.response.send_message("I have failed to get your favorite songs.")
+        else:
+            try:
+                player = self.bot.lavalink.player_manager.create(interaction.guild.id, endpoint="us")
+            except Exception as e:
+                print(e)
+                if isinstance(e, lavalink.errors.NodeError):
+                    log.error(f"Tried to join a voice channel in {interaction.guild.name} but there are no avaliable nodes.")
+                    return await interaction.response.send_message(
+                        "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
+            if not interaction.user.voice or not interaction.user.voice.channel:
+                return await interaction.response.send_message(
+                    '<:tickNo:697759586538749982> Join a voicechannel first.')
+            if not player.is_connected:
+                if (not interaction.user.voice.channel.permissions_for(interaction.guild.me).connect or not 
+                        interaction.user.voice.channel.permissions_for(interaction.guild.me).speak):
+                    return await interaction.response.send_message(
+                        '<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.')
+                player.store('channel', interaction.channel.id)
+                await interaction.user.voice.channel.connect(cls=LavalinkVoiceClient)
+            else:
+                if int(player.channel_id) != interaction.user.voice.channel.id:
+                    return await interaction.response.send_message(
+                        '<:tickNo:697759586538749982> You need to be in my voicechannel.')
+            await interaction.response.send_message("<a:loading:697759686509985814> Starting your Spotify liked songs..", ephemeral=True)
+            for track in liked['items']:
+                results = await self.bot.lavalink.get_tracks(track['track']['external_urls']['spotify'], check_local=True)
+                if results.load_type == 'PLAYLIST_LOADED':
+                    tracks = results.tracks
+                    for track in tracks:
+                        player.add(requester=interaction.user.id, track=track)
+                else:
+                    track = results.tracks[0]
+                    player.add(requester=interaction.user.id, track=track)
+            player.store('channel', interaction.channel.id)
+            if not player.is_playing:
+                await player.play()
 
 class search_msg(discord.ui.View):
     def __init__(self, bot, guild_id, results) -> None:
@@ -420,6 +477,8 @@ class event_hook(discord.ui.View):
                 else:
                     e.set_thumbnail(url=f"https://img.youtube.com/vi/{self.player.current.identifier}/hqdefault.jpg")
                 e.add_field(name="Queue List:", value=queue_list, inline=False)
+                requester = self.bot.get_user(self.player.current.requester)
+                e.set_footer(text=f"Requested by {requester.name}#{requester.discriminator}")
                 return await interaction.response.edit_message(embed=e, view=self)
         else:
             await self.player.set_pause(not self.player.paused)

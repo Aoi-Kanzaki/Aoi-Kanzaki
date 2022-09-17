@@ -28,9 +28,9 @@ class Dev(commands.Cog):
         users = 0
         for _id, p in server_ids.items():
             try:
+                g = self.bot.get_guild(_id)
                 if p.is_playing:
                     number += 1
-                    g = self.bot.get_guild(_id)
                     users += len(g.me.voice.channel.members)
                     server_list.append(f"`{number}.` {g.name}: **{p.current.title}**")
                 else:

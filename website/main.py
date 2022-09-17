@@ -39,20 +39,15 @@ async def dashboard():
 	user_guilds = await discord.fetch_guilds()
 	user = await discord.fetch_user()
 	favs = await ipc.request("get_favorites", user_id=user.id)
-
 	spotify = await ipc.request("get_spotify", user_id=user.id)
-	try:
-		spotify = spotify['account']
-	except KeyError:
-		spotify = None
 
 	guilds = []
 	for guild in user_guilds:
-		if guild.permissions.administrator:			
-			guild.class_color = "green-border" if guild.id in guild_ids else "red-border"
+		if guild.permissions.administrator:
+			guild.can_edit = "true" if guild.id in guild_ids else "false"
 			guilds.append(guild)
 
-	guilds.sort(key = lambda x: x.class_color == "red-border")
+	guilds.sort(key = lambda x: x.can_edit == "red-border")
 	return await render_template("dashboard.html", guilds=guilds, user=user, favsongs=favs['songs'], spotify_account=spotify)
 
 @app.route("/dashboard/<int:guild_id>")
@@ -68,4 +63,5 @@ async def dashboard_server(guild_id):
 		return redirect(f'https://discord.com/oauth2/authorize?&client_id={app.config["DISCORD_CLIENT_ID"]}&scope=bot&permissions=8&guild_id={guild_id}&response_type=code&redirect_uri={app.config["DISCORD_REDIRECT_URI"]}')
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=80)
+	app.run()
+	# app.run(host="0.0.0.0", port=80)
