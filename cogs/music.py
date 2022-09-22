@@ -23,9 +23,9 @@ class Music(commands.Cog):
         if not hasattr(bot, 'lavalink'):
             bot.lavalink = lavalink.Client(bot.user.id)
             bot.lavalink.add_node(
-                host='127.0.0.1',
+                host=self.bot.config['lavalink']['host'],
                 port=2333,
-                password='youshallnotpass',
+                password=self.bot.config['lavalink']['pass'],
                 region='na',
                 name='default-node',
                 resume_timeout=None,

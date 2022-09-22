@@ -149,7 +149,8 @@ class Valorant(commands.GroupCog, name="valorant", description="All valorant rel
                         e.set_image(url=f"attachment://ratings.png")
                         e.set_thumbnail(url=account['data']['card']['small'])
                         return await interaction.followup.send(embed=e, file=image)
-                    except:
+                    except Exception as e:
+                        print(e)
                         return await interaction.followup.send(embed=e)
                 else:
                     return await interaction.followup.send(embed=e)
