@@ -306,13 +306,13 @@ class Music(commands.Cog):
                 interaction.guild.id)
             if strength == 1:
                 return await interaction.response.send_message(
-                    content="Strength must be greater than 1 `(2-100)`, but `0` to disable.",
+                    content="Strength must be greater than 1, but `0` to disable.",
                     ephemeral=True
                 )
             strength = max(0.0, strength)
             strength = min(100, strength)
             if strength == 0.0:
-                player.remove_filter('lowpass')
+                await player.remove_filter('lowpass')
                 return await interaction.response.send_message(
                     content='Disabled **Low Pass Filter**',
                     ephemeral=True
