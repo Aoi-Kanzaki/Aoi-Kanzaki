@@ -1,13 +1,10 @@
-"""
-
-DISCLAMER: THIS CODE IS NOT WRITEN BY ME. THIS CODE BELONGS TO DEVOXIN.
-I WILL CREATE MY OWN CODE FOR THIS AS SOON AS I FIGURE OUT HOW TO DO IT.
-
-"""
-
+"""MADE BY DEVOXIN NOT ME, I AM NOT THE AUTHOR OF THIS SOURCE CODE.
+ALL CREDITS GO TO DEVOXIN."""
 import asyncio
 import aiohttp
+
 session = aiohttp.ClientSession()
+
 
 class RequestWrapper:
     __slots__ = ('_req_url', '_req_args', '_req_kwargs')
@@ -19,7 +16,7 @@ class RequestWrapper:
 
     def __await__(self):
         return self._request().__await__()
-        
+
     def _copy(self, **kwargs):
         return RequestWrapper(self._req_url, *self._req_args, **self._req_kwargs, **kwargs)
 
@@ -30,19 +27,26 @@ class RequestWrapper:
         always_return = kwargs.pop('always_return', False)
         json = kwargs.pop('json', False)
         text = kwargs.pop('text', False)
+
         try:
             async with session.get(self._req_url, *self._req_args, **kwargs) as r:
                 if status:
                     return r.status
+
                 if headers:
                     return r.headers
+
                 if r.status != 200 and not always_return:
                     return None
+
                 if json:
                     return await r.json(content_type=None)
+
                 body = await r.read()
+
                 if text:
                     return body.decode(errors='ignore')
+
                 return body
         except (aiohttp.ClientOSError, aiohttp.ClientConnectorError, asyncio.TimeoutError):
             return None
@@ -76,9 +80,12 @@ async def post(url, always_return=False, json=False, *args, **kwargs):
         async with session.post(url, *args, **kwargs) as r:
             if r.status != 200 and not always_return:
                 return None
+
             if json:
                 return await r.json(content_type=None)
+
             return await r.read()
+
     except (aiohttp.ClientOSError, aiohttp.ClientConnectorError, asyncio.TimeoutError):
         return None
 

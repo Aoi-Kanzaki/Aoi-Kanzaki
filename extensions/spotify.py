@@ -6,23 +6,8 @@ from discord.ext import commands
 from requests.auth import HTTPBasicAuth
 from discord import app_commands as Fresh
 from requests_oauthlib import OAuth2Session
+from buttons.SpotifyCheck import Disconnect_Check
 
-class Disconnect_Check(discord.ui.View):
-    def __init__(self, bot, interaction) -> None:
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.db = self.bot.db.spotifyOauth
-
-    @discord.ui.button(label="Yes", emoji="<:tickYes:697759553626046546>", style=discord.ButtonStyle.green)
-    async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.db.find_one_and_delete({"_id": interaction.user.id})
-        return await interaction.response.edit_message(
-            content="Your spotify account has been disconnected!", view=None, embed=None)
-
-    @discord.ui.button(label="No", emoji="<:tickNo:697759586538749982>", style=discord.ButtonStyle.red)
-    async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
-        return await interaction.response.edit_message(
-            content="Great, your account will stay connected!", view=None, embed=None)
 
 class Spotify(commands.GroupCog, name="spotify", description="All spotify related commands."):
     def __init__(self, bot: commands.Bot) -> None:
@@ -42,8 +27,10 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
             user = await self.get_current_user(interaction)
             if user != "Failed":
                 e = discord.Embed(colour=discord.Colour.blurple())
-                e.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar)
-                e.add_field(name="Name", value=user['display_name'], inline=False)
+                e.set_author(name=interaction.user.display_name,
+                             icon_url=interaction.user.display_avatar)
+                e.add_field(
+                    name="Name", value=user['display_name'], inline=False)
                 # e.add_field(name="Email", value=user['email'], inline=False)
                 e.add_field(name="Url", value=user['uri'], inline=False)
                 if user['images'] != []:
@@ -69,7 +56,8 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
             scope=self.bot.config['spotify']['scope'],
             redirect_uri=self.bot.config['spotify']['redirect']
         )
-        authorization_url, state = oauthSession.authorization_url(self.bot.config['spotify']['base_url'])
+        authorization_url, state = oauthSession.authorization_url(
+            self.bot.config['spotify']['base_url'])
         try:
             msg = f"Please go to this link and authorize Fresh:\n{authorization_url}\n\n"
             msg += "Once authorized, please send the **entire** url of the new page it sends you to.\n\n"
@@ -85,7 +73,8 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
 
         oauthMessage = await self.bot.wait_for('message', check=check)
 
-        auth = HTTPBasicAuth(self.bot.config['spotify']['id'], self.bot.config['spotify']['secret'])
+        auth = HTTPBasicAuth(
+            self.bot.config['spotify']['id'], self.bot.config['spotify']['secret'])
         oauthData = oauthSession.fetch_token(
             self.bot.config['spotify']['token_url'],
             auth=auth,
@@ -93,14 +82,14 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
         )
         try:
             if oauthData['access_token'] != None:
-                oauthData = {"_id": interaction.user.id, "oauthData": oauthData}
+                oauthData = {"_id": interaction.user.id,
+                             "oauthData": oauthData}
                 self.db.insert_one(oauthData)
                 return await interaction.user.send(
                     "Your spotify account has been successfuly connected!")
         except KeyError:
             return await interaction.user.send(
                 "I have failed to connect your spotify account! Please make sure you are sending the FULL link in the url bar when discord shows.")
-        
 
     @Fresh.command(name="disconnect")
     async def spotify_disconnect(self, interaction: discord.Interaction):
@@ -113,11 +102,11 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 ephemeral=True)
         else:
             e = discord.Embed(colour=discord.Colour.blurple())
-            e.set_author(name=interaction.user.display_name, icon_url=interaction.user.display_avatar)
+            e.set_author(name=interaction.user.display_name,
+                         icon_url=interaction.user.display_avatar)
             e.description = "Are you sure you want to disconnect your account?"
             return await interaction.followup.send(embed=e,
-                    view=Disconnect_Check(self.bot, interaction), ephemeral=True)
-
+                                                   view=Disconnect_Check(self.bot, interaction), ephemeral=True)
 
     @Fresh.command(name="liked")
     async def spotify_liked(self, interaction: discord.Interaction):
@@ -131,7 +120,7 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
             liked = await self.get_liked_songs(interaction)
             if liked == "Failed":
                 return await interaction.response.send_message(
-                        "I failed to get your liked songs...")
+                    "I failed to get your liked songs...")
             else:
                 tracks = []
                 for track in liked['items']:
@@ -139,10 +128,9 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 print(tracks)
                 return await interaction.response.send_message("Not done implementing. <3")
 
-
-    @commands.cooldown(1, 5, commands.BucketType.user)
     @Fresh.command(name="playlist")
-    async def spotify_playlist(self, interaction: discord.Interaction, playlist: str=None):
+    @Fresh.checks.cooldown(1, 5)
+    async def spotify_playlist(self, interaction: discord.Interaction, playlist: str = None):
         """Choose a playlist you have created, and start playing in a vc."""
         await interaction.response.defer(ephemeral=True)
         data = self.db.find_one({"_id": interaction.user.id})
@@ -162,19 +150,13 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 else:
                     number = 1
                     msg = ""
-                    # results = []
                     for p in playlists['items']:
                         name = p['name']
-                        # description = p['description']
-                        # uri = p['external_urls']['spotify']
-                        # image = p['images'][0]['url']
-                        # numTracks = p['tracks']['total']
-                        # results.append({"name": name, "desc": description, "uri": uri, "image": image, "numTracks": numTracks})
                         msg += f"`{number}.` **{name}**\n"
                         number += 1
-                    e = discord.Embed(colour=discord.Colour.blurple(), description=msg)
+                    e = discord.Embed(
+                        colour=discord.Colour.blurple(), description=msg)
                     return await interaction.followup.send(embed=e)
-
 
     @spotify_playlist.autocomplete('playlist')
     async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Fresh.Choice[str]]:
@@ -197,7 +179,6 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                     value="Not set up."
                 )
             ]
-
 
     async def get_current_user(self, interaction: discord.Interaction):
         token = await self.get_access_token(interaction)
@@ -251,7 +232,6 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
         else:
             return "Account not setup."
 
-
     async def get_access_token(self, interaction: discord.Interaction):
         oauthData = self.db.find_one({"_id": interaction.user.id})
         if oauthData is None:
@@ -266,7 +246,7 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
             return token
         else:
             auth_header = base64.b64encode((
-                self.bot.config['spotify']['id'] + ":" + 
+                self.bot.config['spotify']['id'] + ":" +
                 self.bot.config['spotify']['secret']).encode("ascii"))
             headers = {
                 "Authorization": "Basic %s" % auth_header.decode("ascii"),
@@ -278,12 +258,14 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 "refresh_token": oauthData['oauthData']['refresh_token']
             }
             async with self.bot.session.post(self.bot.config['spotify']['token_url'],
-                                                    data=data, headers=headers) as session:
+                                             data=data, headers=headers) as session:
                 json = await session.json()
                 # this should be able to update the access token to the refreshed one.
                 oauthData['oauthData']['access_token'] = json['access_token']
-                oauthData['oauthData']['expires_at'] = int(time.time()) + json["expires_in"]
-                self.db.update_one({"_id": interaction.user.id}, {"$set": oauthData})
+                oauthData['oauthData']['expires_at'] = int(
+                    time.time()) + json["expires_in"]
+                self.db.update_one({"_id": interaction.user.id}, {
+                                   "$set": oauthData})
                 return json['access_token']
 
 
