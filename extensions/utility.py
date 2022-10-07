@@ -52,28 +52,10 @@ class Utility(commands.Cog):
             e.add_field(name=f"{forecast.date}", value=value, inline=False)
         await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="uptime")
-    async def uptime(self, interaction: discord.Interaction):
-        """Shows the uptime of the bot."""
-        uptime = uptime = self.get_bot_uptime()
-        await interaction.response.send_message(uptime)
-
     async def get_weather(self, city: str):
         async with python_weather.Client(format=python_weather.IMPERIAL) as client:
             weather = await client.get(city)
             return weather
-
-    def get_bot_uptime(self, *, brief=False):
-        now = datetime.datetime.utcnow()
-        delta = now - self.bot.uptime
-        hours, remainder = divmod(int(delta.total_seconds()), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        days, hours = divmod(hours, 24)
-        if not brief:
-            fmt = "I've been online for {d} days, {h} hours, {m} minutes, and {s} seconds!"
-        else:
-            fmt = "{d}d {h}h {m}m {s}s"
-        return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
 
 async def setup(bot):

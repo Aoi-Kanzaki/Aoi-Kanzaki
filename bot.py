@@ -4,9 +4,7 @@ import discord
 import pymongo
 import aiohttp
 from datetime import datetime
-from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import errors
 
 with open("config.json", "r") as config:
     _config = json.load(config)
@@ -20,6 +18,7 @@ class Fresh(commands.AutoShardedBot):
         self.config = _config
         self.session = None
         self.version = "v2.0"
+        self.uptime = datetime.utcnow()
         print('[Fresh] Connecting to Discord...', end='\r')
 
     async def on_ready(self):

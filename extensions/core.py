@@ -7,6 +7,7 @@ import discord
 import asyncio
 import traceback
 import lavalink
+from datetime import datetime
 from discord.ext import commands
 from discord import app_commands as Fresh
 
@@ -154,6 +155,27 @@ class Core(commands.Cog):
         e.set_thumbnail(
             url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
         await interaction.response.send_message(embed=e)
+
+    @Fresh.command(name="uptime")
+    async def uptime(self, interaction: discord.Interaction):
+        """Shows the uptime of the bot."""
+        uptime = uptime = self.get_bot_uptime()
+        await interaction.response.send_message(
+            content=uptime,
+            ephemeral=True
+        )
+
+    def get_bot_uptime(self, *, brief=False):
+        now = datetime.utcnow()
+        delta = now - self.bot.uptime
+        hours, remainder = divmod(int(delta.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
+        if not brief:
+            fmt = "I've been online for {d} days, {h} hours, {m} minutes, and {s} seconds!"
+        else:
+            fmt = "{d}d {h}h {m}m {s}s"
+        return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
     @Fresh.command(name="musicstats")
     @is_dev()
