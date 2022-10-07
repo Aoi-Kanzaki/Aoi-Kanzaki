@@ -33,7 +33,7 @@ class Core(commands.Cog):
     async def invite(self, interaction: discord.Interaction):
         """Invite the bot to your server!"""
         return await interaction.response.send_message(
-            content=f"You can invite the bot here: {self.bot.invite_url}\nInvite url: <https://discord.gg/WxTmcYG4Ay>",
+            content=f"You can invite the bot here: {self.bot.invite_url}\nSupport URL: <https://discord.gg/WxTmcYG4Ay>",
             ephemeral=True
         )
 
