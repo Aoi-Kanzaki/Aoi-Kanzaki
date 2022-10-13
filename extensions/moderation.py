@@ -1,5 +1,3 @@
-from email import message
-from shutil import ExecError
 import discord
 from discord.ext import commands
 from discord import app_commands as Fresh
