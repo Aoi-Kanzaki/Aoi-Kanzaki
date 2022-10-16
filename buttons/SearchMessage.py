@@ -1,4 +1,6 @@
 import discord
+import datetime
+import humanize
 from lavalink.utils import format_time
 from lavalink.models import AudioTrack
 
@@ -24,8 +26,10 @@ class SearchButtons(discord.ui.View):
         e.description = f'{self.results["tracks"][self.index]["info"]["title"]}\n{self.results["tracks"][self.index]["info"]["uri"]}'
         e.add_field(name="Author",
                     value=self.results["tracks"][0]["info"]["author"])
-        e.add_field(name="Duration", value=format_time(
-            self.results["tracks"][self.index]["info"]["duration"]))
+        dur = self.results["tracks"][self.index]["info"]["duration"]
+        delta = datetime.timedelta(milliseconds=dur)
+        duration = humanize.naturaldelta(delta)
+        e.add_field(name="Duration", value=duration)
         picID = self.results["tracks"][self.index]["info"]["identifier"]
         e.set_thumbnail(
             url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")
@@ -60,8 +64,10 @@ class SearchButtons(discord.ui.View):
         e.description = f'{self.results["tracks"][self.index]["info"]["title"]}\n{self.results["tracks"][self.index]["info"]["uri"]}'
         e.add_field(name="Author",
                     value=self.results["tracks"][0]["info"]["author"])
-        e.add_field(name="Duration", value=format_time(
-            self.results["tracks"][self.index]["info"]["duration"]))
+        dur = self.results["tracks"][self.index]["info"]["duration"]
+        delta = datetime.timedelta(milliseconds=dur)
+        duration = humanize.naturaldelta(delta)
+        e.add_field(name="Duration", value=duration)
         picID = self.results["tracks"][self.index]["info"]["identifier"]
         e.set_thumbnail(
             url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")

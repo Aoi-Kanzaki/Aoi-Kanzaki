@@ -2,6 +2,8 @@ import re
 import math
 import discord
 import lavalink
+import humanize
+import datetime
 from aiohttp import request
 from discord.ext import commands
 from lavalink.filters import LowPass
@@ -141,8 +143,12 @@ class Music(commands.Cog):
                 interaction.guild.id)
             if player.is_playing:
                 position = lavalink.utils.format_time(player.position)
-                duration = '🔴 LIVE' if player.current.stream else lavalink.utils.format_time(
-                    player.current.duration)
+                if player.current.stream:
+                    duration = '🔴 LIVE'
+                else:
+                    dur = player.current.duration
+                    delta = datetime.timedelta(milliseconds=dur)
+                    duration = humanize.naturaldelta(delta)
                 fmt = f'{player.current.title} - {player.current.author}' \
                     if isinstance(player.current, SpotifyAudioTrack) else player.current.title
                 song = f'**[{fmt}]({player.current.uri})**\n({position}/{duration})'
@@ -186,8 +192,10 @@ class Music(commands.Cog):
                     queueDur += track.duration
                 embed = discord.Embed(colour=0x93B1B4,
                                       description=f'{queueList}')
+                queueDur = humanize.naturaldelta(
+                    datetime.timedelta(milliseconds=queueDur))
                 embed.set_footer(
-                    text=f'Viewing page {page}/{pages} | Queue Duration: {lavalink.utils.format_time(queueDur)} | Tracks: {len(player.queue)}')
+                    text=f'Viewing page {page}/{pages} | Queue Duration: {queueDur} | Tracks: {len(player.queue)}')
                 return await interaction.response.send_message(
                     embed=embed,
                     view=QueueButtons(self.bot, interaction.guild.id, page)
@@ -332,6 +340,9 @@ class Music(commands.Cog):
         if data:
             if event.player.fetch('channel') == data['channel']:
                 await self.edit_controller("queueEnd", event, data)
+            else:
+                await self.delete_npMsg(event)
+        await self.delete_npMsg(event)
         guild_id = event.player.guild_id
         guild = self.bot.get_guild(guild_id)
         await guild.voice_client.disconnect(force=True)
@@ -348,18 +359,24 @@ class Music(commands.Cog):
         else:
             await self.send_controller(event)
 
-    async def send_controller(self, event):
+    async def delete_npMsg(self, event):
         if event.player.fetch('npMsg') != None:
             try:
-                channel = self.bot.get_channel(
-                    event.player.fetch('channel'))
+                channel = self.bot.get_channel(event.player.fetch('channel'))
                 msg = await channel.fetch_message(event.player.fetch('npMsg'))
                 await msg.delete()
             except:
                 pass
+
+    async def send_controller(self, event):
+        await self.delete_npMsg(event)
         if event.player.fetch('channel'):
-            duration = '🔴 LIVE' if event.track.stream else lavalink.utils.format_time(
-                event.track.duration)
+            if event.track.stream:
+                duration = '🔴 LIVE'
+            else:
+                dur = event.track.duration
+                delta = datetime.timedelta(milliseconds=dur)
+                duration = humanize.naturaldelta(delta)
             fmt = f'{event.track.title} - {event.track.author}' \
                 if isinstance(event.track, SpotifyAudioTrack) else event.track.title
             song = f'**[{fmt}]({event.track.uri})**\n*Duration: {duration}*\n*Requested By: <@!{event.track.requester}>*'
@@ -384,13 +401,17 @@ class Music(commands.Cog):
         channel = await self.bot.fetch_channel(data['channel'])
         message = await channel.fetch_message(data['message'])
         if type == "trackStart":
-            duration = '🔴 LIVE' if event.track.stream else lavalink.utils.format_time(
-                event.track.duration)
+            if event.track.stream:
+                duration = '🔴 LIVE'
+            else:
+                dur = event.track.duration
+                delta = datetime.timedelta(milliseconds=dur)
+                duration = humanize.naturaldelta(delta)
             fmt = f'{event.track.title} - {event.track.author}' \
                 if isinstance(event.track, SpotifyAudioTrack) else event.track.title
             e = discord.Embed(colour=discord.Colour.teal())
             e.title = "Currently Playing:"
-            e.description = f"**{fmt}**\n*[Link to Spotify]({event.track.uri})*"
+            e.description = f"**{fmt}**\n*[Link to Song]({event.track.uri})*"
             e.add_field(name="Duration:", value=duration)
             e.add_field(name="Requested By:",
                         value=f"<@!{event.track.requester}>")

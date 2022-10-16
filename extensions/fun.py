@@ -19,7 +19,7 @@ class Fun(commands.Cog):
         async with request("GET", url) as response:
             json = await response.json()
             if json["status"] == 200:
-                e = discord.Embed(color=discord.Color.blurple())
+                e = discord.Embed(color=discord.Colour.teal())
                 e.set_image(url=json["message"])
                 await interaction.response.send_message(embed=e)
             else:
@@ -62,7 +62,7 @@ class Fun(commands.Cog):
         async with request("GET", url, headers=headers) as response:
             if response.status == 200:
                 data = await response.json()
-                e = discord.Embed(color=discord.Color.blurple())
+                e = discord.Embed(color=discord.Colour.teal())
                 e.title = "Here is your dad joke:"
                 e.description = f"{data['body'][0]['setup']}\n\n||{data['body'][0]['punchline']}||"
                 e.set_thumbnail(url="https://megaphone.imgix.net/podcasts/f9b00b92-4953-11ec-bbeb-6b1d62ae44a1/image/1619957732809-podcast_icon_v2.png?ixlib=rails-2.1.2&max-w=3000&max-h=3000&fit=crop&auto=format,compress?crop=1:1,offset-y0")

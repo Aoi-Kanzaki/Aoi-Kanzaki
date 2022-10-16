@@ -21,7 +21,7 @@ class Favorites(commands.GroupCog, name="favorites", description="All fav songs 
                 return await interaction.response.send_message(
                     f"<:tickNo:697759586538749982> **{member.display_name}** doesn't have any favorite songs!")
             else:
-                e = discord.Embed(colour=discord.Color.blurple())
+                e = discord.Embed(colour=discord.Colour.teal())
                 e.set_author(
                     icon_url=member.display_avatar,
                     name=f"{member.display_name}'s Favorite Songs:"
@@ -99,7 +99,7 @@ class Favorites(commands.GroupCog, name="favorites", description="All fav songs 
             except AttributeError:
                 return await interaction.response.send_message(
                     "Music commands are currently unavaliable!", ephemeral=True)
-            e = discord.Embed(colour=discord.Color.blurple())
+            e = discord.Embed(colour=discord.Colour.teal())
             e.set_author(
                 icon_url=interaction.user.display_avatar.url,
                 name=f"{interaction.user.display_name}'s Favorite Songs:"

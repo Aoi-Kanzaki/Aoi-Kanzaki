@@ -26,7 +26,7 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
         else:
             user = await self.get_current_user(interaction)
             if user != "Failed":
-                e = discord.Embed(colour=discord.Colour.blurple())
+                e = discord.Embed(colour=discord.Colour.teal())
                 e.set_author(name=interaction.user.display_name,
                              icon_url=interaction.user.display_avatar)
                 e.add_field(
@@ -101,7 +101,7 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 "You don't have a spotify account connected!",
                 ephemeral=True)
         else:
-            e = discord.Embed(colour=discord.Colour.blurple())
+            e = discord.Embed(colour=discord.Colour.teal())
             e.set_author(name=interaction.user.display_name,
                          icon_url=interaction.user.display_avatar)
             e.description = "Are you sure you want to disconnect your account?"
@@ -155,7 +155,7 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                         msg += f"`{number}.` **{name}**\n"
                         number += 1
                     e = discord.Embed(
-                        colour=discord.Colour.blurple(), description=msg)
+                        colour=discord.Colour.teal(), description=msg)
                     return await interaction.followup.send(embed=e)
 
     @spotify_playlist.autocomplete('playlist')

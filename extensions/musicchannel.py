@@ -1,9 +1,10 @@
 import re
 import discord
 import asyncio
+import datetime
+import humanize
 from aiohttp import request
 from discord.ext import commands
-from lavalink.utils import format_time
 from discord import app_commands as Fresh
 from buttons.SearchMessage import SearchButtons
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
@@ -167,10 +168,12 @@ class MusicChannel(commands.GroupCog,
             else:
                 queueList = "Join a voice channel and queue songs by name or url in here."
             if player.current.stream:
-                dur = 'LIVE'
+                dur = '🔴 LIVE'
             else:
-                dur = format_time(player.current.duration)
-            current = f"{player.current.title}\n{player.current.uri}"
+                dur = player.current.duration
+                delta = datetime.timedelta(milliseconds=dur)
+                dur = humanize.naturaldelta(delta)
+            current = f"**{player.current.title} - {player.current.author}**\n*[Link to Song]({player.current.uri})*"
             e = discord.Embed(color=discord.Colour.teal())
             if "open.spotify.com" in str(player.current.uri):
                 url = f"https://open.spotify.com/oembed?url={player.current.uri}"
@@ -186,8 +189,8 @@ class MusicChannel(commands.GroupCog,
                     e.add_field(name="Queue List:", value=queueList)
                     e.set_thumbnail(url=image)
                 else:
-                    e.add_field(name="Currently Playing:",
-                                value=current, inline=False)
+                    e.title = "Currently Playing:"
+                    e.description = current
                     e.add_field(name="Duration:", value=dur)
                     e.add_field(name="Requested By:",
                                 value=f"<@!{player.current.requester}>")
@@ -195,8 +198,8 @@ class MusicChannel(commands.GroupCog,
                                 value=queueList, inline=False)
                     e.set_image(url=image)
             elif status == "basic":
-                e.add_field(name="Currently Playing:",
-                            value=current, inline=False)
+                e.title = "Currently Playing:"
+                e.description = current
                 e.add_field(name="Duration:", value=dur)
                 e.add_field(name="Requested By:",
                             value=f"<@!{player.current.requester}>")
@@ -242,8 +245,10 @@ class MusicChannel(commands.GroupCog,
             e.description = f'{results["tracks"][0]["info"]["title"]}\n{results["tracks"][0]["info"]["uri"]}'
             e.add_field(name="Author",
                         value=results["tracks"][0]["info"]["author"])
-            e.add_field(name="Duration", value=format_time(
-                results["tracks"][0]["info"]["duration"]))
+            dur = results["tracks"][0]["info"]["duration"]
+            delta = datetime.timedelta(milliseconds=dur)
+            duration = humanize.naturaldelta(delta)
+            e.add_field(name="Duration", value=duration)
             picID = results["tracks"][0]["info"]["identifier"]
             e.set_thumbnail(
                 url=f"https://img.youtube.com/vi/{picID}/hqdefault.jpg")
@@ -292,7 +297,7 @@ class MusicChannel(commands.GroupCog,
                 try:
                     channel = await guild.fetch_channel(data['channel'])
                     msg = await channel.fetch_message(data['message'])
-                    e = discord.Embed(color=discord.Color.blurple())
+                    e = discord.Embed(color=discord.Colour.teal())
                     controllerEmbed = discord.Embed(
                         colour=discord.Colour.teal(),
                         description="Send a song link or query to start playing music!\nOr click the button to start you favorite songs!",

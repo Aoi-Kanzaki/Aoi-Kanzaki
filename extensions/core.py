@@ -125,7 +125,7 @@ class Core(commands.Cog):
         except OSError:
             revision = "Could not fetch due to memory error. Sorry."
         e = discord.Embed()
-        e.colour = discord.Colour.blurple()
+        e.colour = discord.Colour.teal()
         e.add_field(name="Developer:", value=devn)
         e.add_field(name="Libraries:", value=f"{discordi}\n{python}")
         e.add_field(name="Latest Changes:", value=revision, inline=False)
@@ -148,7 +148,7 @@ class Core(commands.Cog):
         except OSError:
             revision = "Could not fetch due to memory error. Sorry."
         e = discord.Embed()
-        e.colour = discord.Colour.blurple()
+        e.colour = discord.Colour.teal()
         e.description = revision
         e.set_author(icon_url=self.bot.user.avatar,
                      name="Latest Github Changes:")

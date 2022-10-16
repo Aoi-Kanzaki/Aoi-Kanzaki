@@ -1,6 +1,8 @@
 import math
 import discord
 import lavalink
+import humanize
+import datetime
 
 
 class QueueButtons(discord.ui.View):
@@ -47,6 +49,8 @@ class QueueButtons(discord.ui.View):
             queueDur += track.duration
         embed = discord.Embed(colour=0x93B1B4,
                               description=f'{queueList}')
+        queueDur = humanize.naturaldelta(
+            datetime.timedelta(milliseconds=queueDur))
         embed.set_footer(
-            text=f'Viewing page {self.page}/{pages} | Queue Duration: {lavalink.utils.format_time(queueDur)} | Tracks: {len(self.player.queue)}')
+            text=f'Viewing page {self.page}/{pages} | Queue Duration: {queueDur} | Tracks: {len(self.player.queue)}')
         return embed

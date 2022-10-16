@@ -1,5 +1,7 @@
 import discord
 import lavalink
+import datetime
+import humanize
 from aiohttp import request
 from sources.spotify import SpotifyAudioTrack
 from buttons.EnsureChoice import EnsureChoiceButtons
@@ -137,17 +139,20 @@ class PlayingButtons(discord.ui.View):
     async def pause(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.player.set_pause(not self.player.paused)
         if self.player.paused:
-            title = "Paused"
+            title = "Paused:"
             button.emoji = "<:play:1010305312227606610>"
         else:
             button.emoji = "<:pause:1010305240672780348>"
-            title = "Now Playing"
-        e = discord.Embed(colour=0x93B1B4, title=title)
-        duration = '🔴 LIVE' if self.player.current.stream else lavalink.utils.format_time(
-            self.player.current.duration)
-        fmt = f'{self.player.current.title} - {self.player.current.author}' \
-            if isinstance(self.player.current, SpotifyAudioTrack) else self.player.current.title
-        e.description = f'**[{fmt}]({self.player.current.uri})**'
+            title = "Currently Playing:"
+        e = discord.Embed(colour=discord.Colour.teal(), title=title)
+        if self.player.current.stream:
+            duration = '🔴 LIVE'
+        else:
+            dur = self.player.current.duration
+            delta = datetime.timedelta(milliseconds=dur)
+            duration = humanize.naturaldelta(delta)
+        fmt = f'{self.player.current.title} - {self.player.current.author}'
+        e.description = f'**{fmt}**\n*[Link to Song]({self.player.current.uri})*'
         e.add_field(name="Duration:", value=duration)
         e.add_field(name="Requested By:",
                     value=f"<@!{self.player.current.requester}>")

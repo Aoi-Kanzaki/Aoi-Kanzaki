@@ -1,5 +1,6 @@
 import discord
-import lavalink
+import datetime
+import humanize
 from aiohttp import request
 from sources.spotify import SpotifyAudioTrack, SpotifySource
 from buttons.EnsureChoice import EnsureChoiceButtons
@@ -46,8 +47,12 @@ class TrackStartEventButtons(discord.ui.View):
             button.emoji = "<:pause:1010305240672780348>"
             title = "Now Playing"
         e = discord.Embed(colour=0x93B1B4, title=title)
-        duration = '🔴 LIVE' if self.player.current.stream else lavalink.utils.format_time(
-            self.player.current.duration)
+        if self.player.current.stream:
+            duration = '🔴 LIVE'
+        else:
+            dur = self.player.current.duration
+            delta = datetime.timedelta(milliseconds=dur)
+            duration = humanize.naturaldelta(delta)
         fmt = f'{self.player.current.title} - {self.player.current.author}' \
             if isinstance(self.player.current, SpotifyAudioTrack) else self.player.current.title
         e.description = f'**[{fmt}]({self.player.current.uri})**\n*Duration: {duration}*\n*Requested By: <@!{self.player.current.requester}>*'
@@ -73,6 +78,12 @@ class TrackStartEventButtons(discord.ui.View):
 
     @discord.ui.button(emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.player.fetch('npMsg') != None:
+            try:
+                msg = await interaction.channel.fetch_message(self.player.fetch('npMsg'))
+                await msg.delete()
+            except:
+                pass
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)

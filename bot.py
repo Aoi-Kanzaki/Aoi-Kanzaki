@@ -17,7 +17,7 @@ class Fresh(commands.AutoShardedBot):
         self._init = False
         self.config = _config
         self.session = None
-        self.version = "v2.0"
+        self.version = "v2.1"
         self.uptime = datetime.utcnow()
         print('[Fresh] Connecting to Discord...', end='\r')
 
