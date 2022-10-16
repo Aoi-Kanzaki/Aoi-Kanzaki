@@ -159,7 +159,7 @@ class PlayingButtons(discord.ui.View):
         if self.player.queue:
             queueList = ''
             for index, track in enumerate(self.player.queue[0:5], start=0):
-                queueList += f'`{index+1}.` [{track.title} - {track.author}]({track.uri})\n'
+                queueList += f'`{index+1}.` [{track.title}]({track.uri})\n'
             e.add_field(name="Queue List:", value=queueList, inline=False)
         else:
             e.add_field(
