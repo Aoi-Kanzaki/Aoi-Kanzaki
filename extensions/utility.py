@@ -63,6 +63,33 @@ class Utility(commands.Cog):
             embed=e
         )
 
+    Emoji = Fresh.Group(
+        name="emoji", description="All emoji related commands.")
+
+    @Emoji.command(name="steal")
+    @Fresh.checks.has_permissions(manage_guild=True)
+    async def steal(self, interaction: discord.Interaction, emoji: str):
+        """Steal and emoji and copy it to this server."""
+        try:
+            foundEmoji = self.bot.get_emoji(int(emoji.split(":")[2][0:-1]))
+            if foundEmoji is None:
+                return await interaction.response.send_message(
+                    content="I couldn't find that emoji! Please make sure it's in a server I'm in."
+                )
+            else:
+                copiedEmoji = await interaction.guild.create_custom_emoji(
+                    name=foundEmoji.name,
+                    image=await foundEmoji.read()
+                )
+                return await interaction.response.send_message(
+                    content=f"I have copied the emoji! {copiedEmoji}"
+                )
+        except Exception as e:
+            return await interaction.response.send_message(
+                content=e,
+                ephemeral=True
+            )
+
 
 async def setup(bot):
     await bot.add_cog(Utility(bot))

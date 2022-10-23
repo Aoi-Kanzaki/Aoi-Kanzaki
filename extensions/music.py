@@ -4,6 +4,7 @@ import discord
 import lavalink
 import humanize
 import datetime
+import asyncio
 from aiohttp import request
 from discord.ext import commands
 from lavalink.filters import LowPass
@@ -34,7 +35,22 @@ class Music(commands.Cog):
         bot.lavalink.add_event_hooks(self)
         self.reload_sources()
 
+    async def query_auto(self, interaction: discord.Interaction, current: str):
+        await asyncio.sleep(0.3)
+        if not url_rx.match(current) and not current.startswith(('spotify:', 'artist:')):
+            current = f'spsearch:{current}'
+        results = await self.bot.lavalink.get_tracks(current, check_local=True)
+        if not results.tracks:
+            return [Fresh.Choice(name="Nothing found..", value="Nothing found..")]
+        else:
+            return [
+                Fresh.Choice(
+                    name=f"{track.author} - {track.title}", value=track.uri)
+                for track in results.tracks
+            ]
+
     @Fresh.command(name="play")
+    @Fresh.autocomplete(query=query_auto)
     async def play(self, interaction: discord.Interaction, query: str):
         """ Searches and plays a song from a given query. """
         inVoice = await self.ensure_voice(interaction)

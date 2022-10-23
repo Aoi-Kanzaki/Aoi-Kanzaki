@@ -91,30 +91,34 @@ class Core(commands.Cog):
         """Check the bots response time."""
         await interaction.response.send_message(f"Latency: `{round(self.bot.latency * 1000)}ms`")
 
-    @Fresh.command(name="botinfo")
-    async def botinfo(self, interaction: discord.Interaction):
-        """Shows info about the bot."""
-        await interaction.response.defer(thinking=False)
-        await asyncio.sleep(3)
+    @Fresh.command(name="about")
+    async def about(self, interaction: discord.Interaction):
+        """Shows information about Fresh."""
+        if not (guild := interaction.guild):
+            return await interaction.response.send_message(
+                content="This command needs to be ran in a guild!",
+                ephemeral=True
+            )
+        if not (me := guild.me):
+            return await interaction.response.send_message(
+                content="This command needs to be ran in a guild!",
+                ephemeral=True
+            )
+
         total = 0
         file_amount = 0
-        pyvi = sys.version_info
-        discordi = f"Discord.py: v{discord.__version__}"
-        python = f"Python: v{pyvi.major}.{pyvi.minor}.{pyvi.micro} (Branch {pyvi.releaselevel} v{pyvi.serial})"
-        dev = await self.bot.http.get_user(827940585201205258)
-        devn = f"{dev['username']}#{dev['discriminator']}"
         for path, subdirs, files in os.walk("."):
             for name in files:
                 if name.endswith(".py"):
                     file_amount += 1
                     with codecs.open("./" + str(pathlib.PurePath(path, name)), "r", "utf-8") as f:
                         for i, l in enumerate(f):
-                            # skip commented lines.
                             if (l.strip().startswith("#") or len(l.strip()) == 0):
                                 pass
                             else:
                                 total += 1
         code = f"I am made of {total:,} lines of Python, spread across {file_amount:,} files!"
+
         cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
         if os.name == "posix":
             cmd = cmd.format(r"\`%h\`")
@@ -124,16 +128,27 @@ class Core(commands.Cog):
             revision = os.popen(cmd).read().strip()
         except OSError:
             revision = "Could not fetch due to memory error. Sorry."
-        e = discord.Embed()
-        e.colour = discord.Colour.teal()
-        e.add_field(name="Developer:", value=devn)
-        e.add_field(name="Libraries:", value=f"{discordi}\n{python}")
-        e.add_field(name="Latest Changes:", value=revision, inline=False)
-        e.add_field(name="Code Information:", value=code)
-        e.set_author(name=f"F.res.h {self.bot.version}",
-                     icon_url=interaction.user.avatar)
-        e.set_thumbnail(url=self.bot.user.avatar)
-        await interaction.followup.send(embed=e)
+
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                title="About Fresh:",
+                colour=discord.Colour.teal(),
+                description=(
+                    f"Authored by <@827940585201205258>. See all contributors on "
+                    f"[GitHub](https://github.com/JonnyBoy2000/Fresh). "),
+                url="https://github.com/JonnyBoy2000/Fresh",
+                timestamp=datetime.now()
+            )
+            .set_thumbnail(url=me.avatar.url)
+            .set_footer(
+                text=f"Requested by {interaction.user.display_name}", icon_url=interaction.user.avatar)
+            .add_field(name="Bot Version", value=self.bot.version)
+            .add_field(name="Python Version",
+                       value=f"v{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+            .add_field(name="Discord Version", value=f"v{discord.__version__}")
+            .add_field(name="Latest Changes:", value=revision, inline=False)
+            .add_field(name="Code Information:", value=code)
+        )
 
     @Fresh.command(name="commits")
     async def commits(self, interaction: discord.Interaction):
@@ -147,14 +162,16 @@ class Core(commands.Cog):
             revision = os.popen(cmd).read().strip()
         except OSError:
             revision = "Could not fetch due to memory error. Sorry."
-        e = discord.Embed()
-        e.colour = discord.Colour.teal()
-        e.description = revision
-        e.set_author(icon_url=self.bot.user.avatar,
-                     name="Latest Github Changes:")
-        e.set_thumbnail(
-            url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
-        await interaction.response.send_message(embed=e)
+        await interaction.response.send_message(
+            embed=discord.Embed(
+                colour=discord.Colour.teal(),
+                description=revision
+            )
+            .set_author(icon_url=self.bot.user.avatar,
+                        name="Latest Github Changes:")
+            .set_thumbnail(
+                url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
+        )
 
     @Fresh.command(name="uptime")
     async def uptime(self, interaction: discord.Interaction):
@@ -181,11 +198,14 @@ class Core(commands.Cog):
     @is_dev()
     async def musicstats(self, interaction: discord.Interaction):
         """Shows the current stats for music."""
-        embed = discord.Embed(colour=0x00fefe, title='Lavalink Node Stats')
         for node in self.bot.lavalink.node_manager.nodes:
             stats = node.stats
             ud, uh, um, us = lavalink.utils.parse_time(stats.uptime)
-            embed.add_field(
+        return await interaction.response.send_message(
+            embed=discord.Embed(
+                colour=discord.Colour.teal(),
+                title='Lavalink Node Stats')
+            .add_field(
                 name=node.name,
                 value=f'Uptime: {ud:.0f}d {uh:.0f}h{um:.0f}m{us:.0f}s\n'
                 f'Players: {stats.players} ({stats.playing_players} playing)\n'
@@ -200,9 +220,7 @@ class Core(commands.Cog):
                 f'\u200b\tDeficit: {stats.frames_deficit}\n'
                 f'Node Penalty: {stats.penalty.total:.2f}',
                 inline=True
-            )
-        return await interaction.response.send_message(
-            embed=embed,
+            ),
             ephemeral=True
         )
 

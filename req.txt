@@ -14,3 +14,4 @@ matplotlib
 requests_oauthlib
 pymongo[srv]
 openai
+craiyon.py
