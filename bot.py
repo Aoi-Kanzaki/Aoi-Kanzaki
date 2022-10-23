@@ -41,6 +41,11 @@ class Fresh(commands.AutoShardedBot):
         await self.init_extensions()
 
     async def init_extensions(self):
+        try:
+            await self.load_extension('jishaku')
+            print('\x1b[2K[Fresh] Loaded Jishaku!')
+        except Exception as e:
+            print(f'\x1b[2K{ext:20}ERR loading Jishaku: {str(e)}')
         for ext in os.listdir('extensions'):
             if not ext.endswith('.py') or ext.startswith('core') or ext.startswith('_'):
                 continue
