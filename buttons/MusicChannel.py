@@ -189,7 +189,7 @@ class PlayingButtons(discord.ui.View):
                 ephemeral=True
             )
 
-    @discord.ui.button(emoji="<:shuffle:1026423656961822730>", style=discord.ButtonStyle.grey)
+    @discord.ui.button(emoji="<:shuffle:1033963011657977876>", style=discord.ButtonStyle.grey)
     async def shuffle(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.shuffle = not self.player.shuffle
         return await interaction.response.send_message(

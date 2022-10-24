@@ -10,7 +10,7 @@ from buttons.SpotifyCheck import Disconnect_Check
 
 
 class Spotify(commands.GroupCog, name="spotify", description="All spotify related commands."):
-    def __init__(self, bot: commands.Bot) -> None:
+    def __init__(self, bot: commands.AutoShardedBot) -> None:
         super().__init__()
         self.bot = bot
         self.db = self.bot.db.spotifyOauth
@@ -233,7 +233,8 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
             return "Account not setup."
 
     async def get_access_token(self, interaction: discord.Interaction):
-        oauthData = self.db.find_one({"_id": interaction.user.id})
+        oauthData = self.db.find_one(
+            {"_id": interaction.user.id})
         if oauthData is None:
             try:
                 return await interaction.followup.send(
@@ -265,9 +266,9 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 oauthData['oauthData']['expires_at'] = int(
                     time.time()) + json["expires_in"]
                 self.db.update_one({"_id": interaction.user.id}, {
-                                   "$set": oauthData})
+                    "$set": oauthData})
                 return json['access_token']
 
 
-async def setup(bot):
+async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Spotify(bot))

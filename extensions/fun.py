@@ -8,7 +8,7 @@ from discord import app_commands as Fresh
 
 
 class Fun(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
     @Fresh.command(name="phcomment")
@@ -88,5 +88,5 @@ class Fun(commands.Cog):
         await interaction.response.send_message(embed=e)
 
 
-async def setup(bot):
+async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Fun(bot))

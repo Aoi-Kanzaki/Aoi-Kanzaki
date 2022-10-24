@@ -39,7 +39,10 @@ class Music(commands.Cog):
         await asyncio.sleep(0.3)
         if not url_rx.match(current) and not current.startswith(('spotify:', 'artist:')):
             current = f'spsearch:{current}'
-        results = await self.bot.lavalink.get_tracks(current, check_local=True)
+        try:
+            results = await self.bot.lavalink.get_tracks(current, check_local=True)
+        except lavalink.errors.LoadError:
+            return [Fresh.Choice(name="Nothing found..", value="Nothing found..")]
         if not results.tracks:
             return [Fresh.Choice(name="Nothing found..", value="Nothing found..")]
         else:

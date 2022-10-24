@@ -76,6 +76,15 @@ class TrackStartEventButtons(discord.ui.View):
                 ephemeral=True
             )
 
+    @discord.ui.button(emoji="<:shuffle:1033963011657977876>", style=discord.ButtonStyle.grey)
+    async def shuffle(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.player.shuffle = not self.player.shuffle
+        return await interaction.response.send_message(
+            content='🔀 | Shuffle ' +
+            ('enabled' if self.player.shuffle else 'disabled'),
+            ephemeral=True
+        )
+
     @discord.ui.button(emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.player.fetch('npMsg') != None:

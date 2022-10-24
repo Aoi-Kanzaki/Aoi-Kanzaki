@@ -4,7 +4,7 @@ from discord import app_commands as Fresh
 
 
 class Moderation(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
     @Fresh.command(name="ban")
@@ -121,5 +121,5 @@ class Moderation(commands.Cog):
             return await interaction.followup.send(e)
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Moderation(bot))

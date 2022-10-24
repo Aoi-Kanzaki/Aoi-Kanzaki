@@ -7,7 +7,7 @@ from discord import app_commands as Fresh
 
 
 class Utility(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
     @Fresh.command(name="iplookup")
@@ -91,5 +91,5 @@ class Utility(commands.Cog):
             )
 
 
-async def setup(bot):
+async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Utility(bot))

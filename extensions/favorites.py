@@ -9,7 +9,7 @@ url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
 
 
 class Favorites(commands.GroupCog, name="favorites", description="All fav songs related commands."):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
         self.db = self.bot.db.favorites
 
@@ -161,5 +161,5 @@ class Favorites(commands.GroupCog, name="favorites", description="All fav songs 
                 await player.play()
 
 
-async def setup(bot):
+async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Favorites(bot))
