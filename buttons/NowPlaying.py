@@ -2,11 +2,11 @@ import discord
 import datetime
 import humanize
 from aiohttp import request
-from sources.spotify import SpotifyAudioTrack, SpotifySource
+from sources.spotify import SpotifyAudioTrack
 from buttons.EnsureChoice import EnsureChoiceButtons
 
 
-class TrackStartEventButtons(discord.ui.View):
+class NowPlaying(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
         super().__init__(timeout=None)
         self.bot = bot

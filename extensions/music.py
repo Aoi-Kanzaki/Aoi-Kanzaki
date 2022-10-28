@@ -14,6 +14,7 @@ from utils.LavalinkVoiceClient import LavalinkVoiceClient
 from buttons.QueueMessage import QueueButtons
 from buttons.TrackStartEvent import TrackStartEventButtons
 from buttons.MusicChannel import DefaultButtons, PlayingButtons
+from buttons.NowPlaying import NowPlaying
 
 url_rx = re.compile(r'https?://(?:www\.)?.+')
 
@@ -56,6 +57,9 @@ class Music(commands.Cog):
     @Fresh.autocomplete(query=query_auto)
     async def play(self, interaction: discord.Interaction, query: str):
         """ Searches and plays a song from a given query. """
+        await self._play(interaction, query)
+
+    async def _play(self, interaction: discord.Interaction, query: str):
         inVoice = await self.ensure_voice(interaction)
         if inVoice:
             player = self.bot.lavalink.player_manager.players.get(
@@ -90,6 +94,49 @@ class Music(commands.Cog):
                         await interaction.response.send_message(embed=e, ephemeral=True)
                     except:
                         await interaction.followup.send(embed=e)
+            player.store('channel', interaction.channel.id)
+            if not player.is_playing:
+                await player.play()
+
+    @Fresh.command(name="liked")
+    async def liked(self, interaction: discord.Interaction):
+        """Start's all the songs you have favorited."""
+        data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        if data is None or data['songs'] == []:
+            return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
+        else:
+            try:
+                player = self.bot.lavalink.player_manager.create(
+                    interaction.guild.id, endpoint="us")
+            except Exception as error:
+                print(error)
+                if isinstance(error, lavalink.errors.NodeError):
+                    return await interaction.response.send_message(
+                        "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
+            if not interaction.user.voice or not interaction.user.voice.channel:
+                return await interaction.response.send_message(
+                    '<:tickNo:697759586538749982> Join a voicechannel first.', ephemeral=True)
+            if not player.is_connected:
+                if (not interaction.user.voice.channel.permissions_for(interaction.guild.me).connect or not
+                        interaction.user.voice.channel.permissions_for(interaction.guild.me).speak):
+                    return await interaction.response.send_message(
+                        '<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.', ephemeral=True)
+                player.store('channel', interaction.channel.id)
+                await interaction.user.voice.channel.connect(cls=LavalinkVoiceClient)
+            else:
+                if int(player.channel_id) != interaction.user.voice.channel.id:
+                    return await interaction.response.send_message(
+                        '<:tickNo:697759586538749982> You need to be in my voicechannel.', ephemeral=True)
+            await interaction.response.send_message("<:tickYes:697759553626046546> I am now starting your favorite songs!", ephemeral=True)
+            for song in data['songs']:
+                results = await self.bot.lavalink.get_tracks(song, check_local=True)
+                if results.load_type == 'PLAYLIST_LOADED':
+                    tracks = results.tracks
+                    for track in tracks:
+                        player.add(requester=interaction.user.id, track=track)
+                else:
+                    track = results.tracks[0]
+                    player.add(requester=interaction.user.id, track=track)
             player.store('channel', interaction.channel.id)
             if not player.is_playing:
                 await player.play()
@@ -184,7 +231,8 @@ class Music(commands.Cog):
                     song = f'**[{fmt}]({player.current.uri})**\n({position}/{duration})'
                 return await interaction.response.send_message(
                     embed=embed,
-                    ephemeral=True
+                    ephemeral=True,
+                    view=NowPlaying(self.bot, player.guild_id)
                 )
             else:
                 return await interaction.response.send_message(
@@ -471,7 +519,7 @@ class Music(commands.Cog):
         try:
             player = self.bot.lavalink.player_manager.create(
                 interaction.guild.id)
-            should_connect = interaction.command.name in ('play',)
+            should_connect = interaction.command.name in ('play', 'playlist')
             if not interaction.user.voice or not interaction.user.voice.channel:
                 return await interaction.response.send_message(
                     content='Join a voicechannel first.',

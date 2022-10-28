@@ -47,7 +47,7 @@ class QueueButtons(discord.ui.View):
         for index, track in enumerate(self.player.queue[start:end], start=start):
             queueList += f'`{index+1}.` {track.title} - {track.author}\n'
             queueDur += track.duration
-        embed = discord.Embed(colour=0x93B1B4,
+        embed = discord.Embed(colour=discord.Colour.teal(),
                               description=f'{queueList}')
         queueDur = humanize.naturaldelta(
             datetime.timedelta(milliseconds=queueDur))

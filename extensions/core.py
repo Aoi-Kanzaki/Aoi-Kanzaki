@@ -1,15 +1,21 @@
+import io
 import os
 import sys
 import time
+import math
 import codecs
 import pathlib
 import discord
-import asyncio
+import inspect
 import traceback
 import lavalink
+import typing
+from jishaku.flags import Flags
 from datetime import datetime
 from discord.ext import commands
 from discord import app_commands as Fresh
+from utils.checks import is_dev
+from jishaku.paginators import PaginatorInterface, WrappedPaginator
 
 
 def sizeof_fmt(num, suffix='B'):
@@ -23,11 +29,6 @@ def sizeof_fmt(num, suffix='B'):
 class Core(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
-
-    def is_dev():
-        def predicate(interaction: discord.Interaction) -> bool:
-            return interaction.user.id in interaction.client.config['slashCommands']['devIDS']
-        return Fresh.check(predicate)
 
     @Fresh.command(name="invite")
     @Fresh.checks.cooldown(1, 5)
@@ -89,7 +90,37 @@ class Core(commands.Cog):
     @Fresh.command(name="ping")
     async def ping(self, interaction: discord.Interaction):
         """Check the bots response time."""
-        await interaction.response.send_message(f"Latency: `{round(self.bot.latency * 1000)}ms`")
+        await interaction.response.defer()
+        message = None
+        api_readings: typing.List[float] = []
+        websocket_readings: typing.List[float] = []
+        for _ in range(6):
+            text = "Calculating round-trip time...\n\n"
+            text += "\n".join(f"Reading {index + 1}: {reading * 1000:.2f}ms" for index,
+                              reading in enumerate(api_readings))
+            if api_readings:
+                average, stddev = await self.mean_stddev(api_readings)
+                text += f"\n\nAverage: {average * 1000:.2f} \N{PLUS-MINUS SIGN} {stddev * 1000:.2f}ms"
+            else:
+                text += "\n\nNo readings yet."
+            if websocket_readings:
+                average = sum(websocket_readings) / len(websocket_readings)
+                text += f"\nWebsocket latency: {average * 1000:.2f}ms"
+            else:
+                text += f"\nWebsocket latency: {self.bot.latency * 1000:.2f}ms"
+            if message:
+                before = time.perf_counter()
+                await interaction.followup.edit_message(
+                    message_id=message.id, content=text)
+                after = time.perf_counter()
+                api_readings.append(after - before)
+            else:
+                before = time.perf_counter()
+                message = await interaction.followup.send(content=text)
+                after = time.perf_counter()
+                api_readings.append(after - before)
+            if self.bot.latency > 0.0:
+                websocket_readings.append(self.bot.latency)
 
     @Fresh.command(name="about")
     async def about(self, interaction: discord.Interaction):
@@ -223,6 +254,62 @@ class Core(commands.Cog):
             ),
             ephemeral=True
         )
+
+    @Fresh.command(name="source")
+    @is_dev()
+    async def source(self, interaction: discord.Interaction, command_name: str):
+        """"Displays the source code for a command."""
+        command = self.bot.tree.get_command(command_name)
+        if not command:
+            await interaction.response.send_message(
+                content=f"Couldn't find command `{command_name}`.")
+        try:
+            source_lines, _ = inspect.getsourcelines(command.callback)
+        except (TypeError, OSError):
+            return await interaction.response.send_message(
+                content=f"Was unable to retrieve the source for `{command}` for some reason.")
+
+        filename = "source.py"
+
+        try:
+            filename = pathlib.Path(inspect.getfile(command.callback)).name
+        except (TypeError, OSError):
+            pass
+
+        source_text = ''.join(source_lines)
+
+        if await self.use_file_check(interaction, len(source_text)):
+            await interaction.response.send_message(file=discord.File(
+                filename=filename,
+                fp=io.BytesIO(source_text.encode('utf-8'))
+            ))
+        else:
+            paginator = WrappedPaginator(
+                prefix='```py', suffix='```', max_size=1980)
+            paginator.add_line(source_text.replace(
+                '```', '``\N{zero width space}`'))
+            interface = PaginatorInterface(
+                self.bot, paginator, owner=interaction.user)
+            await interface.send_to(interaction)
+
+    async def use_file_check(self, interaction: discord.Interaction, size: int) -> bool:
+        return all([
+            size < 50_000, not Flags.FORCE_PAGINATOR,
+            (
+                not interaction.user.is_on_mobile()
+                if interaction.guild and self.bot.intents.presences and isinstance(interaction.user, discord.Member)
+                else True
+            )
+        ])
+
+    async def mean_stddev(self, collection: typing.Collection[float]) -> typing.Tuple[float, float]:
+        average = sum(collection) / len(collection)
+        if len(collection) > 1:
+            stddev = math.sqrt(sum(math.pow(reading - average, 2)
+                               for reading in collection) / (len(collection) - 1))
+        else:
+            stddev = 0.0
+        return (average, stddev)
 
 
 async def setup(bot: commands.AutoShardedBot):

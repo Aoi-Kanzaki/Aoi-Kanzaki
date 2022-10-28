@@ -1,12 +1,14 @@
 import time
 import base64
 import discord
+import lavalink
 from typing import List
 from discord.ext import commands
 from requests.auth import HTTPBasicAuth
 from discord import app_commands as Fresh
 from requests_oauthlib import OAuth2Session
 from buttons.SpotifyCheck import Disconnect_Check
+from utils.LavalinkVoiceClient import LavalinkVoiceClient
 
 
 class Spotify(commands.GroupCog, name="spotify", description="All spotify related commands."):
@@ -122,31 +124,76 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                 return await interaction.response.send_message(
                     "I failed to get your liked songs...")
             else:
-                tracks = []
-                for track in liked['items']:
-                    tracks.append(track['track']['external_urls']['spotify'])
-                print(tracks)
-                return await interaction.response.send_message("Not done implementing. <3")
+                if data is None:
+                    return await interaction.response.send_message("You don't have a spotify account connected!", ephemeral=True)
+                liked = await self.bot.get_cog('spotify').get_liked_songs(interaction)
+                if liked == "Failed":
+                    return interaction.response.send_message("I have failed to get your favorite songs.")
+                else:
+                    try:
+                        player = self.bot.lavalink.player_manager.create(
+                            interaction.guild.id, endpoint="us")
+                    except Exception as e:
+                        print(e)
+                        if isinstance(e, lavalink.errors.NodeError):
+                            return await interaction.response.send_message(
+                                "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
+                    if not interaction.user.voice or not interaction.user.voice.channel:
+                        return await interaction.response.send_message(
+                            '<:tickNo:697759586538749982> Join a voicechannel first.')
+                    if not player.is_connected:
+                        if (not interaction.user.voice.channel.permissions_for(interaction.guild.me).connect or not
+                                interaction.user.voice.channel.permissions_for(interaction.guild.me).speak):
+                            return await interaction.response.send_message(
+                                '<:tickNo:697759586538749982> I need the `CONNECT` and `SPEAK` permissions.')
+                        player.store('channel', interaction.channel.id)
+                        await interaction.user.voice.channel.connect(cls=LavalinkVoiceClient)
+                    else:
+                        if int(player.channel_id) != interaction.user.voice.channel.id:
+                            return await interaction.response.send_message(
+                                '<:tickNo:697759586538749982> You need to be in my voicechannel.')
+                    await interaction.response.send_message("<:tickYes:697759553626046546> Starting your Spotify liked songs..", ephemeral=True)
+                    for track in liked['items']:
+                        results = await self.bot.lavalink.get_tracks(track['track']['external_urls']['spotify'], check_local=True)
+                        if results.load_type == 'PLAYLIST_LOADED':
+                            tracks = results.tracks
+                            for track in tracks:
+                                player.add(
+                                    requester=interaction.user.id, track=track)
+                        else:
+                            track = results.tracks[0]
+                            player.add(
+                                requester=interaction.user.id, track=track)
+                    player.store('channel', interaction.channel.id)
+                    if not player.is_playing:
+                        await player.play()
 
     @Fresh.command(name="playlist")
     @Fresh.checks.cooldown(1, 5)
     async def spotify_playlist(self, interaction: discord.Interaction, playlist: str = None):
         """Choose a playlist you have created, and start playing in a vc."""
-        await interaction.response.defer(ephemeral=True)
         data = self.db.find_one({"_id": interaction.user.id})
         if data is None:
-            return await interaction.followup.send(
-                "You do not have a spotify account connected! If you would like to connect yours please use the command `/spotify connect`! <3")
+            return await interaction.response.send_message(
+                content="You do not have a spotify account connected! If you would like to connect yours please use the command `/spotify connect`! <3",
+                ephemeral=True
+            )
         else:
             if playlist != None:
-                await self.bot.get_cog('Music')._play(interaction, playlist)
-                # return await interaction.followup.send(
-                #         f"Here is when I need to play this playlist right?\n{playlist}")
+                try:
+                    await self.bot.get_cog('Music')._play(interaction, playlist)
+                except Exception as e:
+                    print(e)
+                    await interaction.response.send_message(
+                        content=e, ephemeral=True)
+                print(interaction.command.name)
+                print(
+                    f"Here is when I need to play this playlist right?\n{playlist}")
             else:
                 playlists = await self.get_playlists(interaction)
                 if playlists == "Failed":
-                    return await interaction.followup.send(
-                        "I failed to get your playlists...")
+                    return await interaction.response.send_message(
+                        content="I failed to get your playlists...", ephemeral=True)
                 else:
                     number = 1
                     msg = ""
@@ -156,7 +203,8 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
                         number += 1
                     e = discord.Embed(
                         colour=discord.Colour.teal(), description=msg)
-                    return await interaction.followup.send(embed=e)
+                    return await interaction.response.send_message(
+                        embed=e, ephemeral=True)
 
     @spotify_playlist.autocomplete('playlist')
     async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Fresh.Choice[str]]:
