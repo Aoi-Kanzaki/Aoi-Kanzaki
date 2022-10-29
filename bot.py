@@ -37,7 +37,6 @@ class Fresh(commands.AutoShardedBot):
             self.db = pymongo.MongoClient(
                 _config["database"]["uri"])[collection]
             print(f'\x1b[2K[Fresh] DB: Connected to {collection}!')
-        await self.load_extension('extensions.core')
         await self.init_extensions()
 
     async def init_extensions(self):
@@ -47,14 +46,15 @@ class Fresh(commands.AutoShardedBot):
         except Exception as e:
             print(f'\x1b[2K{ext:20}ERR loading Jishaku: {str(e)}')
         for ext in os.listdir('extensions'):
-            if not ext.endswith('.py') or ext.startswith('core') or ext.startswith('_'):
+            if not ext.endswith('.py'):
                 continue
             try:
                 await self.load_extension(f'extensions.{ext[:-3]}')
-            except Exception as e:
-                print(f'\x1b[2K{ext:20}ERR: {str(e)}')
+                print(f'\x1b[2K[Fresh] Loaded Extension: {ext[:-3]}')
             except commands.ExtensionAlreadyLoaded:
                 pass
+            except Exception as e:
+                print(f'\x1b[2K{ext:20}ERR: {str(e)}')
             else:
                 print(f'\x1b[2K{ext:20}OK', end='\r')
         try:

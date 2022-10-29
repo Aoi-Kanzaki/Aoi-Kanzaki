@@ -1,7 +1,6 @@
 import discord
 import datetime
 import humanize
-from lavalink.utils import format_time
 from lavalink.models import AudioTrack
 
 

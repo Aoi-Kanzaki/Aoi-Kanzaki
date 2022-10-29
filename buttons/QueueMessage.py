@@ -1,6 +1,5 @@
 import math
 import discord
-import lavalink
 import humanize
 import datetime
 

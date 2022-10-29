@@ -2,7 +2,7 @@ import discord
 import datetime
 import humanize
 from aiohttp import request
-from sources.spotify import SpotifyAudioTrack, SpotifySource
+from sources.spotify import SpotifyAudioTrack
 from buttons.EnsureChoice import EnsureChoiceButtons
 
 
