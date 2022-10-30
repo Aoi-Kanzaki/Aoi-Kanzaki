@@ -11,7 +11,7 @@ from buttons.SpotifyCheck import Disconnect_Check
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
 
 
-class Spotify(commands.GroupCog, name="spotify", description="All spotify related commands."):
+class Spotify(commands.GroupCog, description="All spotify related commands."):
     def __init__(self, bot: commands.AutoShardedBot) -> None:
         super().__init__()
         self.bot = bot
@@ -320,3 +320,4 @@ class Spotify(commands.GroupCog, name="spotify", description="All spotify relate
 
 async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Spotify(bot))
+ 

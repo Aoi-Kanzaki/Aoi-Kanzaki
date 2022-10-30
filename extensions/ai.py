@@ -10,7 +10,7 @@ from discord import app_commands as Fresh
 from buttons.AiImagePaging import Paging
 
 
-class Ai(commands.GroupCog, name="ai", description="All Artificial intelligence related commands."):
+class Ai(commands.GroupCog, description="All Artificial intelligence related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
         self.AiKey = self.bot.config['openAiKey']

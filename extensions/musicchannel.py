@@ -12,9 +12,7 @@ from utils.LavalinkVoiceClient import LavalinkVoiceClient
 from buttons.MusicChannel import PlayingButtons, DefaultButtons
 
 
-class MusicChannel(commands.GroupCog,
-                   name="musicchannel",
-                   description="All music channel related commands."):
+class MusicChannel(commands.GroupCog, description="All music channel related commands."):
 
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot

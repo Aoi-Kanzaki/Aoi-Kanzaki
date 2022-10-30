@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord import app_commands as Fresh
 
 
-class Crypto(commands.GroupCog, name="crypto", description="Crypto related commands."):
+class Crypto(commands.GroupCog, description="Crypto related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 

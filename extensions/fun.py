@@ -6,6 +6,8 @@ from aiohttp import request
 from discord.ext import commands
 from discord import app_commands as Fresh
 
+from buttons.MemeButtons import MemeButtons
+
 
 class Fun(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
@@ -85,7 +87,7 @@ class Fun(commands.Cog):
         e.set_image(url=memeUrl)
         e.set_footer(
             text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}")
-        await interaction.response.send_message(embed=e)
+        await interaction.response.send_message(embed=e, view=MemeButtons())
 
 
 async def setup(bot: commands.AutoShardedBot):

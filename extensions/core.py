@@ -17,6 +17,9 @@ from discord import app_commands as Fresh
 from utils.checks import is_dev
 from jishaku.paginators import PaginatorInterface, WrappedPaginator
 
+from modals.BugReport import BugReport
+from modals.Suggest import Suggest
+
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -29,6 +32,18 @@ def sizeof_fmt(num, suffix='B'):
 class Core(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
+
+    @Fresh.command(name="report")
+    @Fresh.checks.cooldown(1, 60)
+    async def report(self, interaction: discord.Interaction):
+        """Submit a bug report to the developer."""
+        return await interaction.response.send_modal(BugReport(self.bot))
+
+    @Fresh.command(name="suggest")
+    @Fresh.checks.cooldown(1, 60)
+    async def suggest(self, interaction: discord.Interaction):
+        """Suggest a feature for the developer."""
+        return await interaction.response.send_modal(Suggest(self.bot))
 
     @Fresh.command(name="invite")
     @Fresh.checks.cooldown(1, 5)

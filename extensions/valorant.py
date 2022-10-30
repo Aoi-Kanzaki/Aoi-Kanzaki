@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord import app_commands as Fresh
 
 
-class Valorant(commands.GroupCog, name="valorant", description="Crypto related commands."):
+class Valorant(commands.GroupCog, description="Crypto related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 

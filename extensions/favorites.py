@@ -8,7 +8,7 @@ from utils.LavalinkVoiceClient import LavalinkVoiceClient
 url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
 
 
-class Favorites(commands.GroupCog, name="favorites", description="All fav songs related commands."):
+class Favorites(commands.GroupCog, description="All fav songs related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
         self.db = self.bot.db.favorites
