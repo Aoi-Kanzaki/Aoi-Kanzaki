@@ -39,11 +39,12 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
                 text=f"Viewing image 1/{len(images)}...")
             try:
                 await interaction.delete_original_response()
-                return await interaction.channel.send(
+                view = Paging(bot=self.bot, prompt=input,
+                              images=images, index=0)
+                view.message = await interaction.channel.send(
                     file=discord.File(image, "image.png"),
                     embed=e,
-                    view=Paging(bot=self.bot, prompt=input,
-                                images=images, index=0)
+                    view=view
                 )
             except Exception as e:
                 print(e)

@@ -87,7 +87,8 @@ class Fun(commands.Cog):
         e.set_image(url=memeUrl)
         e.set_footer(
             text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}")
-        await interaction.response.send_message(embed=e, view=MemeButtons())
+        view = MemeButtons()
+        view.message = await interaction.channel.send(embed=e, view=view)
 
 
 async def setup(bot: commands.AutoShardedBot):

@@ -1,3 +1,4 @@
+import time
 import math
 import discord
 import requests
@@ -9,6 +10,57 @@ from discord import app_commands as Fresh
 class Utility(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
+
+    @Fresh.command(name="userinfo")
+    @Fresh.describe(user="The member you want to get information about.")
+    async def userinfo(self, interaction: discord.Interaction, user: discord.Member = None):
+        """Get a users information."""
+        if user is None:
+            user = interaction.user
+        roles = ", ".join(
+            [f"<@&{x.id}>" for x in sorted(user.roles, key=lambda x: x.position,
+                                           reverse=True) if x.id != interaction.guild.default_role.id]
+        ) if len(user.roles) > 1 else "None"
+
+        e = discord.Embed(colour=user.top_role.color.value)
+        e.set_thumbnail(url=user.avatar.url)
+        e.add_field(name="Name:", value=user)
+        e.add_field(name="Nickname", value=user.nick if hasattr(
+            user, "nick") else "None")
+        e.add_field(name="ID", value=user.id)
+        e.add_field(name=f"Roles ({len(user.roles)-1})",
+                    value=roles, inline=False)
+        e.add_field(name="Created Account",
+                    value=f"<t:{str(time.mktime(user.created_at.timetuple())).split('.')[0]}:R>")
+        e.add_field(name="Joined this server",
+                    value=f"<t:{str(time.mktime(user.joined_at.timetuple())).split('.')[0]}:R>")
+
+        usr = await self.bot.fetch_user(user.id)
+        if usr.banner:
+            e.set_image(url=usr.banner.url)
+        return await interaction.response.send_message(embed=e)
+
+    @Fresh.command(name="serverinfo")
+    async def serverinfo(self, interaction: discord.Interaction):
+        """Shows information about the server."""
+        bots = sum(1 for member in interaction.guild.members if member.bot)
+        e = discord.Embed(colour=discord.Colour.teal(
+        ), title=f"**{interaction.guild.name}** ({interaction.guild.id})")
+        if interaction.guild.icon:
+            e.set_thumbnail(url=interaction.guild.icon)
+        if interaction.guild.banner:
+            e.set_image(url=interaction.guild.banner.with_format(
+                "png").with_size(1024))
+        e.add_field(name="Server Name",
+                    value=interaction.guild.name)
+        e.add_field(
+            name="Owner", value=interaction.guild.owner.mention)
+        e.add_field(name="Created",
+                    value=f"<t:{str(time.mktime(interaction.guild.created_at.timetuple())).split('.')[0]}:R>", inline=False)
+        e.add_field(name="Members",
+                    value=interaction.guild.member_count)
+        e.add_field(name="Bots", value=bots)
+        return await interaction.response.send_message(embed=e)
 
     @Fresh.command(name="iplookup")
     async def iplookup(self, interaction: discord.Interaction, ipaddr: str = "9.9.9.9"):

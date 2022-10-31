@@ -12,6 +12,10 @@ class Paging(discord.ui.View):
         self.index = index
         self.prompt = prompt
 
+    async def on_timeout(self):
+        self.clear_items()
+        return await self.message.edit(view=self)
+
     @discord.ui.button(emoji="<:prev:1010324780274176112>", label="Previous", style=discord.ButtonStyle.success)
     async def prev(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.index -= 1

@@ -19,16 +19,19 @@ class Help(commands.Cog):
         return [
             Fresh.Choice(name=f"{command.name} - {command.description}",
                          value=command.name)
-            for command in self.bot.tree.get_commands() if current.lower() in command.name.lower()
+            for command in self.bot.tree.get_commands() if current.lower()
+            in command.name.lower() and command.module != "extensions.contextmenus"
         ][0:25]
 
     @Fresh.command(name="help")
     @Fresh.autocomplete(module=module_auto, command=command_auto)
+    @Fresh.describe(module="Select a module to list commands from.", command="Select a command to get help on.")
     async def help(self, interaction: discord.Interaction, module: str = None, command: str = None):
         """Get help on one of the bots commands or modules."""
+        ignore_cogs = ['Jishaku', 'ErrorHandler', 'ContextMenus']
         if not module and not command:
             e = discord.Embed(colour=discord.Colour.teal(),
-                              description="\n".join([e.capitalize() for e in self.bot.cogs if e not in ('Jishaku', 'ErrorHandler')]))
+                              description="\n".join([e for e in self.bot.cogs if e not in ignore_cogs]))
             e.set_thumbnail(url=self.bot.user.avatar)
             e.set_author(
                 name=f"{self.bot.user.name} Extensions:", icon_url=self.bot.user.avatar)

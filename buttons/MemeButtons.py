@@ -5,7 +5,11 @@ import discord
 
 class MemeButtons(discord.ui.View):
     def __init__(self):
-        super().__init__(timeout=180)
+        super().__init__(timeout=60)
+
+    async def on_timeout(self):
+        self.clear_items()
+        return await self.message.edit(view=self)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.success)
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
