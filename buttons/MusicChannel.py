@@ -61,7 +61,7 @@ class DefaultButtons(discord.ui.View):
         data = self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.response.send_message("You don't have a spotify account connected!", ephemeral=True)
-        liked = await self.bot.get_cog('spotify').get_liked_songs(interaction)
+        liked = await self.bot.get_cog('Spotify').get_liked_songs(interaction)
         if liked == "Failed":
             return interaction.response.send_message("I have failed to get your favorite songs.")
         else:

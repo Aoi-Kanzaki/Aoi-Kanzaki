@@ -126,7 +126,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
             else:
                 if data is None:
                     return await interaction.response.send_message("You don't have a spotify account connected!", ephemeral=True)
-                liked = await self.bot.get_cog('spotify').get_liked_songs(interaction)
+                liked = await self.get_liked_songs(interaction)
                 if liked == "Failed":
                     return interaction.response.send_message("I have failed to get your favorite songs.")
                 else:
@@ -320,4 +320,3 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
 
 async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Spotify(bot))
- 
