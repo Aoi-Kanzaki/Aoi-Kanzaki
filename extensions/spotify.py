@@ -21,7 +21,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
     async def spotify_info(self, interaction: discord.Interaction):
         """Get the info of the account that is currently connected."""
         await interaction.response.defer(ephemeral=True)
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.followup.send(
                 "You do not have an account that is connected.")
@@ -46,7 +46,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
     async def spotify_connect(self, interaction: discord.Interaction):
         """Connect your spotify account to Fresh."""
         await interaction.response.defer(ephemeral=True)
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
 
         if data is not None:
             return await interaction.followup.send(
@@ -86,7 +86,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
             if oauthData['access_token'] != None:
                 oauthData = {"_id": interaction.user.id,
                              "oauthData": oauthData}
-                self.db.insert_one(oauthData)
+                await self.db.insert_one(oauthData)
                 return await interaction.user.send(
                     "Your spotify account has been successfuly connected!")
         except KeyError:
@@ -97,7 +97,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
     async def spotify_disconnect(self, interaction: discord.Interaction):
         """This will disconnect your spotify account from Fresh and delete your data!"""
         await interaction.response.defer(ephemeral=True)
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.followup.send(
                 "You don't have a spotify account connected!",
@@ -113,7 +113,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
     @Fresh.command(name="liked")
     async def spotify_liked(self, interaction: discord.Interaction):
         """Start playing all of the songs you have liked."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return interaction.response.send_message(
                 "You do not have a spotify account connected! If you would like to connect yours please use the command `/spotify connect`! <3",
@@ -172,7 +172,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
     @Fresh.checks.cooldown(1, 5)
     async def spotify_playlist(self, interaction: discord.Interaction, playlist: str = None):
         """Choose a playlist you have created, and start playing in a vc."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.response.send_message(
                 content="You do not have a spotify account connected! If you would like to connect yours please use the command `/spotify connect`! <3",
@@ -208,7 +208,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
 
     @spotify_playlist.autocomplete('playlist')
     async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Fresh.Choice[str]]:
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data != None:
             new_list = []
             playlists = await self.get_playlists(interaction)
@@ -281,7 +281,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
             return "Account not setup."
 
     async def get_access_token(self, interaction: discord.Interaction):
-        oauthData = self.db.find_one(
+        oauthData = await self.db.find_one(
             {"_id": interaction.user.id})
         if oauthData is None:
             try:
@@ -313,7 +313,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                 oauthData['oauthData']['access_token'] = json['access_token']
                 oauthData['oauthData']['expires_at'] = int(
                     time.time()) + json["expires_in"]
-                self.db.update_one({"_id": interaction.user.id}, {
+                await self.db.update_one({"_id": interaction.user.id}, {
                     "$set": oauthData})
                 return json['access_token']
 

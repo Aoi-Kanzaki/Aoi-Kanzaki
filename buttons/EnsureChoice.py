@@ -9,10 +9,10 @@ class EnsureChoiceButtons(discord.ui.View):
 
     @discord.ui.button(label="Yes", emoji="<:tickYes:697759553626046546>", style=discord.ButtonStyle.green)
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        data = await self.bot.db.favorites.find_one({"_id": interaction.user.id})
         if self.song in data['songs']:
-            self.bot.db.favorites.update_one({"_id": interaction.user.id}, {
-                                             "$pull": {"songs": self.song}})
+            await self.bot.db.favorites.update_one({"_id": interaction.user.id}, {
+                "$pull": {"songs": self.song}})
             return await interaction.response.edit_message(
                 content="<:tickYes:697759553626046546> I have removed the song from your favorites!", embed=None, view=None)
         else:

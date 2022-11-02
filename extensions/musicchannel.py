@@ -22,7 +22,7 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
     @Fresh.command(name="enable")
     async def enable(self, interaction: discord.Interaction):
         """Enabled the music channel."""
-        data = self.db.find_one({"_id": interaction.guild.id})
+        data = await self.db.find_one({"_id": interaction.guild.id})
         if not data:
             channel = await interaction.guild.create_text_channel(name="fresh-music")
             controllerEmbed = discord.Embed(
@@ -38,7 +38,7 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
                                                    view=DefaultButtons(self.bot))
             data = {"_id": interaction.guild.id, "toggle": True,
                     "channel": channel.id, "message": controllerMessage.id}
-            self.db.insert_one(data)
+            await self.db.insert_one(data)
             return await interaction.response.send_message(
                 content="I have enabled the music channel in this server!",
                 ephemeral=True
@@ -52,11 +52,11 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
     @Fresh.command(name="disable")
     async def disable(self, interaction: discord.Interaction):
         """Disables the music channel."""
-        data = self.db.find_one({"_id": interaction.guild.id})
+        data = await self.db.find_one({"_id": interaction.guild.id})
         if data:
             channel = await self.bot.fetch_channel(data['channel'])
             await channel.delete()
-            self.db.delete_one(data)
+            await self.db.delete_one(data)
             return await interaction.response.send_message(
                 content="I have disabled the music channel!",
                 ephemeral=True
@@ -73,7 +73,7 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
             return
         if message.author.bot:
             return
-        data = self.db.find_one({"_id": message.guild.id})
+        data = await self.db.find_one({"_id": message.guild.id})
         if not data:
             return
         if message.channel.id == data['channel']:
@@ -277,21 +277,21 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
             return player
 
     async def create_player_msg(self, message):
-        data = self.db.find_one({"_id": message.guild.id})
+        data = await self.db.find_one({"_id": message.guild.id})
         e = discord.Embed(color=discord.Colour.teal())
         e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
         e.description = "Send a song link or query to start playing music!\n"
         e.description += "Or click the button to start you favorite songs!"
         e.set_image(url=self.bot.user.avatar)
         msg = await self.bot.get_channel(data['channel']).send(embed=e, view=DefaultButtons(self.bot))
-        self.db.update_one({"_id": message.guild.id}, {
+        await self.db.update_one({"_id": message.guild.id}, {
                            "$set": {"message": msg.id}})
         return await message.channel.fetch_message(msg.id)
 
     async def cog_unload(self):
         self.bot.lavalink._event_hooks.clear()
         for guild in self.bot.guilds:
-            data = self.db.find_one({"_id": guild.id})
+            data = await self.db.find_one({"_id": guild.id})
             if data != None and data['toggle'] is True:
                 try:
                     channel = await guild.fetch_channel(data['channel'])

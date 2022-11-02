@@ -9,7 +9,7 @@ class Disconnect_Check(discord.ui.View):
 
     @discord.ui.button(label="Yes", emoji="<:tickYes:697759553626046546>", style=discord.ButtonStyle.green)
     async def yes(self, interaction: discord.Interaction, button: discord.ui.Button):
-        self.db.find_one_and_delete({"_id": interaction.user.id})
+        await self.db.find_one_and_delete({"_id": interaction.user.id})
         return await interaction.response.edit_message(
             content="Your spotify account has been disconnected!", view=None, embed=None)
 

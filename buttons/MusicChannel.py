@@ -57,7 +57,7 @@ class DefaultButtons(discord.ui.View):
 
     @discord.ui.button(label="Start Spotify Liked", custom_id="spotify_liked", style=discord.ButtonStyle.green)
     async def spotify_liked(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.response.send_message("You don't have a spotify account connected!", ephemeral=True)
         liked = await self.bot.get_cog('Spotify').get_liked_songs(interaction)
@@ -107,7 +107,6 @@ class PlayingButtons(discord.ui.View):
         self.bot = bot
         self.fav = self.bot.db.favorites
         self.db = self.bot.db.musicChannel
-        self.data = self.db.find_one({"_id": guild_id})
         self.player = bot.lavalink.player_manager.get(guild_id)
 
     @discord.ui.button(emoji="🤍", style=discord.ButtonStyle.grey)
@@ -200,9 +199,10 @@ class PlayingButtons(discord.ui.View):
     @discord.ui.button(emoji="<:stop:1010325505179918468>", style=discord.ButtonStyle.red)
     async def stop(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(content="⏹️ Stopping music and clearing the queue...", ephemeral=True)
-        if self.data != None and interaction.channel.id == self.data['channel']:
-            channel = await self.bot.fetch_channel(self.data['channel'])
-            msg = await channel.fetch_message(self.data['message'])
+        data = await self.db.find_one({"_id": interaction.guild.id})
+        if data != None and interaction.channel.id == data['channel']:
+            channel = await self.bot.fetch_channel(data['channel'])
+            msg = await channel.fetch_message(data['message'])
             e = discord.Embed(
                 colour=discord.Colour.teal(),
                 description="Send a song link or query to start playing music!\nOr click the button to start you favorite songs!",

@@ -102,7 +102,7 @@ class Music(commands.Cog):
     @Fresh.command(name="liked")
     async def liked(self, interaction: discord.Interaction):
         """Start's all the songs you have favorited."""
-        data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        data = await self.bot.db.favorites.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
             return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
         else:
@@ -403,7 +403,7 @@ class Music(commands.Cog):
 
     @lavalink.listener(lavalink.events.QueueEndEvent)
     async def on_queue_end(self, event: lavalink.events.QueueEndEvent):
-        data = self.bot.db.musicChannel.find_one(
+        data = await self.bot.db.musicChannel.find_one(
             {"_id": event.player.guild_id})
         if data:
             if event.player.fetch('channel') == data['channel']:
@@ -417,7 +417,7 @@ class Music(commands.Cog):
 
     @lavalink.listener(lavalink.events.TrackStartEvent)
     async def on_track_start(self, event: lavalink.events.TrackStartEvent):
-        data = self.bot.db.musicChannel.find_one(
+        data = await self.bot.db.musicChannel.find_one(
             {"_id": event.player.guild_id})
         if data != None and data['toggle'] is True:
             if event.player.fetch('channel') == data['channel']:

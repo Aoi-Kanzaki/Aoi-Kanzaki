@@ -1,11 +1,11 @@
 import os
 import json
 import discord
-import pymongo
 import aiohttp
 import asyncio
 from datetime import datetime
 from discord.ext import commands
+import motor.motor_asyncio as motor
 
 from rich.console import Console as RichConsole
 richConsole = RichConsole()
@@ -39,7 +39,7 @@ class Fresh(commands.AutoShardedBot):
         self.invite_url = discord.utils.oauth_url(self.user.id)
         if _config['database']['enabled'] is not False:
             collection = _config["database"]["collection"]
-            self.db = pymongo.MongoClient(
+            self.db = motor.AsyncIOMotorClient(
                 _config["database"]["uri"])[collection]
             richConsole.print(
                 f'[bold green][Fresh][/] DB: Connected to {collection}!')

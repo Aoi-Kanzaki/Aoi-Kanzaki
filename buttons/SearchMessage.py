@@ -13,7 +13,6 @@ class SearchButtons(discord.ui.View):
         self.index = 0
         self.results = results
         self.db = self.bot.db.fresh_channel
-        self.data = self.db.find_one({"_id": guild_id})
 
     @discord.ui.button(label='Last Result', emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def last_result(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -46,8 +45,9 @@ class SearchButtons(discord.ui.View):
             await self.player.play()
         await interaction.response.send_message("<:tickYes:697759553626046546> Enqueued track.", ephemeral=True)
         await interaction.message.delete()
-        if self.data != None and interaction.channel.id == self.data['channel']:
-            playerMsg = await interaction.channel.fetch_message(self.data['message'])
+        data = await self.db.find_one({"_id": self.guild_id})
+        if data != None and interaction.channel.id == data['channel']:
+            playerMsg = await interaction.channel.fetch_message(data['message'])
             if not playerMsg:
                 playerMsg = await self.bot.get_cog('MusicChannel').create_player_msg(interaction.message)
             if self.player.current is not None:

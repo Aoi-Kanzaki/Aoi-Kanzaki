@@ -16,7 +16,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
         @Fresh.context_menu(name="Favorite Songs")
         async def fav_songs_context(interaction: discord.Interaction, member: discord.Member):
             """Show's a users favorite songs."""
-            data = self.db.find_one({"_id": member.id})
+            data = await self.db.find_one({"_id": member.id})
             if data is None:
                 return await interaction.response.send_message(
                     f"<:tickNo:697759586538749982> **{member.display_name}** doesn't have any favorite songs!")
@@ -46,11 +46,11 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
     @Fresh.command(name="add")
     async def fav_add(self, interaction: discord.Interaction, link: str):
         """Adds a song to your favorites."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
-            self.db.insert_one({"_id": interaction.user.id})
-            self.db.update_one({"_id": interaction.user.id}, {
-                               "$set": {"songs": []}})
+            await self.db.insert_one({"_id": interaction.user.id})
+            await self.db.update_one({"_id": interaction.user.id}, {
+                "$set": {"songs": []}})
         else:
             if not url_rx.match(link):
                 return await interaction.response.send_message(
@@ -59,15 +59,15 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                 return await interaction.response.send_message(
                     "<:tickNo:697759586538749982> This song is already in your favorites!")
             else:
-                self.db.update_one({"_id": interaction.user.id}, {
-                                   "$push": {"songs": link}})
+                await self.db.update_one({"_id": interaction.user.id}, {
+                    "$push": {"songs": link}})
                 return await interaction.response.send_message(
                     "<:tickYes:697759553626046546> Done, it's now added to your favorites!")
 
     @Fresh.command(name="remove")
     async def fav_remove(self, interaction: discord.Interaction, link: str):
         """Removes a song from your favorites."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.response.send_message(
                 "You don't have any favorite songs!")
@@ -76,8 +76,8 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                 return await interaction.response.send_message(
                     "<:tickNo:697759586538749982> You need to pass a valid link to add to your favorites!")
             elif link in data['songs']:
-                self.db.update_one({"_id": interaction.user.id}, {
-                                   "$pull": {"songs": link}})
+                await self.db.update_one({"_id": interaction.user.id}, {
+                    "$pull": {"songs": link}})
                 return await interaction.response.send_message(
                     "I have removed the song from your favorites!")
             else:
@@ -89,7 +89,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
     @Fresh.command(name="show")
     async def fav_show(self, interaction: discord.Interaction):
         """Show's how many favorite you have."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
             return await interaction.response.send_message(
                 "<:tickNo:697759586538749982> You don't have any favorite songs!")
@@ -120,7 +120,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
     @Fresh.command(name="start")
     async def start(self, interaction: discord.Interaction):
         """Start's your favorite songs."""
-        data = self.db.find_one({"_id": interaction.user.id})
+        data = await self.db.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
             return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
         else:
