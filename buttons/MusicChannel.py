@@ -111,11 +111,11 @@ class PlayingButtons(discord.ui.View):
 
     @discord.ui.button(emoji="🤍", style=discord.ButtonStyle.grey)
     async def love_song(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.fav.find_one({"_id": interaction.user.id})
+        data = await self.fav.find_one({"_id": interaction.user.id})
         if data is None:
-            self.fav.insert_one({"_id": interaction.user.id})
-            self.fav.update_one({"_id": interaction.user.id}, {
-                                "$set": {"songs": [self.player.current.uri]}})
+            await self.fav.insert_one({"_id": interaction.user.id})
+            await self.fav.update_one({"_id": interaction.user.id}, {
+                "$set": {"songs": [self.player.current.uri]}})
             return await interaction.response.send_message(
                 "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
         else:
@@ -128,8 +128,8 @@ class PlayingButtons(discord.ui.View):
                 await interaction.response.send_message(
                     embed=e, view=EnsureChoiceButtons(self.bot, self.player.current.uri), ephemeral=True)
             else:
-                self.fav.update_one({"_id": interaction.user.id}, {
-                                    "$push": {"songs": self.player.current.uri}})
+                await self.fav.update_one({"_id": interaction.user.id}, {
+                    "$push": {"songs": self.player.current.uri}})
                 return await interaction.response.send_message(
                     "<:tickYes:697759553626046546> Done, it's now added to your favorites!", ephemeral=True)
 
