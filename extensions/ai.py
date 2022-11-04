@@ -6,7 +6,7 @@ import base64
 import aiohttp
 from io import BytesIO
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 from buttons.AiImagePaging import Paging
 
 
@@ -16,8 +16,8 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
         self.AiKey = self.bot.config['openAiKey']
         openai.api_key = self.AiKey
 
-    @Fresh.command(name="image")
-    @Fresh.describe(input="What do you want the AI to create?")
+    @Aoi.command(name="image")
+    @Aoi.describe(input="What do you want the AI to create?")
     async def image(self, interaction: discord.Interaction, input: str):
         """Create images from text with AI."""
         await interaction.response.defer()
@@ -47,10 +47,11 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
                     view=view
                 )
             except Exception as e:
-                print(e)
+                self.bot.richConsole.print(
+                    f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
 
-    @Fresh.command(name="sql")
-    @Fresh.describe(input="Ex: find all users who live in California and have over 1000 credits")
+    @Aoi.command(name="sql")
+    @Aoi.describe(input="Ex: find all users who live in California and have over 1000 credits")
     async def sql(self, interaction: discord.Interaction, input: str):
         """Create simple SQL queries."""
         response = openai.Completion.create(
@@ -73,10 +74,10 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
             ephemeral=True
         )
 
-    @Fresh.command(name="fresh")
-    @Fresh.describe(input="What do you want to say to Fresh?")
-    async def fresh(self, interaction: discord.Interaction, input: str):
-        """Talk to Fresh."""
+    @Aoi.command(name="aio")
+    @Aoi.describe(input="What do you want to say to Aoi?")
+    async def aio(self, interaction: discord.Interaction, input: str):
+        """Talk to Aoi."""
         response = openai.Completion.create(
             model="text-davinci-002",
             prompt=input,

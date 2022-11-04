@@ -5,7 +5,7 @@ import datetime
 import humanize
 from aiohttp import request
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 from buttons.SearchMessage import SearchButtons
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
@@ -19,12 +19,12 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
         self.db = self.bot.db.musicChannel
         self.bot.add_view(DefaultButtons(self.bot))
 
-    @Fresh.command(name="enable")
+    @Aoi.command(name="enable")
     async def enable(self, interaction: discord.Interaction):
         """Enabled the music channel."""
         data = await self.db.find_one({"_id": interaction.guild.id})
         if not data:
-            channel = await interaction.guild.create_text_channel(name="fresh-music")
+            channel = await interaction.guild.create_text_channel(name="aio-music")
             controllerEmbed = discord.Embed(
                 colour=discord.Colour.teal(),
                 description="Send a song link or query to start playing music!\nOr click the button to start you favorite songs!",
@@ -49,7 +49,7 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
                 ephemeral=True
             )
 
-    @Fresh.command(name="disable")
+    @Aoi.command(name="disable")
     async def disable(self, interaction: discord.Interaction):
         """Disables the music channel."""
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -154,7 +154,7 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
     async def update_player_msg(self, player, guild, playerMsg, status):
         if status == "main":
             e = discord.Embed(color=discord.Colour.teal())
-            e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+            e.set_author(name="Aoi Music", icon_url=self.bot.user.avatar.url)
             e.description = "Send a song link or query to start playing music!\n"
             e.description += "Or click the button to start you favorite songs!"
             e.set_image(url="https://i.imgur.com/VIYaATs.jpg")
@@ -279,13 +279,13 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
     async def create_player_msg(self, message):
         data = await self.db.find_one({"_id": message.guild.id})
         e = discord.Embed(color=discord.Colour.teal())
-        e.set_author(name="Fresh Music", icon_url=self.bot.user.avatar.url)
+        e.set_author(name="Aoi Music", icon_url=self.bot.user.avatar.url)
         e.description = "Send a song link or query to start playing music!\n"
         e.description += "Or click the button to start you favorite songs!"
         e.set_image(url=self.bot.user.avatar)
         msg = await self.bot.get_channel(data['channel']).send(embed=e, view=DefaultButtons(self.bot))
         await self.db.update_one({"_id": message.guild.id}, {
-                           "$set": {"message": msg.id}})
+            "$set": {"message": msg.id}})
         return await message.channel.fetch_message(msg.id)
 
     async def cog_unload(self):

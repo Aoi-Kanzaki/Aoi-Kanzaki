@@ -37,4 +37,6 @@ class BugReport(discord.ui.Modal):
         await interaction.response.send_message(f'Thanks for your submitting your bug!', ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.richConsole.print(
+            "[bold red][Bug Report][/] [red]Error: [white]" + str(error))
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)

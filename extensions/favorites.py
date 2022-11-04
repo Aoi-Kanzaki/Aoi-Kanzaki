@@ -2,7 +2,7 @@ import re
 import discord
 import lavalink
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
 
 url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
@@ -13,7 +13,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
         self.bot = bot
         self.db = self.bot.db.favorites
 
-        @Fresh.context_menu(name="Favorite Songs")
+        @Aoi.context_menu(name="Favorite Songs")
         async def fav_songs_context(interaction: discord.Interaction, member: discord.Member):
             """Show's a users favorite songs."""
             data = await self.db.find_one({"_id": member.id})
@@ -43,7 +43,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                     e.description += f"\nNot showing **{total}** more songs..."
                 return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="add")
+    @Aoi.command(name="add")
     async def fav_add(self, interaction: discord.Interaction, link: str):
         """Adds a song to your favorites."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -64,7 +64,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                 return await interaction.response.send_message(
                     "<:tickYes:697759553626046546> Done, it's now added to your favorites!")
 
-    @Fresh.command(name="remove")
+    @Aoi.command(name="remove")
     async def fav_remove(self, interaction: discord.Interaction, link: str):
         """Removes a song from your favorites."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -86,7 +86,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                     ephemeral=True
                 )
 
-    @Fresh.command(name="show")
+    @Aoi.command(name="show")
     async def fav_show(self, interaction: discord.Interaction):
         """Show's how many favorite you have."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -117,7 +117,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                 e.description += f"\nNot showing **{total}** more songs..."
             return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="start")
+    @Aoi.command(name="start")
     async def start(self, interaction: discord.Interaction):
         """Start's your favorite songs."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -128,7 +128,8 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as error:
-                print(error)
+                self.bot.richConsole.print(
+                    f"[bold red][MusicChannel][/] Error while creating player: {error}")
                 if isinstance(error, lavalink.errors.NodeError):
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)

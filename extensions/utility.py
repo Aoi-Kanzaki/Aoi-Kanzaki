@@ -4,15 +4,15 @@ import discord
 import requests
 import datetime
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 
 class Utility(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
-    @Fresh.command(name="userinfo")
-    @Fresh.describe(user="The member you want to get information about.")
+    @Aoi.command(name="userinfo")
+    @Aoi.describe(user="The member you want to get information about.")
     async def userinfo(self, interaction: discord.Interaction, user: discord.Member = None):
         """Get a users information."""
         if user is None:
@@ -40,7 +40,7 @@ class Utility(commands.Cog):
             e.set_image(url=usr.banner.url)
         return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="serverinfo")
+    @Aoi.command(name="serverinfo")
     async def serverinfo(self, interaction: discord.Interaction):
         """Shows information about the server."""
         bots = sum(1 for member in interaction.guild.members if member.bot)
@@ -62,7 +62,7 @@ class Utility(commands.Cog):
         e.add_field(name="Bots", value=bots)
         return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="iplookup")
+    @Aoi.command(name="iplookup")
     async def iplookup(self, interaction: discord.Interaction, ipaddr: str = "9.9.9.9"):
         """Lookup an ip address."""
         r = requests.get(
@@ -91,7 +91,7 @@ class Utility(commands.Cog):
         e.timestamp = datetime.datetime.utcnow()
         return await interaction.response.send_message(embed=e)
 
-    @Fresh.command(name="weather")
+    @Aoi.command(name="weather")
     async def weather(self, interaction: discord.Interaction, city: str):
         """Get your citys weather."""
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.bot.config['weatherApiKey']}"
@@ -115,11 +115,11 @@ class Utility(commands.Cog):
             embed=e
         )
 
-    Emoji = Fresh.Group(
+    Emoji = Aoi.Group(
         name="emoji", description="All emoji related commands.")
 
     @Emoji.command(name="steal")
-    @Fresh.checks.has_permissions(manage_guild=True)
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def steal(self, interaction: discord.Interaction, emoji: str):
         """Steal and emoji and copy it to this server."""
         try:

@@ -36,7 +36,13 @@ class ErrorHandler(commands.Cog):
                     ephemeral=True
                 )
             except Exception as e:
-                print(e)
+                try:
+                    await interaction.followup.send(
+                        embed=em,
+                        ephemeral=True)
+                except Exception as e:
+                    self.bot.richConsole.print(
+                        f"[bold red][Error Handler][/] {e}")
         elif isinstance(error, AttributeError):
             em = discord.Embed(colour=discord.Colour.red())
             em.title = "Oh no, an Attribute Error!"

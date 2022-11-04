@@ -5,7 +5,7 @@ import lavalink
 from typing import List
 from discord.ext import commands
 from requests.auth import HTTPBasicAuth
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 from requests_oauthlib import OAuth2Session
 from buttons.SpotifyCheck import Disconnect_Check
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
@@ -17,7 +17,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
         self.bot = bot
         self.db = self.bot.db.spotifyOauth
 
-    @Fresh.command(name="info")
+    @Aoi.command(name="info")
     async def spotify_info(self, interaction: discord.Interaction):
         """Get the info of the account that is currently connected."""
         await interaction.response.defer(ephemeral=True)
@@ -42,9 +42,9 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                 return await interaction.followup.send(
                     "I have failed to get your account information.")
 
-    @Fresh.command(name="connect")
+    @Aoi.command(name="connect")
     async def spotify_connect(self, interaction: discord.Interaction):
-        """Connect your spotify account to Fresh."""
+        """Connect your spotify account to Aoi."""
         await interaction.response.defer(ephemeral=True)
         data = await self.db.find_one({"_id": interaction.user.id})
 
@@ -61,7 +61,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
         authorization_url, state = oauthSession.authorization_url(
             self.bot.config['spotify']['base_url'])
         try:
-            msg = f"Please go to this link and authorize Fresh:\n{authorization_url}\n\n"
+            msg = f"Please go to this link and authorize Aoi:\n{authorization_url}\n\n"
             msg += "Once authorized, please send the **entire** url of the new page it sends you to.\n\n"
             msg += "**DO NOT SEND THIS LINK OR THE NEW LINK TO ANYONE ELSE BESIDES IN FRESH DMS**"
             await interaction.user.send(msg)
@@ -93,9 +93,9 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
             return await interaction.user.send(
                 "I have failed to connect your spotify account! Please make sure you are sending the FULL link in the url bar when discord shows.")
 
-    @Fresh.command(name="disconnect")
+    @Aoi.command(name="disconnect")
     async def spotify_disconnect(self, interaction: discord.Interaction):
-        """This will disconnect your spotify account from Fresh and delete your data!"""
+        """This will disconnect your spotify account from Aoi and delete your data!"""
         await interaction.response.defer(ephemeral=True)
         data = await self.db.find_one({"_id": interaction.user.id})
         if data is None:
@@ -110,7 +110,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
             return await interaction.followup.send(embed=e,
                                                    view=Disconnect_Check(self.bot, interaction), ephemeral=True)
 
-    @Fresh.command(name="liked")
+    @Aoi.command(name="liked")
     async def spotify_liked(self, interaction: discord.Interaction):
         """Start playing all of the songs you have liked."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -134,7 +134,8 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                         player = self.bot.lavalink.player_manager.create(
                             interaction.guild.id, endpoint="us")
                     except Exception as e:
-                        print(e)
+                        self.bot.richConsole.print(
+                            f"[bold red][Music][/] Failed to create player in {interaction.guild.name}: {e}")
                         if isinstance(e, lavalink.errors.NodeError):
                             return await interaction.response.send_message(
                                 "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
@@ -168,8 +169,8 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                     if not player.is_playing:
                         await player.play()
 
-    @Fresh.command(name="playlist")
-    @Fresh.checks.cooldown(1, 5)
+    @Aoi.command(name="playlist")
+    @Aoi.checks.cooldown(1, 5)
     async def spotify_playlist(self, interaction: discord.Interaction, playlist: str = None):
         """Choose a playlist you have created, and start playing in a vc."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -183,12 +184,8 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                 try:
                     await self.bot.get_cog('Music')._play(interaction, playlist)
                 except Exception as e:
-                    print(e)
-                    await interaction.response.send_message(
-                        content=e, ephemeral=True)
-                print(interaction.command.name)
-                print(
-                    f"Here is when I need to play this playlist right?\n{playlist}")
+                    self.bot.richConsole.print(
+                        f"[bold red][Spotify][/] Failed to play users playlist in {interaction.guild.name}: {e}")
             else:
                 playlists = await self.get_playlists(interaction)
                 if playlists == "Failed":
@@ -207,7 +204,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                         embed=e, ephemeral=True)
 
     @spotify_playlist.autocomplete('playlist')
-    async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Fresh.Choice[str]]:
+    async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Aoi.Choice[str]]:
         data = await self.db.find_one({"_id": interaction.user.id})
         if data != None:
             new_list = []
@@ -217,12 +214,12 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                 url = playlist['external_urls']['spotify']
                 new_list.append({"name": name, "url": url})
             return [
-                Fresh.Choice(name=pl['name'], value=pl['url'])
+                Aoi.Choice(name=pl['name'], value=pl['url'])
                 for pl in new_list if current.lower() in str(pl['name']).lower()
             ]
         else:
             return [
-                Fresh.Choice(
+                Aoi.Choice(
                     name="No account or playlists found.",
                     value="Not set up."
                 )

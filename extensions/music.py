@@ -8,7 +8,7 @@ import asyncio
 from aiohttp import request
 from discord.ext import commands
 from lavalink.filters import LowPass
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 from sources.spotify import SpotifyAudioTrack, SpotifySource
 from utils.LavalinkVoiceClient import LavalinkVoiceClient
@@ -44,18 +44,18 @@ class Music(commands.Cog):
         try:
             results = await self.bot.lavalink.get_tracks(current, check_local=True)
         except lavalink.errors.LoadError:
-            return [Fresh.Choice(name="Nothing found..", value="Nothing found..")]
+            return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
         if not results.tracks:
-            return [Fresh.Choice(name="Nothing found..", value="Nothing found..")]
+            return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
         else:
             return [
-                Fresh.Choice(
+                Aoi.Choice(
                     name=f"{track.author} - {track.title}", value=track.uri)
                 for track in results.tracks
             ]
 
-    @Fresh.command(name="play")
-    @Fresh.autocomplete(query=query_auto)
+    @Aoi.command(name="play")
+    @Aoi.autocomplete(query=query_auto)
     async def play(self, interaction: discord.Interaction, query: str):
         """ Searches and plays a song from a given query. """
         await self._play(interaction, query)
@@ -99,7 +99,7 @@ class Music(commands.Cog):
             if not player.is_playing:
                 await player.play()
 
-    @Fresh.command(name="liked")
+    @Aoi.command(name="liked")
     async def liked(self, interaction: discord.Interaction):
         """Start's all the songs you have favorited."""
         data = await self.bot.db.favorites.find_one({"_id": interaction.user.id})
@@ -110,7 +110,8 @@ class Music(commands.Cog):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as error:
-                print(error)
+                self.bot.richConsole.print(
+                    f"[bold red][Music][/] Error while creating player: {error}")
                 if isinstance(error, lavalink.errors.NodeError):
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
@@ -142,7 +143,7 @@ class Music(commands.Cog):
             if not player.is_playing:
                 await player.play()
 
-    @Fresh.command(name="seek")
+    @Aoi.command(name="seek")
     async def seek(self, interaction: discord.Interaction, seconds: int):
         """Seeks to a given position in a track."""
         inVoice = await self.ensure_voice(interaction)
@@ -162,7 +163,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="skip")
+    @Aoi.command(name="skip")
     async def skip(self, interaction: discord.Interaction):
         """Skips the current song."""
         inVoice = await self.ensure_voice(interaction)
@@ -181,7 +182,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="stop")
+    @Aoi.command(name="stop")
     async def stop(self, interaction: discord.Interaction):
         """Stops the current queue and clears it."""
         inVoice = await self.ensure_voice(interaction)
@@ -201,7 +202,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="now")
+    @Aoi.command(name="now")
     async def now(self, interaction: discord.Interaction):
         """Shows the current song that is playing."""
         inVoice = await self.ensure_voice(interaction)
@@ -241,7 +242,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="queue")
+    @Aoi.command(name="queue")
     async def queue(self, interaction: discord.Interaction, page: int = 1):
         """Shows the current queue."""
         inVoice = await self.ensure_voice(interaction)
@@ -274,7 +275,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="pause")
+    @Aoi.command(name="pause")
     async def pause(self, interaction: discord.Interaction):
         """Pauses or resumes the current player."""
         inVoice = await self.ensure_voice(interaction)
@@ -300,7 +301,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="volume")
+    @Aoi.command(name="volume")
     async def volume(self, interaction: discord.Interaction, volume: int = None):
         """Changes or shows the current players volume."""
         inVoice = await self.ensure_voice(interaction)
@@ -328,7 +329,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="shuffle")
+    @Aoi.command(name="shuffle")
     async def shuffle(self, interaction: discord.Interaction):
         """Enables or disabled the players shuffle."""
         inVoice = await self.ensure_voice(interaction)
@@ -348,7 +349,7 @@ class Music(commands.Cog):
                     ephemeral=True
                 )
 
-    @Fresh.command(name="disconnect")
+    @Aoi.command(name="disconnect")
     async def disconnect(self, interaction: discord.Interaction):
         """Disconnect the bot from the voice channel."""
         inVoice = await self.ensure_voice(interaction)
@@ -373,7 +374,7 @@ class Music(commands.Cog):
                 ephemeral=True
             )
 
-    @Fresh.command(name="lowpass")
+    @Aoi.command(name="lowpass")
     async def lowpass(self, interaction: discord.Interaction, strength: int):
         """Sets the strength of the low pass filter."""
         inVoice = await self.ensure_voice(interaction)
@@ -426,6 +427,16 @@ class Music(commands.Cog):
                 await self.send_controller(event)
         else:
             await self.send_controller(event)
+
+    @lavalink.listener(lavalink.events.NodeConnectedEvent)
+    async def on_node_connect(self, event: lavalink.events.NodeConnectedEvent):
+        self.bot.richConsole.print(
+            f"[bold green][Music][/] Connected to node {event.node.name}")
+
+    @lavalink.listener(lavalink.events.NodeDisconnectedEvent)
+    async def on_node_disconnect(self, event: lavalink.events.NodeDisconnectedEvent):
+        self.bot.richConsole.print(
+            f"[bold red][Music][/] Disconnected from node {event.node.name} with code {event.code}. Reason: {event.reason}")
 
     async def delete_npMsg(self, event):
         if event.player.fetch('npMsg') != None:
@@ -555,7 +566,8 @@ class Music(commands.Cog):
                 else:
                     return True
         except Exception as e:
-            print(e)
+            self.bot.richConsole.print(
+                f"[bold red][Music][/] Error during ensure_voice: {e}")
 
     def reload_sources(self):
         self.bot.lavalink.sources.clear()

@@ -54,4 +54,6 @@ class Suggest(discord.ui.Modal):
                 ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.richConsole.print(
+            "[bold red][Suggest][/] [red]Error: [white]" + str(error))
         await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)

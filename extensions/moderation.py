@@ -1,15 +1,15 @@
 import discord
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 
 class Moderation(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
-    @Fresh.command(name="ban")
-    @Fresh.checks.has_permissions(ban_members=True)
-    @Fresh.describe(
+    @Aoi.command(name="ban")
+    @Aoi.checks.has_permissions(ban_members=True)
+    @Aoi.describe(
         member="The member you would like to ban.",
         reason="The reason why you are banning the user.",
         messages="The amount of days you want to delete messages from (0-7)."
@@ -48,9 +48,9 @@ class Moderation(commands.Cog):
                 ephemeral=True
             )
 
-    @Fresh.command(name="kick")
-    @Fresh.checks.has_permissions(kick_members=True)
-    @Fresh.describe(
+    @Aoi.command(name="kick")
+    @Aoi.checks.has_permissions(kick_members=True)
+    @Aoi.describe(
         member="The member you would like to kick.",
         reason="The reason why you are kicking the user."
     )
@@ -84,9 +84,9 @@ class Moderation(commands.Cog):
                 ephemeral=True
             )
 
-    @Fresh.command(name="purge")
-    @Fresh.checks.has_permissions(manage_messages=True)
-    @Fresh.describe(
+    @Aoi.command(name="purge")
+    @Aoi.checks.has_permissions(manage_messages=True)
+    @Aoi.describe(
         amount="The amount of messages you want to delete.",
         member="The member you want to delete message from."
     )
@@ -107,7 +107,7 @@ class Moderation(commands.Cog):
         except Exception as e:
             return await interaction.followup.send(e)
 
-    @Fresh.command(name="cleanup")
+    @Aoi.command(name="cleanup")
     async def cleanup(self, interaction: discord.Interaction, amount: int = 100):
         """Cleans up the bots messages."""
         await interaction.response.defer(ephemeral=True)

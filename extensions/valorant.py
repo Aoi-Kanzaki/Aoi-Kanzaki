@@ -1,14 +1,14 @@
 import discord
 from utils.valUtils import Region
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 
 class Valorant(commands.GroupCog, description="Crypto related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
-    @Fresh.command(name="status")
+    @Aoi.command(name="status")
     async def status(self, interaction: discord.Interaction, region: str):
         """Check Valorant's servers."""
         region = Region(region)

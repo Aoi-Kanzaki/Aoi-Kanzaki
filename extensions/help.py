@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 
 class Help(commands.Cog):
@@ -11,21 +11,21 @@ class Help(commands.Cog):
 
     async def module_auto(self, interaction: discord.Interaction, current: str):
         return [
-            Fresh.Choice(name=module, value=module)
+            Aoi.Choice(name=module, value=module)
             for module in self.bot.cogs if module not in ('Jishaku', 'ErrorHandler')
         ]
 
     async def command_auto(self, interaction: discord.Interaction, current: str):
         return [
-            Fresh.Choice(name=f"{command.name} - {command.description}",
+            Aoi.Choice(name=f"{command.name} - {command.description}",
                          value=command.name)
             for command in self.bot.tree.get_commands() if current.lower()
             in command.name.lower() and command.module != "extensions.contextmenus"
         ][0:25]
 
-    @Fresh.command(name="help")
-    @Fresh.autocomplete(module=module_auto, command=command_auto)
-    @Fresh.describe(module="Select a module to list commands from.", command="Select a command to get help on.")
+    @Aoi.command(name="help")
+    @Aoi.autocomplete(module=module_auto, command=command_auto)
+    @Aoi.describe(module="Select a module to list commands from.", command="Select a command to get help on.")
     async def help(self, interaction: discord.Interaction, module: str = None, command: str = None):
         """Get help on one of the bots commands or modules."""
         ignore_cogs = ['Jishaku', 'ErrorHandler', 'ContextMenus']

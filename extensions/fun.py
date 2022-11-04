@@ -4,7 +4,7 @@ import urllib
 import json
 from aiohttp import request
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 from buttons.MemeButtons import MemeButtons
 
@@ -13,8 +13,8 @@ class Fun(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
-    @Fresh.command(name="phcomment")
-    @Fresh.describe(comment="The comment you want to post on PornHub.")
+    @Aoi.command(name="phcomment")
+    @Aoi.describe(comment="The comment you want to post on PornHub.")
     async def phcomment(self, interaction: discord.Interaction, comment: str):
         """Send a comment on PornHub. ( ͡° ͜ʖ ͡°)"""
         url = f"https://nekobot.xyz/api/imagegen?type=phcomment&image={interaction.user.avatar.url}&username={interaction.user.name}&text={comment}"
@@ -27,7 +27,7 @@ class Fun(commands.Cog):
             else:
                 await interaction.response.send_message(f"{json['message']}")
 
-    @Fresh.command(name="rps")
+    @Aoi.command(name="rps")
     async def rps(self, interaction: discord.Interaction, choice: str):
         """Play rock paper scissors with the bot."""
         choices = ["rock", "paper", "scissors"]
@@ -53,7 +53,7 @@ class Fun(commands.Cog):
         else:
             await interaction.response.send_message("Invalid choice, please choose rock, paper, or scissors.")
 
-    @Fresh.command(name="dadjoke")
+    @Aoi.command(name="dadjoke")
     async def dadjoke(self, interaction: discord.Interaction):
         """Get a random dad joke."""
         url = "https://dad-jokes.p.rapidapi.com/random/joke"
@@ -72,7 +72,7 @@ class Fun(commands.Cog):
             else:
                 await interaction.response.send_message(f"{response.status}")
 
-    @Fresh.command(name="meme")
+    @Aoi.command(name="meme")
     async def meme(self, interaction: discord.Interaction):
         """You want memes???"""
         memeApi = urllib.request.urlopen(

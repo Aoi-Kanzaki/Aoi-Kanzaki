@@ -13,7 +13,7 @@ import typing
 from jishaku.flags import Flags
 from datetime import datetime
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 from utils.checks import is_dev
 from jishaku.paginators import PaginatorInterface, WrappedPaginator
 
@@ -33,20 +33,20 @@ class Core(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
 
-    @Fresh.command(name="report")
-    @Fresh.checks.cooldown(1, 60)
+    @Aoi.command(name="report")
+    @Aoi.checks.cooldown(1, 60)
     async def report(self, interaction: discord.Interaction):
         """Submit a bug report to the developer."""
         return await interaction.response.send_modal(BugReport(self.bot))
 
-    @Fresh.command(name="suggest")
-    @Fresh.checks.cooldown(1, 60)
+    @Aoi.command(name="suggest")
+    @Aoi.checks.cooldown(1, 60)
     async def suggest(self, interaction: discord.Interaction):
         """Suggest a feature for the developer."""
         return await interaction.response.send_modal(Suggest(self.bot))
 
-    @Fresh.command(name="invite")
-    @Fresh.checks.cooldown(1, 5)
+    @Aoi.command(name="invite")
+    @Aoi.checks.cooldown(1, 5)
     async def invite(self, interaction: discord.Interaction):
         """Invite the bot to your server!"""
         return await interaction.response.send_message(
@@ -54,7 +54,7 @@ class Core(commands.Cog):
             ephemeral=True
         )
 
-    @Fresh.command(name="sync")
+    @Aoi.command(name="sync")
     @is_dev()
     async def sync(self, interaction: discord.Interaction):
         """Sync's the bot's application commands."""
@@ -65,14 +65,15 @@ class Core(commands.Cog):
                 content=f"📡 I have succesfully synced {len(synced)} commands!"
             )
         except Exception as e:
-            print(e)
+            self.bot.richConsole.print(
+                f"[bold red][Aoi][/] Error syncing commands: {e}")
             em = discord.Embed(colour=discord.Colour.red(),
                                title="An Error has Occurred:")
             em.description = e
             em.timestamp(time.localtime())
             await interaction.followup.send(embed=e)
 
-    @Fresh.command(name="reload")
+    @Aoi.command(name="reload")
     @is_dev()
     async def reload(self, interaction: discord.Interaction, module: str):
         """Reload the bot's modules."""
@@ -102,7 +103,7 @@ class Core(commands.Cog):
         e.description = response.strip()
         return await interaction.response.send_message(embed=e, ephemeral=True)
 
-    @Fresh.command(name="ping")
+    @Aoi.command(name="ping")
     async def ping(self, interaction: discord.Interaction):
         """Check the bots response time."""
         await interaction.response.defer()
@@ -137,9 +138,9 @@ class Core(commands.Cog):
             if self.bot.latency > 0.0:
                 websocket_readings.append(self.bot.latency)
 
-    @Fresh.command(name="about")
+    @Aoi.command(name="about")
     async def about(self, interaction: discord.Interaction):
-        """Shows information about Fresh."""
+        """Shows information about Aoi."""
         if not (guild := interaction.guild):
             return await interaction.response.send_message(
                 content="This command needs to be ran in a guild!",
@@ -165,7 +166,7 @@ class Core(commands.Cog):
                                 total += 1
         code = f"I am made of {total:,} lines of Python, spread across {file_amount:,} files!"
 
-        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
+        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Aoi/commit/%H) %s (%cr)"'
         if os.name == "posix":
             cmd = cmd.format(r"\`%h\`")
         else:
@@ -177,12 +178,12 @@ class Core(commands.Cog):
 
         await interaction.response.send_message(
             embed=discord.Embed(
-                title="About Fresh:",
+                title="About Aoi:",
                 colour=discord.Colour.teal(),
                 description=(
                     f"Authored by <@827940585201205258>. See all contributors on "
-                    f"[GitHub](https://github.com/JonnyBoy2000/Fresh). "),
-                url="https://github.com/JonnyBoy2000/Fresh",
+                    f"[GitHub](https://github.com/JonnyBoy2000/Aoi). "),
+                url="https://github.com/JonnyBoy2000/Aoi",
                 timestamp=datetime.now()
             )
             .set_thumbnail(url=me.avatar.url)
@@ -196,10 +197,10 @@ class Core(commands.Cog):
             .add_field(name="Code Information:", value=code)
         )
 
-    @Fresh.command(name="commits")
+    @Aoi.command(name="commits")
     async def commits(self, interaction: discord.Interaction):
         """Shows last 5 github commits."""
-        cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Fresh/commit/%H) %s (%cr)"'
+        cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Aoi/commit/%H) %s (%cr)"'
         if os.name == "posix":
             cmd = cmd.format(r"\`%h\`")
         else:
@@ -219,7 +220,7 @@ class Core(commands.Cog):
                 url="https://avatars2.githubusercontent.com/u/22266893?s=400&u=9df85f1c8eb95b889fdd643f04a3144323c38b66&v=4")
         )
 
-    @Fresh.command(name="uptime")
+    @Aoi.command(name="uptime")
     async def uptime(self, interaction: discord.Interaction):
         """Shows the uptime of the bot."""
         uptime = uptime = self.get_bot_uptime()
@@ -240,7 +241,7 @@ class Core(commands.Cog):
             fmt = "{d}d {h}h {m}m {s}s"
         return fmt.format(d=days, h=hours, m=minutes, s=seconds)
 
-    @Fresh.command(name="musicstats")
+    @Aoi.command(name="musicstats")
     @is_dev()
     async def musicstats(self, interaction: discord.Interaction):
         """Shows the current stats for music."""
@@ -270,7 +271,7 @@ class Core(commands.Cog):
             ephemeral=True
         )
 
-    @Fresh.command(name="source")
+    @Aoi.command(name="source")
     @is_dev()
     async def source(self, interaction: discord.Interaction, command_name: str):
         """"Displays the source code for a command."""

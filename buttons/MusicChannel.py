@@ -23,7 +23,8 @@ class DefaultButtons(discord.ui.View):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as error:
-                print(error)
+                self.bot.richConsole.print(
+                    f"[bold red][MusicChannel][/] Error while creating player: {error}")
                 if isinstance(error, lavalink.errors.NodeError):
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)
@@ -68,7 +69,8 @@ class DefaultButtons(discord.ui.View):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as e:
-                print(e)
+                self.bot.richConsole.print(
+                    f"[bold red][MusicChannel][/] Error while creating player: {e}")
                 if isinstance(e, lavalink.errors.NodeError):
                     return await interaction.response.send_message(
                         "<:tickNo:697759586538749982> There is no avaliable nodes right now! Try again later.", ephemeral=True)

@@ -1,7 +1,7 @@
 import discord
 import requests
 from discord.ext import commands
-from discord import app_commands as Fresh
+from discord import app_commands as Aoi
 
 
 class Crypto(commands.GroupCog, description="Crypto related commands."):
@@ -17,7 +17,7 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
         json = requests.get(url, headers=headers).json()
         return json['data']
 
-    @Fresh.command(name="bitcoin")
+    @Aoi.command(name="bitcoin")
     async def bitcoin(self, interaction: discord.Interaction):
         """Get Bitcoins current price."""
         try:
@@ -28,9 +28,11 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
-            print(e)
+            self.bot.richConsole.print(
+                f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
+            return await interaction.response.send_message(content=f"Error: {e}")
 
-    @Fresh.command(name="ethereum")
+    @Aoi.command(name="ethereum")
     async def etherium(self, interaction: discord.Interaction):
         """Get Ethereum current price."""
         try:
@@ -41,9 +43,11 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
-            print(e)
+            self.bot.richConsole.print(
+                f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
+            return await interaction.response.send_message(content=f"Error: {e}")
 
-    @Fresh.command(name="xrp")
+    @Aoi.command(name="xrp")
     async def xrp(self, interaction: discord.Interaction):
         """Get XRP current price."""
         try:
@@ -54,7 +58,9 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
-            print(e)
+            self.bot.richConsole.print(
+                f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
+            return await interaction.response.send_message(content=f"Error: {e}")
 
 
 async def setup(bot: commands.AutoShardedBot):
