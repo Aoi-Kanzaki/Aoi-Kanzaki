@@ -12,7 +12,7 @@ class SearchButtons(discord.ui.View):
         self.player = bot.lavalink.player_manager.get(guild_id)
         self.index = 0
         self.results = results
-        self.db = self.bot.db.fresh_channel
+        self.db = self.bot.db.musicChannel
 
     @discord.ui.button(label='Last Result', emoji="<:prev:1010324780274176112>", style=discord.ButtonStyle.blurple)
     async def last_result(self, interaction: discord.Interaction, button: discord.ui.Button):

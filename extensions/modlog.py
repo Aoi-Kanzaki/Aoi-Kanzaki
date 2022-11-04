@@ -6,7 +6,7 @@ from discord import app_commands as Aoi
 class ModLog(commands.GroupCog, description="All ModLog related commands."):
     def __init__(self, bot: commands.AutoShardedBot):
         self.bot = bot
-        self.db = self.bot.db.automod
+        self.db = self.bot.db.ModLog
 
     @Aoi.command(name="enable")
     @Aoi.checks.has_permissions(administrator=True)
@@ -21,12 +21,12 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
             await self.db.update_one({"_id": interaction.guild.id}, {
                 "$set": {"channel": channel.id}})
             return await interaction.response.send_message(
-                content=f"Automod has been enabled! Logs will be sent to {channel.mention}"
+                content=f"ModLog has been enabled! Logs will be sent to {channel.mention}"
             )
         else:
             if data['enabled'] is True:
                 return await interaction.response.send_message(
-                    "<:tickNo:697759586538749982> AutoMod is already enabled!")
+                    "<:tickNo:697759586538749982> ModLog is already enabled!")
             else:
                 if data['channel'] is None:
                     channel = await interaction.guild.create_text_channel("modlog")
@@ -35,12 +35,12 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                     await self.db.update_one({"_id": interaction.guild.id}, {
                         "$set": {"channel": channel.id}})
                     return await interaction.response.send_message(
-                        content=f"Automod has been enabled! Logs will be sent to {channel.mention}"
+                        content=f"ModLog has been enabled! Logs will be sent to {channel.mention}"
                     )
                 await self.db.update_one({"_id": interaction.guild.id}, {
                     "$set": {"enabled": True}})
                 return await interaction.response.send_message(
-                    "<:tickYes:697759553626046546> AutoMod has been enabled!")
+                    "<:tickYes:697759553626046546> ModLog has been enabled!")
 
     @Aoi.command(name="disable")
     @Aoi.checks.has_permissions(administrator=True)
@@ -49,11 +49,11 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
             return await interaction.response.send_message(
-                "<:tickNo:697759586538749982> AutoMod is not enabled!")
+                "<:tickNo:697759586538749982> ModLog is not enabled!")
         else:
             if data['enabled'] is False:
                 return await interaction.response.send_message(
-                    "<:tickNo:697759586538749982> AutoMod is not enabled!")
+                    "<:tickNo:697759586538749982> ModLog is not enabled!")
             else:
                 channel = self.bot.get_channel(data['channel'])
                 try:
@@ -66,7 +66,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 await self.db.update_one({"_id": interaction.guild.id}, {
                     "$set": {"enabled": False}})
                 return await interaction.response.send_message(
-                    "<:tickYes:697759553626046546> AutoMod has been disabled!")
+                    "<:tickYes:697759553626046546> ModLog has been disabled!")
 
     @commands.Cog.listener()
     async def on_message_edit(self, message: discord.Message, new_message: discord.Message):

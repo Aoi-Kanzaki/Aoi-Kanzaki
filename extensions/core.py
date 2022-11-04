@@ -110,7 +110,7 @@ class Core(commands.Cog):
         message = None
         api_readings: typing.List[float] = []
         websocket_readings: typing.List[float] = []
-        for _ in range(6):
+        for _ in range(5):
             text = "Calculating round-trip time...\n\n"
             text += "\n".join(f"Reading {index + 1}: {reading * 1000:.2f}ms" for index,
                               reading in enumerate(api_readings))

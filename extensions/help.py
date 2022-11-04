@@ -12,13 +12,14 @@ class Help(commands.Cog):
     async def module_auto(self, interaction: discord.Interaction, current: str):
         return [
             Aoi.Choice(name=module, value=module)
-            for module in self.bot.cogs if module not in ('Jishaku', 'ErrorHandler')
+            for module in self.bot.cogs if current.lower() in module.lower()
+            and module not in ('Jishaku', 'ErrorHandler', 'ContextMenus', 'Help')
         ]
 
     async def command_auto(self, interaction: discord.Interaction, current: str):
         return [
             Aoi.Choice(name=f"{command.name} - {command.description}",
-                         value=command.name)
+                       value=command.name)
             for command in self.bot.tree.get_commands() if current.lower()
             in command.name.lower() and command.module != "extensions.contextmenus"
         ][0:25]
@@ -28,7 +29,7 @@ class Help(commands.Cog):
     @Aoi.describe(module="Select a module to list commands from.", command="Select a command to get help on.")
     async def help(self, interaction: discord.Interaction, module: str = None, command: str = None):
         """Get help on one of the bots commands or modules."""
-        ignore_cogs = ['Jishaku', 'ErrorHandler', 'ContextMenus']
+        ignore_cogs = ['Jishaku', 'ErrorHandler', 'ContextMenus', 'Help']
         if not module and not command:
             e = discord.Embed(colour=discord.Colour.teal(),
                               description="\n".join([e for e in self.bot.cogs if e not in ignore_cogs]))

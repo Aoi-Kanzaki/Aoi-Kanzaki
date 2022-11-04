@@ -63,7 +63,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
         try:
             msg = f"Please go to this link and authorize Aoi:\n{authorization_url}\n\n"
             msg += "Once authorized, please send the **entire** url of the new page it sends you to.\n\n"
-            msg += "**DO NOT SEND THIS LINK OR THE NEW LINK TO ANYONE ELSE BESIDES IN FRESH DMS**"
+            msg += "**DO NOT SEND THIS LINK OR THE NEW LINK TO ANYONE ELSE BESIDES IN AOI DMS**"
             await interaction.user.send(msg)
             await interaction.followup.send("Please check your dms to proceed!")
         except discord.errors.Forbidden:

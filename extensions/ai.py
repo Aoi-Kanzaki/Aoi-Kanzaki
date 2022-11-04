@@ -74,9 +74,9 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
             ephemeral=True
         )
 
-    @Aoi.command(name="aio")
+    @Aoi.command(name="aoi")
     @Aoi.describe(input="What do you want to say to Aoi?")
-    async def aio(self, interaction: discord.Interaction, input: str):
+    async def aoi(self, interaction: discord.Interaction, input: str):
         """Talk to Aoi."""
         response = openai.Completion.create(
             model="text-davinci-002",
