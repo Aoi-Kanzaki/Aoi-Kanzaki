@@ -166,7 +166,7 @@ class Core(commands.Cog):
                                 total += 1
         code = f"I am made of {total:,} lines of Python, spread across {file_amount:,} files!"
 
-        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/JonnyBoy2000/Aoi-Kanzaki/commit/%H) %s (%cr)"'
+        cmd = r'git show -s HEAD~3..HEAD --format="[{}](https://github.com/Jonny0181/Aoi-Kanzaki/commit/%H) %s (%cr)"'
         if os.name == "posix":
             cmd = cmd.format(r"\`%h\`")
         else:
@@ -182,8 +182,8 @@ class Core(commands.Cog):
                 colour=discord.Colour.teal(),
                 description=(
                     f"Authored by <@827940585201205258>. See all contributors on "
-                    f"[GitHub](https://github.com/JonnyBoy2000/Aoi-Kanzaki). "),
-                url="https://github.com/JonnyBoy2000/Aoi-Kanzaki",
+                    f"[GitHub](https://github.com/Jonny0181/Aoi-Kanzaki). "),
+                url="https://github.com/Jonny0181/Aoi-Kanzaki",
                 timestamp=datetime.now()
             )
             .set_thumbnail(url=me.avatar.url)
@@ -200,7 +200,7 @@ class Core(commands.Cog):
     @Aoi.command(name="commits")
     async def commits(self, interaction: discord.Interaction):
         """Shows last 5 github commits."""
-        cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/JonnyBoy2000/Aoi/commit/%H) %s (%cr)"'
+        cmd = r'git show -s HEAD~5..HEAD --format="[{}](https://github.com/Jonny0181/Aoi-Kanzaki/commit/%H) %s (%cr)"'
         if os.name == "posix":
             cmd = cmd.format(r"\`%h\`")
         else:
