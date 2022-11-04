@@ -15,7 +15,7 @@ class DefaultButtons(discord.ui.View):
 
     @discord.ui.button(label="Start My Favorites", custom_id="start_fav", style=discord.ButtonStyle.green)
     async def start_fav(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = self.bot.db.favorites.find_one({"_id": interaction.user.id})
+        data = await self.bot.db.favorites.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
             return await interaction.response.send_message("You don't have any favorite songs.", ephemeral=True)
         else:
