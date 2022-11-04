@@ -3,6 +3,7 @@ import json
 import discord
 import aiohttp
 import asyncio
+import random
 from datetime import datetime
 from discord.ext import commands
 import motor.motor_asyncio as motor
@@ -31,11 +32,6 @@ class Aoi(commands.AutoShardedBot):
             self._init = True
             self.session = aiohttp.ClientSession()
             self.richConsole.print('[bold green][Aoi][/] Connected.')
-        await self.change_presence(
-            status=discord.Status.dnd,
-            activity=discord.Activity(
-                type=discord.ActivityType.watching, name=f"/help | {len(self.guilds)} guilds..")
-        )
         self.invite_url = discord.utils.oauth_url(self.user.id)
         if _config['database']['enabled'] is not False:
             collection = _config["database"]["collection"]
@@ -44,6 +40,34 @@ class Aoi(commands.AutoShardedBot):
             self.richConsole.print(
                 f'[bold green][Aoi][/] DB: Connected to {collection}!')
         await self.init_extensions()
+
+    async def status_loop(self):
+        await self.wait_until_ready()
+
+        while not self.is_closed():
+            playing = 0
+            for player in self.lavalink.player_manager.players:
+                player = self.lavalink.player_manager.get(player)
+                if player.current is not None:
+                    playing += 1
+
+            statuses = [
+                {"name": "guilds",
+                    "value": f"/help | {len(self.guilds)} guilds.."},
+                {"name": "music",
+                    "value": f"music in {playing} guilds.."}
+            ]
+            status = random.choice(statuses)
+            if status['name'] == "guilds":
+                await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
+                    type=discord.ActivityType.watching, name=status['value']
+                ))
+            elif status['name'] == "music":
+                await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
+                    type=discord.ActivityType.listening, name=status['value']
+                ))
+
+            await asyncio.sleep(30)
 
     async def init_extensions(self):
         extLoaded = 1
@@ -72,6 +96,12 @@ class Aoi(commands.AutoShardedBot):
 
             self.richConsole.print(
                 f'[bold green][Aoi][/] Succesfully loaded {len(extensions)+1} extensions!')
+        try:
+            self.loop.create_task(self.status_loop())
+            self.richConsole.print('[bold green][Aoi][/] Started Status loop.')
+        except Exception as e:
+            self.richConsole.print(
+                f'[bold red][Aoi][/] Failed to start Status loop: {e}')
         with self.richConsole.status("[bold green][Aoi][/] Attempting to sync application commands...") as status:
             try:
                 synced = await self.tree.sync()

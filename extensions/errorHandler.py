@@ -41,8 +41,7 @@ class ErrorHandler(commands.Cog):
                         embed=em,
                         ephemeral=True)
                 except Exception as e:
-                    self.bot.richConsole.print(
-                        f"[bold red][Error Handler][/] {e}")
+                    self.bot.richConsole.print_exception()
         elif isinstance(error, AttributeError):
             em = discord.Embed(colour=discord.Colour.red())
             em.title = "Oh no, an Attribute Error!"

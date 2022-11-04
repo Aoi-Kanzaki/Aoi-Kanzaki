@@ -52,7 +52,7 @@ class Music(commands.Cog):
                 Aoi.Choice(
                     name=f"{track.author} - {track.title}", value=track.uri)
                 for track in results.tracks
-            ]
+            ][0:5]
 
     @Aoi.command(name="play")
     @Aoi.autocomplete(query=query_auto)

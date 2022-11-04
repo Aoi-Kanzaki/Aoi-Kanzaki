@@ -1,4 +1,5 @@
 import discord
+from datetime import datetime
 from discord.ext import commands
 from discord import app_commands as Aoi
 
@@ -75,21 +76,17 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         data = await self.db.find_one({"_id": message.guild.id})
         if data is None:
             return
-        else:
-            if data['enabled'] is True:
-                channel = self.bot.get_channel(data['channel'])
-                embed = discord.Embed(
-                    title="Message Edited",
-                    description=f"**Author:** {message.author.mention}\n"
-                    f"**Channel:** {message.channel.mention}\n"
-                    f"**Before:** {message.content}\n"
-                    f"**After:** {new_message.content}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=message.author.avatar.url)
-                embed.set_footer(
-                    text=f"Message ID: {message.id} | Author ID: {message.author.id}")
-                return await channel.send(embed=embed)
+        if data['enabled'] is True:
+            channel = self.bot.get_channel(data['channel'])
+            e = discord.Embed(colour=0xf58142, timestamp=datetime.utcnow())
+            e.set_author(name=message.author,
+                         icon_url=message.author.avatar.url)
+            e.description = (f"**Messaged Edited in {message.channel.mention}**\n"
+                             f"**Before:** {message.content}\n"
+                             f"**After:** {new_message.content}")
+            e.set_thumbnail(url=message.author.avatar.url)
+            e.set_footer(text=f"Message ID: {message.id}")
+            return await channel.send(embed=e)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -98,20 +95,16 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         data = await self.db.find_one({"_id": message.guild.id})
         if data is None:
             return
-        else:
-            if data['enabled'] is True:
-                channel = self.bot.get_channel(data['channel'])
-                embed = discord.Embed(
-                    title="Message Deleted",
-                    description=f"**Author:** {message.author.mention}\n"
-                    f"**Channel:** {message.channel.mention}\n"
-                    f"**Message:** {message.content}",
-                    color=discord.Color.red()
-                )
-                embed.set_thumbnail(url=message.author.avatar.url)
-                embed.set_footer(
-                    text=f"Message ID: {message.id} | Author ID: {message.author.id}")
-                return await channel.send(embed=embed)
+        if data['enabled'] is True:
+            channel = self.bot.get_channel(data['channel'])
+            e = discord.Embed(colour=0xf55742, timestamp=datetime.utcnow())
+            e.set_author(name=message.author,
+                         icon_url=message.author.avatar.url)
+            e.description = (f"**Message deleted in {message.channel.mention}**\n"
+                             f"{message.content}")
+            e.set_thumbnail(url=message.author.avatar.url)
+            e.set_footer(text=f"Message ID: {message.id}")
+            return await channel.send(embed=e)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -126,10 +119,10 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 embed = discord.Embed(
                     title="Member Joined",
                     description=f"**Member:** {member.mention}\n"
-                    f"**Account Created:** {member.created_at.strftime('%d %B %Y')}",
+                    f"**Account Created:** {member.created_at.strftime('%B %d %Y')}",
                     color=discord.Color.green()
                 )
-                embed.set_thumbnail(url=member.avatar.url)
+                embed.set_thumbnail(url=member.avatar)
                 embed.set_footer(
                     text=f"Member ID: {member.id}")
                 return await channel.send(embed=embed)
@@ -149,7 +142,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                     description=f"**Member:** {member.mention}",
                     color=discord.Color.red()
                 )
-                embed.set_thumbnail(url=member.avatar.url)
+                embed.set_thumbnail(url=member.avatar)
                 embed.set_footer(
                     text=f"Member ID: {member.id}")
                 return await channel.send(embed=embed)
@@ -166,10 +159,10 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 channel = self.bot.get_channel(data['channel'])
                 embed = discord.Embed(
                     title="Member Banned",
-                    description=f"**Member:** {user.mention}",
+                    description=f"**Member:** {user}",
                     color=discord.Color.red()
                 )
-                embed.set_thumbnail(url=user.avatar.url)
+                embed.set_thumbnail(url=user.avatar)
                 embed.set_footer(
                     text=f"Member ID: {user.id}")
                 return await channel.send(embed=embed)
@@ -186,10 +179,10 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 channel = self.bot.get_channel(data['channel'])
                 embed = discord.Embed(
                     title="Member Unbanned",
-                    description=f"**Member:** {user.mention}",
+                    description=f"**Member:** {user}",
                     color=discord.Color.green()
                 )
-                embed.set_thumbnail(url=user.avatar.url)
+                embed.set_thumbnail(url=user.avatar)
                 embed.set_footer(
                     text=f"Member ID: {user.id}")
                 return await channel.send(embed=embed)
@@ -331,17 +324,6 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                     embed.set_footer(
                         text=f"Guild ID: {before.id}")
                     return await channel.send(embed=embed)
-                elif before.region != after.region:
-                    embed = discord.Embed(
-                        title="Guild Region Changed",
-                        description=f"**Before:** {before.region}\n"
-                        f"**After:** {after.region}",
-                        color=discord.Color.orange()
-                    )
-                    embed.set_thumbnail(url=before.icon.url)
-                    embed.set_footer(
-                        text=f"Guild ID: {before.id}")
-                    return await channel.send(embed=embed)
                 elif before.afk_channel != after.afk_channel:
                     embed = discord.Embed(
                         title="Guild AFK Channel Changed",
@@ -349,7 +331,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                         f"**After:** {after.afk_channel}",
                         color=discord.Color.orange()
                     )
-                    embed.set_thumbnail(url=before.icon.url)
+                    embed.set_thumbnail(url=before.icon)
                     embed.set_footer(
                         text=f"Guild ID: {before.id}")
                     return await channel.send(embed=embed)
@@ -369,17 +351,6 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                         title="Guild Widget Enabled Changed",
                         description=f"**Before:** {before.widget_enabled}\n"
                         f"**After:** {after.widget_enabled}",
-                        color=discord.Color.orange()
-                    )
-                    embed.set_thumbnail(url=before.icon.url)
-                    embed.set_footer(
-                        text=f"Guild ID: {before.id}")
-                    return await channel.send(embed=embed)
-                elif before.widget_channel != after.widget_channel:
-                    embed = discord.Embed(
-                        title="Guild Widget Channel Changed",
-                        description=f"**Before:** {before.widget_channel}\n"
-                        f"**After:** {after.widget_channel}",
                         color=discord.Color.orange()
                     )
                     embed.set_thumbnail(url=before.icon.url)
@@ -455,11 +426,12 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 embed.set_footer(
                     text=f"Guild ID: {before.guild.id}")
                 return await channel.send(embed=embed)
-            elif before.hoist != after.hoist:
+            elif before.position != after.position:
                 embed = discord.Embed(
-                    title="Guild Role Hoist Changed",
-                    description=f"**Before:** {before.hoist}\n"
-                    f"**After:** {after.hoist}",
+                    title="Guild Role position Changed",
+                    description=f"**Role:** {before.mention}\n"
+                    f"**Before:** {before.position}\n"
+                    f"**After:** {after.position}",
                     color=discord.Color.orange()
                 )
                 embed.set_thumbnail(url=before.guild.icon.url)
@@ -478,10 +450,14 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                     text=f"Guild ID: {before.guild.id}")
                 return await channel.send(embed=embed)
             elif before.permissions != after.permissions:
+                beforeperms = ", ".join([perm.replace("_", " ").title()
+                                         for perm, value in before.permissions if value])
+                afterperms = ", ".join([perm.replace("_", " ").title()
+                                        for perm, value in after.permissions if value])
                 embed = discord.Embed(
                     title="Guild Role Permissions Changed",
-                    description=f"**Before:** {before.permissions}\n"
-                    f"**After:** {after.permissions}",
+                    description=f"**Before:** {beforeperms}\n"
+                    f"**After:** {afterperms}",
                     color=discord.Color.orange()
                 )
                 embed.set_thumbnail(url=before.guild.icon.url)
@@ -494,253 +470,52 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         data = await self.db.find_one({"_id": guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            if before != after:
-                embed = discord.Embed(
-                    title="Guild Emoji Updated",
-                    description=f"**Before:** {before}\n"
-                    f"**After:** {after}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {guild.id}")
-                return await channel.send(embed=embed)
+            for emoji in before:
+                if emoji not in after:
+                    embed = discord.Embed(
+                        title="Guild Emoji Deleted",
+                        description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
+                        color=discord.Color.red()
+                    )
+                    embed.set_image(url=emoji.url)
+                    embed.set_thumbnail(url=guild.icon.url)
+                    return await channel.send(embed=embed)
+            for emoji in after:
+                if emoji not in before:
+                    embed = discord.Embed(
+                        title="Guild Emoji Created",
+                        description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
+                        color=discord.Color.green()
+                    )
+                    embed.set_image(url=emoji.url)
+                    embed.set_thumbnail(url=guild.icon.url)
+                    return await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_channel_create(self, channel: discord.abc.GuildChannel):
-        data = await self.db.find_one({"_id": channel.guild.id})
+    async def on_guild_stickers_update(self, guild: discord.Guild, before: discord.Sticker, after: discord.Sticker):
+        data = await self.db.find_one({"_id": guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            embed = discord.Embed(
-                title="Channel Created",
-                description=f"**Name:** {channel.name}\n"
-                f"**ID:** {channel.id}",
-                color=discord.Color.green()
-            )
-            embed.set_thumbnail(url=channel.guild.icon.url)
-            embed.set_footer(
-                text=f"Guild ID: {channel.guild.id}")
-            return await channel.send(embed=embed)
-
-    @commands.Cog.listener()
-    async def on_channel_delete(self, channel: discord.abc.GuildChannel):
-        data = await self.db.find_one({"_id": channel.guild.id})
-        if data is not None:
-            channel = self.bot.get_channel(data["channel"])
-            embed = discord.Embed(
-                title="Channel Deleted",
-                description=f"**Name:** {channel.name}\n"
-                f"**ID:** {channel.id}",
-                color=discord.Color.red()
-            )
-            embed.set_thumbnail(url=channel.guild.icon.url)
-            embed.set_footer(
-                text=f"Guild ID: {channel.guild.id}")
-            return await channel.send(embed=embed)
-
-    @commands.Cog.listener()
-    async def on_channel_update(self, before: discord.abc.GuildChannel, after: discord.abc.GuildChannel):
-        data = await self.db.find_one({"_id": before.guild.id})
-        if data is not None:
-            channel = self.bot.get_channel(data["channel"])
-            if before.name != after.name:
-                embed = discord.Embed(
-                    title="Channel Name Changed",
-                    description=f"**Before:** {before.name}\n"
-                    f"**After:** {after.name}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.category != after.category:
-                embed = discord.Embed(
-                    title="Channel Category Changed",
-                    description=f"**Before:** {before.category}\n"
-                    f"**After:** {after.category}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.position != after.position:
-                embed = discord.Embed(
-                    title="Channel Position Changed",
-                    description=f"**Before:** {before.position}\n"
-                    f"**After:** {after.position}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.topic != after.topic:
-                embed = discord.Embed(
-                    title="Channel Topic Changed",
-                    description=f"**Before:** {before.topic}\n"
-                    f"**After:** {after.topic}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.slowmode_delay != after.slowmode_delay:
-                embed = discord.Embed(
-                    title="Channel Slowmode Delay Changed",
-                    description=f"**Before:** {before.slowmode_delay}\n"
-                    f"**After:** {after.slowmode_delay}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_nsfw() != after.is_nsfw():
-                embed = discord.Embed(
-                    title="Channel NSFW Changed",
-                    description=f"**Before:** {before.is_nsfw()}\n"
-                    f"**After:** {after.is_nsfw()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_news() != after.is_news():
-                embed = discord.Embed(
-                    title="Channel News Changed",
-                    description=f"**Before:** {before.is_news()}\n"
-                    f"**After:** {after.is_news()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_private() != after.is_private():
-                embed = discord.Embed(
-                    title="Channel Private Changed",
-                    description=f"**Before:** {before.is_private()}\n"
-                    f"**After:** {after.is_private()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_voice() != after.is_voice():
-                embed = discord.Embed(
-                    title="Channel Voice Changed",
-                    description=f"**Before:** {before.is_voice()}\n"
-                    f"**After:** {after.is_voice()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_text() != after.is_text():
-                embed = discord.Embed(
-                    title="Channel Text Changed",
-                    description=f"**Before:** {before.is_text()}\n"
-                    f"**After:** {after.is_text()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_category() != after.is_category():
-                embed = discord.Embed(
-                    title="Channel Category Changed",
-                    description=f"**Before:** {before.is_category()}\n"
-                    f"**After:** {after.is_category()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_store() != after.is_store():
-                embed = discord.Embed(
-                    title="Channel Store Changed",
-                    description=f"**Before:** {before.is_store()}\n"
-                    f"**After:** {after.is_store()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.is_stage_voice() != after.is_stage_voice():
-                embed = discord.Embed(
-                    title="Channel Stage Voice Changed",
-                    description=f"**Before:** {before.is_stage_voice()}\n"
-                    f"**After:** {after.is_stage_voice()}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.default_auto_archive_duration != after.default_auto_archive_duration:
-                embed = discord.Embed(
-                    title="Channel Default Auto Archive Duration Changed",
-                    description=f"**Before:** {before.default_auto_archive_duration}\n"
-                    f"**After:** {after.default_auto_archive_duration}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.rtc_region != after.rtc_region:
-                embed = discord.Embed(
-                    title="Channel RTC Region Changed",
-                    description=f"**Before:** {before.rtc_region}\n"
-                    f"**After:** {after.rtc_region}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.bitrate != after.bitrate:
-                embed = discord.Embed(
-                    title="Channel Bitrate Changed",
-                    description=f"**Before:** {before.bitrate}\n"
-                    f"**After:** {after.bitrate}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.user_limit != after.user_limit:
-                embed = discord.Embed(
-                    title="Channel User Limit Changed",
-                    description=f"**Before:** {before.user_limit}\n"
-                    f"**After:** {after.user_limit}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.slowmode_delay != after.slowmode_delay:
-                embed = discord.Embed(
-                    title="Channel Slowmode Delay Changed",
-                    description=f"**Before:** {before.slowmode_delay}\n"
-                    f"**After:** {after.slowmode_delay}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
+            for sticker in before:
+                if sticker not in after:
+                    embed = discord.Embed(
+                        title="Guild Sticker Deleted",
+                        description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
+                        color=discord.Color.red()
+                    )
+                    embed.set_image(url=sticker.url)
+                    embed.set_thumbnail(url=guild.icon.url)
+                    return await channel.send(embed=embed)
+            for sticker in after:
+                if sticker not in before:
+                    embed = discord.Embed(
+                        title="Guild Sticker Created",
+                        description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
+                        color=discord.Color.green()
+                    )
+                    embed.set_image(url=sticker.url)
+                    embed.set_thumbnail(url=guild.icon.url)
+                    return await channel.send(embed=embed)
 
 
 async def setup(bot: commands.AutoShardedBot):

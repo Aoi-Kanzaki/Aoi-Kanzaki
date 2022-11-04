@@ -5,7 +5,7 @@ from discord.ext import commands
 
 class ContextMenus(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
-        self.bot = bot
+        bot = bot
 
         @bot.tree.context_menu(name="Userinfo")
         async def userinfo(interaction: discord.Interaction, user: discord.Member):
@@ -31,6 +31,63 @@ class ContextMenus(commands.Cog):
             if usr.banner:
                 e.set_image(url=usr.banner.url)
             return await interaction.response.send_message(embed=e)
+
+        @bot.tree.context_menu(name="Activities")
+        async def activities(interaction: discord.Interaction, member: discord.Member):
+            await interaction.response.defer()
+            embeds = []
+
+            member = member or interaction.user
+            member = member.guild.get_member(member.id)
+
+            if member.activities != None:
+                for activity in member.activities:
+                    if isinstance(activity, discord.Spotify):
+                        e = discord.Embed(
+                            title="Listening to Spotify",
+                            colour=activity.color
+                        )
+                        e.description = f"**Title:** {activity.title}\n"
+                        e.description += f"**Artist:** {activity.artist}\n"
+                        e.description += f"**Album:** {activity.album}"
+                        e.set_thumbnail(url=activity.album_cover_url)
+                        embeds.append(e)
+                    elif isinstance(activity, discord.Activity):
+                        e = discord.Embed(
+                            title=f"{activity.name}",
+                            colour=discord.Colour.blurple()
+                        )
+                        if activity.details:
+                            e.description = f"{activity.details}"
+                        if activity.large_image_url:
+                            e.set_thumbnail(url=activity.large_image_url)
+                        embeds.append(e)
+                    elif isinstance(activity, discord.CustomActivity):
+                        e = discord.Embed(
+                            colour=discord.Colour.blurple(),
+                            description=activity.name
+                        )
+                        embeds.append(e)
+                    elif isinstance(activity, discord.Streaming):
+                        e = discord.Embed(
+                            colour=discord.Colour.purple(),
+                            title="Currently Streaming"
+                        )
+                        e.description = f"**Platform:** {activity.platform}\n"
+                        e.description += f"**Name:** {activity.name}\n"
+                        e.description += f"**Game:** {activity.game}\n"
+                        e.description += f"Come watch here! [Go to {activity.platform}]({activity.url})"
+                        embeds.append(e)
+                    elif isinstance(activity, discord.Game):
+                        e = discord.Embed(
+                            colour=discord.Colour.blurple(),
+                            description=activity.name
+                        )
+                        embeds.append(e)
+
+                return await interaction.followup.send(embeds=embeds, content=f"**{member}'s Activities:**")
+
+            return await interaction.followup.send("Nothing found.")
 
 
 async def setup(bot: commands.AutoShardedBot):
