@@ -28,6 +28,7 @@ class Fun(commands.Cog):
                 await interaction.response.send_message(f"{json['message']}")
 
     @Aoi.command(name="rps")
+    @Aoi.describe(choice="Choose rock, paper, or scissors.")
     async def rps(self, interaction: discord.Interaction, choice: str):
         """Play rock paper scissors with the bot."""
         choices = ["rock", "paper", "scissors"]

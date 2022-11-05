@@ -14,6 +14,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
         self.db = self.bot.db.favorites
 
     @Aoi.command(name="add")
+    @Aoi.describe(link="The link to the song you want to add to your favorites.")
     async def fav_add(self, interaction: discord.Interaction, link: str):
         """Adds a song to your favorites."""
         data = await self.db.find_one({"_id": interaction.user.id})
@@ -35,6 +36,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
                     "<:tickYes:697759553626046546> Done, it's now added to your favorites!")
 
     @Aoi.command(name="remove")
+    @Aoi.describe(link="The link of the song you want to remove from your favorites.")
     async def fav_remove(self, interaction: discord.Interaction, link: str):
         """Removes a song from your favorites."""
         data = await self.db.find_one({"_id": interaction.user.id})

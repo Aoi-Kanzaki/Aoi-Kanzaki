@@ -17,12 +17,28 @@ class Help(commands.Cog):
         ]
 
     async def command_auto(self, interaction: discord.Interaction, current: str):
-        return [
-            Aoi.Choice(name=f"{command.name} - {command.description}",
-                       value=command.name)
-            for command in self.bot.tree.get_commands() if current.lower()
-            in command.name.lower() and command.module != "extensions.contextmenus"
-        ][0:25]
+        choices = []
+        for command in self.bot.tree.get_commands():
+            if command.module == "extensions.contextmenus":
+                continue
+            else:
+                choices.append(Aoi.Choice(
+                    name=f"{command.name} - {command.description}", value=command.name))
+                try:
+                    for cmd in command.commands:
+                        choices.append(Aoi.Choice(
+                            name=f"{cmd.name} - {cmd.description}", value=cmd.name))
+                except AttributeError:
+                    pass
+        return choices[0:25]
+
+    # async def command_auto(self, interaction: discord.Interaction, current: str):
+    #     return [
+    #         Aoi.Choice(name=f"{command.name} - {command.description}",
+    #                    value=command.name)
+    #         for command in self.bot.tree.get_commands() if current.lower()
+    #         in command.name.lower() and command.module != "extensions.contextmenus"
+    #     ][0:25]
 
     @Aoi.command(name="help")
     @Aoi.autocomplete(module=module_auto, command=command_auto)
@@ -44,39 +60,49 @@ class Help(commands.Cog):
             cmds = ""
             for cmd in cog.walk_app_commands():
                 params = ""
-                if cmd.parameters:
-                    for param in cmd.parameters:
-                        params += f"<{param.name}> "
-                cmds += f"`{cmd.name} {params}` - {cmd.description}\n"
+                try:
+                    if cmd.parameters:
+                        for param in cmd.parameters:
+                            params += f"<{param.name}> "
+                    cmds += f"`{cmd.name} {params}` - {cmd.description}\n"
+                except AttributeError:
+                    cmds += f"`{cmd.name}` - {cmd.description}\n"
             e = discord.Embed(colour=discord.Colour.teal(), description=cmds)
             e.set_author(
                 name=f"Commands for {module}:", icon_url=self.bot.user.avatar)
             e.set_thumbnail(url=self.bot.user.avatar)
             return await interaction.response.send_message(embed=e)
         else:
-            command = self.bot.tree.get_command(command)
-            params = ""
-            try:
-                if command.parameters:
-                    for param in command.parameters:
-                        params += f"<{param.name}> "
-            except AttributeError:
-                pass
-            if command:
+            cmd = self.bot.tree.get_command(command)
+            if not cmd:
+                for cumand in self.bot.tree.get_commands():
+                    try:
+                        for cmmd in cumand.commands:
+                            if cmmd.name == command:
+                                cmd = cmmd
+                    except AttributeError:
+                        pass
+            if cmd:
                 e = discord.Embed(colour=discord.Colour.teal())
                 e.set_thumbnail(url=self.bot.user.avatar)
-                e.add_field(name=f"{command.name} {params}",
-                            value=command.description, inline=False)
+                e.set_author(
+                    name=f"Help for {cmd.name}:", icon_url=self.bot.user.avatar)
+                e.description = cmd.description
+                try:
+                    if cmd.parameters:
+                        e.add_field(name="Parameters:",
+                                    value="\n".join([f"`{param.name}` - {param.description}" for param in cmd.parameters]))
+                except AttributeError:
+                    pass
                 try:
                     e.add_field(name="Sub Commands:", value="\n".join(
-                        [f"`{e.name}` - {e.description}" for e in command.commands]))
+                        [f"`{cmd.name}` - {cmd.description}" for cmd in cmd.commands]))
                 except AttributeError:
                     pass
                 return await interaction.response.send_message(embed=e)
-            else:
-                return await interaction.response.send_message(
-                    content="I have failed to fetch the help for that command, please try again."
-                )
+            return await interaction.response.send_message(
+                content="I have failed to fetch the help for that command, please try again."
+            )
 
     @help.error
     async def send_error(self, interaction: discord.Interaction, error):

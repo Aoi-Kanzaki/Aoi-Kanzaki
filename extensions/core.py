@@ -74,6 +74,7 @@ class Core(commands.Cog):
             await interaction.followup.send(embed=e)
 
     @Aoi.command(name="reload")
+    @Aoi.describe(module="The module to reload.")
     @is_dev()
     async def reload(self, interaction: discord.Interaction, module: str):
         """Reload the bot's modules."""
@@ -272,6 +273,7 @@ class Core(commands.Cog):
         )
 
     @Aoi.command(name="source")
+    @Aoi.describe(command_name="The command you want to see the source of.")
     @is_dev()
     async def source(self, interaction: discord.Interaction, command_name: str):
         """"Displays the source code for a command."""

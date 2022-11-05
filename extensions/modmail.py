@@ -53,6 +53,7 @@ class ModMail(commands.GroupCog, description="ModMail commands."):
         )
 
     @Aoi.command(name="setup", description="Setup modmail for the server.")
+    @Aoi.describe(toggle="Whether to enable or disable ModMail.")
     async def setup(self, interaction: discord.Interaction, toggle: typing.Literal["enable", "disable"]):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is not None:

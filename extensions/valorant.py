@@ -9,6 +9,7 @@ class Valorant(commands.GroupCog, description="Crypto related commands."):
         self.bot = bot
 
     @Aoi.command(name="status")
+    @Aoi.describe(region="The region you want to check the status of.")
     async def status(self, interaction: discord.Interaction, region: str):
         """Check Valorant's servers."""
         region = Region(region)

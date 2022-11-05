@@ -170,6 +170,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                         await player.play()
 
     @Aoi.command(name="playlist")
+    @Aoi.describe(playlist="The playlist you want to play.")
     @Aoi.checks.cooldown(1, 5)
     async def spotify_playlist(self, interaction: discord.Interaction, playlist: str = None):
         """Choose a playlist you have created, and start playing in a vc."""

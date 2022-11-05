@@ -13,6 +13,7 @@ class Utility(commands.Cog):
         self.afk = self.bot.db.afk
 
     @Aoi.command(name="afk", description="Set an afk status!")
+    @Aoi.describe(reason="The reason why you are afk.")
     async def afk(self, interaction: discord.Interaction, reason: str = None):
         """Set an afk status."""
         data = await self.afk.find_one({"_id": interaction.user.id})
@@ -32,6 +33,7 @@ class Utility(commands.Cog):
         )
 
     @Aoi.command(name="activity", description="Get the activity of a user")
+    @Aoi.describe(member="The user you want to get the activity of.")
     async def activity(self, interaction: discord.Interaction, member: discord.Member = None):
         await interaction.response.defer()
         embeds = []
@@ -140,6 +142,7 @@ class Utility(commands.Cog):
         return await interaction.response.send_message(embed=e)
 
     @Aoi.command(name="iplookup")
+    @Aoi.describe(ipaddr="The IP you want to lookup.")
     async def iplookup(self, interaction: discord.Interaction, ipaddr: str = "9.9.9.9"):
         """Lookup an ip address."""
         r = requests.get(
@@ -169,6 +172,7 @@ class Utility(commands.Cog):
         return await interaction.response.send_message(embed=e)
 
     @Aoi.command(name="weather")
+    @Aoi.describe(city="The city you want to get the weather for.")
     async def weather(self, interaction: discord.Interaction, city: str):
         """Get your citys weather."""
         url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={self.bot.config['weatherApiKey']}"
@@ -196,6 +200,7 @@ class Utility(commands.Cog):
         name="emoji", description="All emoji related commands.")
 
     @Emoji.command(name="steal")
+    @Aoi.describe(emoji="The emoji you want to steal.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def steal(self, interaction: discord.Interaction, emoji: str):
         """Steal and emoji and copy it to this server."""

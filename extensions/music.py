@@ -55,6 +55,7 @@ class Music(commands.Cog):
             ][0:5]
 
     @Aoi.command(name="play")
+    @Aoi.describe(query="The song you want to play.")
     @Aoi.autocomplete(query=query_auto)
     async def play(self, interaction: discord.Interaction, query: str):
         """ Searches and plays a song from a given query. """
@@ -144,6 +145,7 @@ class Music(commands.Cog):
                 await player.play()
 
     @Aoi.command(name="seek")
+    @Aoi.describe(seconds="The amount of seconds you want to seek.")
     async def seek(self, interaction: discord.Interaction, seconds: int):
         """Seeks to a given position in a track."""
         inVoice = await self.ensure_voice(interaction)
@@ -243,6 +245,7 @@ class Music(commands.Cog):
                 )
 
     @Aoi.command(name="queue")
+    @Aoi.describe(page="The page you want to see.")
     async def queue(self, interaction: discord.Interaction, page: int = 1):
         """Shows the current queue."""
         inVoice = await self.ensure_voice(interaction)
@@ -302,6 +305,7 @@ class Music(commands.Cog):
                 )
 
     @Aoi.command(name="volume")
+    @Aoi.describe(volume="The volume you want to set.")
     async def volume(self, interaction: discord.Interaction, volume: Aoi.Range[int, 1, 100] = None):
         """Changes or shows the current players volume."""
         inVoice = await self.ensure_voice(interaction)
@@ -371,6 +375,7 @@ class Music(commands.Cog):
             )
 
     @Aoi.command(name="lowpass")
+    @Aoi.describe(strength="The strength of the lowpass filter.")
     async def lowpass(self, interaction: discord.Interaction, strength: int):
         """Sets the strength of the low pass filter."""
         inVoice = await self.ensure_voice(interaction)

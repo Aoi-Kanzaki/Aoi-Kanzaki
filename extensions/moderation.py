@@ -108,6 +108,7 @@ class Moderation(commands.Cog):
             return await interaction.followup.send(e)
 
     @Aoi.command(name="cleanup")
+    @Aoi.describe(amount="The amount of messages you want to delete.")
     async def cleanup(self, interaction: discord.Interaction, amount: int = 100):
         """Cleans up the bots messages."""
         await interaction.response.defer(ephemeral=True)
