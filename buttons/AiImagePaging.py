@@ -67,3 +67,16 @@ class Paging(discord.ui.View):
     @discord.ui.button(emoji="<:stop:1010325505179918468>", label="Done", style=discord.ButtonStyle.danger)
     async def done(self, interaction: discord.Interaction, button: discord.ui.Button):
         return await interaction.message.delete()
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][Ai Paging Buttons][/] Error: {error}")

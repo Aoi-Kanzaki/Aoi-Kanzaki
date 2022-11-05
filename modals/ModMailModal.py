@@ -79,6 +79,14 @@ class ModMailModal(discord.ui.Modal):
         )
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
-        self.bot.richConsole.print(
-            "[bold red][Mod Mail][/] [red]Error: [white]" + str(error))
-        await interaction.response.send_message('Oops! Something went wrong.', ephemeral=True)
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][ModMail Modal][/] Error: {error}")

@@ -102,6 +102,19 @@ class DefaultButtons(discord.ui.View):
             if not player.is_playing:
                 await player.play()
 
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][MusicChannel Default Buttons][/] Error: {error}")
+
 
 class PlayingButtons(discord.ui.View):
     def __init__(self, bot, guild_id) -> None:
@@ -218,3 +231,16 @@ class PlayingButtons(discord.ui.View):
         self.player.queue.clear()
         await self.player.stop()
         await interaction.guild.voice_client.disconnect(force=True)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][MusicChannel Playing Buttons][/] Error: {error}")

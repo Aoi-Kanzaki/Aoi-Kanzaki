@@ -69,6 +69,17 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                 return await interaction.response.send_message(
                     "<:tickYes:697759553626046546> ModLog has been disabled!")
 
+    @enable.error
+    @disable.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
     @commands.Cog.listener()
     async def on_message_edit(self, message: discord.Message, new_message: discord.Message):
         if message.author.bot:
@@ -374,148 +385,153 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         data = await self.db.find_one({"_id": role.guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            embed = discord.Embed(
-                title="Guild Role Created",
-                description=f"**Name:** {role.name}\n**ID:** {role.id}",
-                color=discord.Color.green()
-            )
-            embed.set_thumbnail(url=role.guild.icon.url)
-            embed.set_footer(
-                text=f"Guild ID: {role.guild.id}")
-            return await channel.send(embed=embed)
+            if data['enabled'] is True:
+                embed = discord.Embed(
+                    title="Guild Role Created",
+                    description=f"**Name:** {role.name}\n**ID:** {role.id}",
+                    color=discord.Color.green()
+                )
+                embed.set_thumbnail(url=role.guild.icon.url)
+                embed.set_footer(
+                    text=f"Guild ID: {role.guild.id}")
+                return await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
         data = await self.db.find_one({"_id": role.guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            embed = discord.Embed(
-                title="Guild Role Deleted",
-                description=f"**Name:** {role.name}\n**ID:** {role.id}",
-                color=discord.Color.red()
-            )
-            embed.set_thumbnail(url=role.guild.icon.url)
-            embed.set_footer(
-                text=f"Guild ID: {role.guild.id}")
-            return await channel.send(embed=embed)
+            if data['enabled'] is True:
+                embed = discord.Embed(
+                    title="Guild Role Deleted",
+                    description=f"**Name:** {role.name}\n**ID:** {role.id}",
+                    color=discord.Color.red()
+                )
+                embed.set_thumbnail(url=role.guild.icon.url)
+                embed.set_footer(
+                    text=f"Guild ID: {role.guild.id}")
+                return await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_role_update(self, before: discord.Role, after: discord.Role):
         data = await self.db.find_one({"_id": before.guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            if before.name != after.name:
-                embed = discord.Embed(
-                    title="Guild Role Name Changed",
-                    description=f"**Before:** {before.name}\n"
-                    f"**After:** {after.name}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.color != after.color:
-                embed = discord.Embed(
-                    title="Guild Role Color Changed",
-                    description=f"**Before:** {before.color}\n"
-                    f"**After:** {after.color}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.position != after.position:
-                embed = discord.Embed(
-                    title="Guild Role position Changed",
-                    description=f"**Role:** {before.mention}\n"
-                    f"**Before:** {before.position}\n"
-                    f"**After:** {after.position}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.mentionable != after.mentionable:
-                embed = discord.Embed(
-                    title="Guild Role Mentionable Changed",
-                    description=f"**Before:** {before.mentionable}\n"
-                    f"**After:** {after.mentionable}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
-            elif before.permissions != after.permissions:
-                beforeperms = ", ".join([perm.replace("_", " ").title()
-                                         for perm, value in before.permissions if value])
-                afterperms = ", ".join([perm.replace("_", " ").title()
-                                        for perm, value in after.permissions if value])
-                embed = discord.Embed(
-                    title="Guild Role Permissions Changed",
-                    description=f"**Before:** {beforeperms}\n"
-                    f"**After:** {afterperms}",
-                    color=discord.Color.orange()
-                )
-                embed.set_thumbnail(url=before.guild.icon.url)
-                embed.set_footer(
-                    text=f"Guild ID: {before.guild.id}")
-                return await channel.send(embed=embed)
+            if data['enabled'] is True:
+                if before.name != after.name:
+                    embed = discord.Embed(
+                        title="Guild Role Name Changed",
+                        description=f"**Before:** {before.name}\n"
+                        f"**After:** {after.name}",
+                        color=discord.Color.orange()
+                    )
+                    embed.set_thumbnail(url=before.guild.icon.url)
+                    embed.set_footer(
+                        text=f"Guild ID: {before.guild.id}")
+                    return await channel.send(embed=embed)
+                elif before.color != after.color:
+                    embed = discord.Embed(
+                        title="Guild Role Color Changed",
+                        description=f"**Before:** {before.color}\n"
+                        f"**After:** {after.color}",
+                        color=discord.Color.orange()
+                    )
+                    embed.set_thumbnail(url=before.guild.icon.url)
+                    embed.set_footer(
+                        text=f"Guild ID: {before.guild.id}")
+                    return await channel.send(embed=embed)
+                elif before.position != after.position:
+                    embed = discord.Embed(
+                        title="Guild Role position Changed",
+                        description=f"**Role:** {before.mention}\n"
+                        f"**Before:** {before.position}\n"
+                        f"**After:** {after.position}",
+                        color=discord.Color.orange()
+                    )
+                    embed.set_thumbnail(url=before.guild.icon.url)
+                    embed.set_footer(
+                        text=f"Guild ID: {before.guild.id}")
+                    return await channel.send(embed=embed)
+                elif before.mentionable != after.mentionable:
+                    embed = discord.Embed(
+                        title="Guild Role Mentionable Changed",
+                        description=f"**Before:** {before.mentionable}\n"
+                        f"**After:** {after.mentionable}",
+                        color=discord.Color.orange()
+                    )
+                    embed.set_thumbnail(url=before.guild.icon.url)
+                    embed.set_footer(
+                        text=f"Guild ID: {before.guild.id}")
+                    return await channel.send(embed=embed)
+                elif before.permissions != after.permissions:
+                    beforeperms = ", ".join([perm.replace("_", " ").title()
+                                            for perm, value in before.permissions if value])
+                    afterperms = ", ".join([perm.replace("_", " ").title()
+                                            for perm, value in after.permissions if value])
+                    embed = discord.Embed(
+                        title="Guild Role Permissions Changed",
+                        description=f"**Before:** {beforeperms}\n"
+                        f"**After:** {afterperms}",
+                        color=discord.Color.orange()
+                    )
+                    embed.set_thumbnail(url=before.guild.icon.url)
+                    embed.set_footer(
+                        text=f"Guild ID: {before.guild.id}")
+                    return await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_emojis_update(self, guild: discord.Guild, before: discord.Emoji, after: discord.Emoji):
         data = await self.db.find_one({"_id": guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            for emoji in before:
-                if emoji not in after:
-                    embed = discord.Embed(
-                        title="Guild Emoji Deleted",
-                        description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
-                        color=discord.Color.red()
-                    )
-                    embed.set_image(url=emoji.url)
-                    embed.set_thumbnail(url=guild.icon.url)
-                    return await channel.send(embed=embed)
-            for emoji in after:
-                if emoji not in before:
-                    embed = discord.Embed(
-                        title="Guild Emoji Created",
-                        description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
-                        color=discord.Color.green()
-                    )
-                    embed.set_image(url=emoji.url)
-                    embed.set_thumbnail(url=guild.icon.url)
-                    return await channel.send(embed=embed)
+            if data['enabled'] is True:
+                for emoji in before:
+                    if emoji not in after:
+                        embed = discord.Embed(
+                            title="Guild Emoji Deleted",
+                            description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
+                            color=discord.Color.red()
+                        )
+                        embed.set_image(url=emoji.url)
+                        embed.set_thumbnail(url=guild.icon.url)
+                        return await channel.send(embed=embed)
+                for emoji in after:
+                    if emoji not in before:
+                        embed = discord.Embed(
+                            title="Guild Emoji Created",
+                            description=f"**Name:** {emoji.name}\n**ID:** {emoji.id}",
+                            color=discord.Color.green()
+                        )
+                        embed.set_image(url=emoji.url)
+                        embed.set_thumbnail(url=guild.icon.url)
+                        return await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_guild_stickers_update(self, guild: discord.Guild, before: discord.Sticker, after: discord.Sticker):
         data = await self.db.find_one({"_id": guild.id})
         if data is not None:
             channel = self.bot.get_channel(data["channel"])
-            for sticker in before:
-                if sticker not in after:
-                    embed = discord.Embed(
-                        title="Guild Sticker Deleted",
-                        description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
-                        color=discord.Color.red()
-                    )
-                    embed.set_image(url=sticker.url)
-                    embed.set_thumbnail(url=guild.icon.url)
-                    return await channel.send(embed=embed)
-            for sticker in after:
-                if sticker not in before:
-                    embed = discord.Embed(
-                        title="Guild Sticker Created",
-                        description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
-                        color=discord.Color.green()
-                    )
-                    embed.set_image(url=sticker.url)
-                    embed.set_thumbnail(url=guild.icon.url)
-                    return await channel.send(embed=embed)
+            if data['enabled'] is True:
+                for sticker in before:
+                    if sticker not in after:
+                        embed = discord.Embed(
+                            title="Guild Sticker Deleted",
+                            description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
+                            color=discord.Color.red()
+                        )
+                        embed.set_image(url=sticker.url)
+                        embed.set_thumbnail(url=guild.icon.url)
+                        return await channel.send(embed=embed)
+                for sticker in after:
+                    if sticker not in before:
+                        embed = discord.Embed(
+                            title="Guild Sticker Created",
+                            description=f"**Name:** {sticker.name}\n**ID:** {sticker.id}",
+                            color=discord.Color.green()
+                        )
+                        embed.set_image(url=sticker.url)
+                        embed.set_thumbnail(url=guild.icon.url)
+                        return await channel.send(embed=embed)
 
 
 async def setup(bot: commands.AutoShardedBot):

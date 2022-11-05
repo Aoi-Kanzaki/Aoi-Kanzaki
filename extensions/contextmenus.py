@@ -1,11 +1,14 @@
+import re
 import time
 import discord
 from discord.ext import commands
 
+url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
+
 
 class ContextMenus(commands.Cog):
     def __init__(self, bot: commands.AutoShardedBot):
-        bot = bot
+        self.bot = bot
 
         @bot.tree.context_menu(name="Userinfo")
         async def userinfo(interaction: discord.Interaction, user: discord.Member):
@@ -88,6 +91,48 @@ class ContextMenus(commands.Cog):
                 return await interaction.followup.send(embeds=embeds, content=f"**{member}'s Activities:**")
 
             return await interaction.followup.send("Nothing found.")
+
+        @bot.tree.context_menu(name="Favorite Songs")
+        async def fav_songs_context(interaction: discord.Interaction, member: discord.Member):
+            """Show's a users favorite songs."""
+            data = await self.bot.db.favorites.find_one({"_id": member.id})
+            if data is None:
+                return await interaction.response.send_message(
+                    f"<:tickNo:697759586538749982> **{member.display_name}** doesn't have any favorite songs!")
+            else:
+                e = discord.Embed(colour=discord.Colour.teal())
+                e.set_author(
+                    icon_url=member.display_avatar,
+                    name=f"{member.display_name}'s Favorite Songs:"
+                )
+                e.description = ""
+                number = 1
+                for song in data['songs'][0:5]:
+                    if not url_rx.match(song):
+                        song = f'spsearch:{song}'
+                    try:
+                        result = await self.bot.lavalink.get_tracks(song, check_local=True)
+                    except:
+                        return await interaction.response.send_message(
+                            "The music module is not enabled! Or I have encountered a more serious error.", ephemeral=True)
+                    e.description += f"`{number}.` {result['tracks'][0]['title']}\n"
+                    number += 1
+                if len(data['songs']) > 5:
+                    total = len(data['songs']) - 5
+                    e.description += f"\nNot showing **{total}** more songs..."
+                return await interaction.response.send_message(embed=e)
+
+        @fav_songs_context.error
+        @activities.error
+        @userinfo.error
+        async def send_error(interaction: discord.Interaction, error):
+            e = discord.Embed(title="An Error has Occurred!",
+                              colour=discord.Colour.red())
+            e.add_field(name="Error:", value=error)
+            try:
+                await interaction.response.send_message(embed=e)
+            except:
+                await interaction.followup.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

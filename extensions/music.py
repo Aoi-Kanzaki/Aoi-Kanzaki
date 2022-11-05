@@ -302,7 +302,7 @@ class Music(commands.Cog):
                 )
 
     @Aoi.command(name="volume")
-    async def volume(self, interaction: discord.Interaction, volume: int = None):
+    async def volume(self, interaction: discord.Interaction, volume: Aoi.Range[int, 1, 100] = None):
         """Changes or shows the current players volume."""
         inVoice = await self.ensure_voice(interaction)
         if inVoice:
@@ -314,10 +314,6 @@ class Music(commands.Cog):
                         content=f'🔈 | {player.volume}%',
                         ephemeral=True
                     )
-                if volume > 100:
-                    volume = 100
-                elif volume < 1:
-                    volume = 1
                 await player.set_volume(volume)
                 return await interaction.response.send_message(
                     content=f'🔈 | Set to {player.volume}%',
@@ -401,6 +397,27 @@ class Music(commands.Cog):
                 content=f'Set **Low Pass Filter** strength to {strength}.',
                 ephemeral=True
             )
+
+    @lowpass.error
+    @disconnect.error
+    @shuffle.error
+    @volume.error
+    @pause.error
+    @queue.error
+    @now.error
+    @stop.error
+    @skip.error
+    @seek.error
+    @liked.error
+    @play.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
 
     @lavalink.listener(lavalink.events.QueueEndEvent)
     async def on_queue_end(self, event: lavalink.events.QueueEndEvent):

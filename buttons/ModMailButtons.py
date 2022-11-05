@@ -37,6 +37,19 @@ class ModMailButtons(discord.ui.View):
             ephemeral=True
         )
 
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][ModMail Close Button][/] Error: {error}")
+
 
 class EnsureClose(discord.ui.View):
     def __init__(self, bot: commands.AutoShardedBot, thread, channel, user, mods, members):
@@ -77,3 +90,16 @@ class EnsureClose(discord.ui.View):
             ephemeral=True
         )
         self.stop()
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][ModMail Ensure Buttons][/] Error: {error}")

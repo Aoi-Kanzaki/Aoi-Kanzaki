@@ -37,6 +37,16 @@ class Valorant(commands.GroupCog, description="Crypto related commands."):
                     embed=embed2,
                 )
 
+    @status.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
 
 async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(Valorant(bot))

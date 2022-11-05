@@ -87,6 +87,18 @@ class ModMail(commands.GroupCog, description="ModMail commands."):
                 return await interaction.response.send_message("Modmail has been enabled for this server.")
             return await interaction.response.send_message("Modmail is not setup for this server.")
 
+    @setup.error
+    @close.error
+    @send.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
 
 async def setup(bot: commands.AutoShardedBot):
     await bot.add_cog(ModMail(bot))

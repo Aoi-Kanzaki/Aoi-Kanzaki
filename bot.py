@@ -24,6 +24,7 @@ class Aoi(commands.AutoShardedBot):
         self.version = "v3"
         self.uptime = datetime.utcnow()
         self.richConsole = RichConsole()
+        self.statusIndex = 0
         self.richConsole.print(
             '[bold green][Aoi][/] Connecting to Discord...', end='\r')
 
@@ -45,29 +46,39 @@ class Aoi(commands.AutoShardedBot):
         await self.wait_until_ready()
 
         while not self.is_closed():
+
             playing = 0
             for player in self.lavalink.player_manager.players:
                 player = self.lavalink.player_manager.get(player)
                 if player.current is not None:
                     playing += 1
 
+            users = 0
+            for guild in self.guilds:
+                users += len(guild.members)
+
             statuses = [
                 {"name": "guilds",
                     "value": f"/help | {len(self.guilds)} guilds.."},
                 {"name": "music",
-                    "value": f"music in {playing} guilds.."}
+                    "value": f"music in {playing} guilds.."},
+                {"name": "users", "value": f"/help | {users} users.."}
             ]
-            status = random.choice(statuses)
-            if status['name'] == "guilds":
+            self.richConsole.print(
+                f"[bold green][Status Loop][/] Switching to {statuses[self.statusIndex]['value']}")
+            if statuses[self.statusIndex]['name'] in ("guilds", "users"):
                 await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
-                    type=discord.ActivityType.watching, name=status['value']
+                    type=discord.ActivityType.watching, name=statuses[self.statusIndex]['value']
                 ))
-            elif status['name'] == "music":
+            elif statuses[self.statusIndex]['name'] == "music":
                 await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
-                    type=discord.ActivityType.listening, name=status['value']
+                    type=discord.ActivityType.listening, name=statuses[self.statusIndex]['value']
                 ))
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(60)
+            self.statusIndex += 1
+            if self.statusIndex == 3:
+                self.statusIndex = 0
 
     async def init_extensions(self):
         extLoaded = 1

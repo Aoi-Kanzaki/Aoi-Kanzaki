@@ -13,36 +13,6 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
         self.bot = bot
         self.db = self.bot.db.favorites
 
-        @Aoi.context_menu(name="Favorite Songs")
-        async def fav_songs_context(interaction: discord.Interaction, member: discord.Member):
-            """Show's a users favorite songs."""
-            data = await self.db.find_one({"_id": member.id})
-            if data is None:
-                return await interaction.response.send_message(
-                    f"<:tickNo:697759586538749982> **{member.display_name}** doesn't have any favorite songs!")
-            else:
-                e = discord.Embed(colour=discord.Colour.teal())
-                e.set_author(
-                    icon_url=member.display_avatar,
-                    name=f"{member.display_name}'s Favorite Songs:"
-                )
-                e.description = ""
-                number = 1
-                for song in data['songs'][0:5]:
-                    if not url_rx.match(song):
-                        song = f'spsearch:{song}'
-                    try:
-                        result = await self.bot.lavalink.get_tracks(song, check_local=True)
-                    except:
-                        return await interaction.response.send_message(
-                            "The music module is not enabled! Or I have encountered a more serious error.", ephemeral=True)
-                    e.description += f"`{number}.` {result['tracks'][0]['title']}\n"
-                    number += 1
-                if len(data['songs']) > 5:
-                    total = len(data['songs']) - 5
-                    e.description += f"\nNot showing **{total}** more songs..."
-                return await interaction.response.send_message(embed=e)
-
     @Aoi.command(name="add")
     async def fav_add(self, interaction: discord.Interaction, link: str):
         """Adds a song to your favorites."""
@@ -118,7 +88,7 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
             return await interaction.response.send_message(embed=e)
 
     @Aoi.command(name="start")
-    async def start(self, interaction: discord.Interaction):
+    async def fav_start(self, interaction: discord.Interaction):
         """Start's your favorite songs."""
         data = await self.db.find_one({"_id": interaction.user.id})
         if data is None or data['songs'] == []:
@@ -160,6 +130,19 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
             player.store('channel', interaction.channel.id)
             if not player.is_playing:
                 await player.play()
+
+    @fav_start.error
+    @fav_add.error
+    @fav_remove.error
+    @fav_show.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

@@ -203,6 +203,20 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                     return await interaction.response.send_message(
                         embed=e, ephemeral=True)
 
+    @spotify_connect.error
+    @spotify_disconnect.error
+    @spotify_info.error
+    @spotify_liked.error
+    @spotify_playlist.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
     @spotify_playlist.autocomplete('playlist')
     async def playlist_auto(self, interaction: discord.Interaction, current: str) -> List[Aoi.Choice[str]]:
         data = await self.db.find_one({"_id": interaction.user.id})

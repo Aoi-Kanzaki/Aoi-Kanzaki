@@ -24,3 +24,16 @@ class EnsureChoiceButtons(discord.ui.View):
     async def no(self, interaction: discord.Interaction, button: discord.ui.Button):
         return await interaction.response.edit_message(
             content="Great, the song will stay!", view=None, embed=None)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][Favorites Ensure Buttons][/] Error: {error}")

@@ -53,3 +53,16 @@ class QueueButtons(discord.ui.View):
         embed.set_footer(
             text=f'Viewing page {self.page}/{pages} | Queue Duration: {queueDur} | Tracks: {len(self.player.queue)}')
         return embed
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][Queue Buttons][/] Error: {error}")

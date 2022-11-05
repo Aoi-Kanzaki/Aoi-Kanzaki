@@ -308,6 +308,26 @@ class Core(commands.Cog):
                 self.bot, paginator, owner=interaction.user)
             await interface.send_to(interaction)
 
+    @source.error
+    @musicstats.error
+    @uptime.error
+    @commits.error
+    @about.error
+    @ping.error
+    @reload.error
+    @report.error
+    @suggest.error
+    @invite.error
+    @sync.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
     async def use_file_check(self, interaction: discord.Interaction, size: int) -> bool:
         return all([
             size < 50_000, not Flags.FORCE_PAGINATOR,

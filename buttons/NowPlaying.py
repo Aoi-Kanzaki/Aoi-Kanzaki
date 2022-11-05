@@ -96,3 +96,16 @@ class NowPlaying(discord.ui.View):
         self.player.queue.clear()
         await self.player.stop()
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][now Playing Buttons][/] Error: {error}")

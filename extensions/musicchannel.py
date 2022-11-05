@@ -67,6 +67,17 @@ class MusicChannel(commands.GroupCog, description="All music channel related com
                 ephemeral=True
             )
 
+    @enable.error
+    @disable.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        e = discord.Embed(title="An Error has Occurred!",
+                          colour=discord.Colour.red())
+        e.add_field(name="Error:", value=error)
+        try:
+            await interaction.response.send_message(embed=e)
+        except:
+            await interaction.followup.send(embed=e)
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if not message.guild:

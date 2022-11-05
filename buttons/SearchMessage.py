@@ -78,3 +78,16 @@ class SearchButtons(discord.ui.View):
             return await interaction.delete_original_response()
         except:
             return await interaction.message.delete()
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        e = discord.Embed(
+            colour=discord.Colour.red(),
+            title="An error has occurred!"
+        )
+        e.add_field(name="Error", value=error)
+        e.set_thumbnail(self.bot.user.avatar)
+        try:
+            return await interaction.response.send_message(embed=e)
+        except:
+            self.bot.richConsole.print(
+                f"[bold red][Search Buttons][/] Error: {error}")
