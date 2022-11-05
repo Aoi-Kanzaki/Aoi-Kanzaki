@@ -31,27 +31,6 @@ class Utility(commands.Cog):
             ephemeral=True
         )
 
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        if message.author.bot:
-            return
-        data = await self.afk.find_one({"_id": message.author.id})
-        if data is not None:
-            await self.afk.delete_one({"_id": message.author.id})
-            return await message.channel.send(
-                f"{message.author.mention}  welcome back, I have removed your afk status!")
-        if message.mentions:
-            for user in message.mentions:
-                if await self.afk.find_one({"_id": user.id}):
-                    data = await self.afk.find_one({"_id": user.id})
-                    e = discord.Embed(
-                        color=discord.Color.blurple()
-                    )
-                    e.set_author(name=f"{user.name} is afk!",
-                                 icon_url=user.avatar)
-                    e.add_field(name="Reason:", value=data['reason'])
-                    return await message.channel.send(embed=e)
-
     @Aoi.command(name="activity", description="Get the activity of a user")
     async def activity(self, interaction: discord.Interaction, member: discord.Member = None):
         await interaction.response.defer()
@@ -240,12 +219,34 @@ class Utility(commands.Cog):
                 ephemeral=True
             )
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        data = await self.afk.find_one({"_id": message.author.id})
+        if data is not None:
+            await self.afk.delete_one({"_id": message.author.id})
+            return await message.channel.send(
+                f"{message.author.mention}  welcome back, I have removed your afk status!")
+        if message.mentions:
+            for user in message.mentions:
+                if await self.afk.find_one({"_id": user.id}):
+                    data = await self.afk.find_one({"_id": user.id})
+                    e = discord.Embed(
+                        color=discord.Color.blurple()
+                    )
+                    e.set_author(name=f"{user.name} is afk!",
+                                 icon_url=user.avatar)
+                    e.add_field(name="Reason:", value=data['reason'])
+                    return await message.channel.send(embed=e)
+
     @steal.error
     @weather.error
     @iplookup.error
     @serverinfo.error
     @userinfo.error
     @activity.error
+    @afk.error
     async def send_error(self, interaction: discord.Interaction, error):
         e = discord.Embed(title="An Error has Occurred!",
                           colour=discord.Colour.red())
