@@ -3,71 +3,7 @@ import typing
 import emojis
 from discord.ext import commands
 from discord import app_commands as Aoi
-
-
-class ReactionRolesNotSetup(commands.CommandError):
-    """Reaction roles are not setup for this guild."""
-    pass
-
-
-def is_setup():
-    async def wrap_func(interaction: discord.Interaction):
-        data = interaction.client.db.find_one({"_id": interaction.guild.id})
-        if data is None:
-            raise ReactionRolesNotSetup
-        if data["message_id"] is None:
-            raise ReactionRolesNotSetup
-        return True
-    return Aoi.check(wrap_func)
-
-
-class UpdateEmbed(discord.ui.View):
-    def __init__(self, bot: commands.AutoShardedBot, data: dict):
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.data = data
-        self.db = self.bot.db.reactionroles
-
-    @discord.ui.button(label="Update Embed", style=discord.ButtonStyle.green)
-    async def update_embed(self, interaction: discord.Interaction, button: discord.ui.Button):
-        data = await self.db.find_one({"_id": interaction.guild.id})
-        e = discord.Embed(
-            colour=discord.Colour.blurple(), title="Reaction Roles")
-        e.set_thumbnail(url=interaction.guild.icon.url)
-
-        e.description = ""
-        for rr in data["roles"]:
-            role = interaction.guild.get_role(rr["role"])
-            e.description += f"{rr['emoji']} - {role.mention}\n"
-        try:
-            if data["message_id"] is None:
-                return await interaction.response.edit_message(
-                    content="Please update using the command `/reactionroles channel`.", view=None)
-            if data["channel_id"] is None:
-                return await interaction.response.edit_message(
-                    content="Please update using the command `/reactionroles channel`.", view=None)
-            channel = interaction.guild.get_channel(data["channel_id"])
-            try:
-                message = await channel.fetch_message(data["message_id"])
-                if message is not None:
-                    await message.delete()
-            except:
-                pass
-            msg = await channel.send(embed=e)
-            for rr in self.data["roles"]:
-                await msg.add_reaction(rr["emoji"])
-            await self.db.update_one({"_id": interaction.guild.id}, {
-                "$set": {"message_id": msg.id}})
-            return await interaction.response.send_message(
-                content="Successfully updated the embed!", view=None)
-        except:
-            return await interaction.followup.send("Please set a channel first! Use the command `/reactionrole channel`.")
-
-    @discord.ui.button(label="Later", style=discord.ButtonStyle.grey)
-    async def later(self, interaction: discord.Interaction, button: discord.ui.Button, ):
-        await interaction.response.defer()
-        await interaction.response.edit_message(
-            content="You can update the embed later! Just use the `/reactionroles channel` command!", view=None)
+from utils.checks import is_setup
 
 
 class ReactionRoles(commands.GroupCog, description="Reaction roles for your server."):
@@ -75,72 +11,130 @@ class ReactionRoles(commands.GroupCog, description="Reaction roles for your serv
         self.bot = bot
         self.db = self.bot.db.reactionroles
 
-    @Aoi.command(name="channel", description="Set the channel for reaction roles")
-    @Aoi.describe(channel="The channel to set the reaction roles in")
-    @commands.has_permissions(manage_guild=True)
-    async def channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
-        await interaction.response.defer(ephemeral=True)
-        try:
-            await channel.send("This is a test message for reaction roles.", delete_after=0.05)
-        except discord.Forbidden:
-            return await interaction.followup.send("I do not have permissions to send messages in that channel.")
-
-        e = discord.Embed(title="Reaction Roles",
-                          color=discord.Color.blurple())
-        e.set_thumbnail(url=interaction.guild.icon.url)
-        e.description = ""
+    @Aoi.command(name="update", description="Update the embed for reaction roles.")
+    @Aoi.checks.has_permissions(manage_guild=True)
+    @is_setup()
+    async def update(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
         data = await self.db.find_one({"_id": interaction.guild.id})
+        message = await interaction.channel.fetch_message(data["message_id"])
+        if message is None:
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+        else:
+            await message.delete()
+
+        e = discord.Embed(colour=discord.Colour.teal())
+        e.set_author(name="Reaction Roles", icon_url=interaction.guild.icon)
+        e.description = "React to this message to get a role!\n"
         for rr in data["roles"]:
             role = interaction.guild.get_role(rr['role'])
-            e.description += f"{rr['emoji']} {role.mention}\n"
+            if role is None:
+                continue
+            else:
+                e.description += f"{rr['emoji']} - {role.mention}\n"
 
-        m = await channel.send(embed=e)
+        channel = interaction.guild.get_channel(data["channel_id"])
+        if channel is None:
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+
+        msg = await channel.send(embed=e)
         for rr in data["roles"]:
-            await m.add_reaction(rr["emoji"])
-        if data['message_id'] is not None:
-            old = await channel.fetch_message(data['message_id'])
-            await old.delete()
-        await self.db.update_one({"_id": interaction.guild.id}, {"$set": {"message_id": m.id}})
-        await self.db.update_one({"_id": interaction.guild.id}, {"$set": {"channel_id": channel.id}})
-        await interaction.followup.send("Successfully set the reaction roles channel.")
+            await msg.add_reaction(rr["emoji"])
 
-    @Aoi.command(name="add", description="Add a reaction role")
-    @Aoi.describe(role="The role to add", emoji="The emoji to add")
-    @commands.has_permissions(manage_guild=True)
-    async def add(self, interaction: discord.Interaction, role: discord.Role, emoji: str):
-        if isinstance(emoji, discord.Emoji):
-            emoji = emoji.id
-        else:
-            emoji = emojis.encode(emoji)
+        await self.db.update_one({"_id": interaction.guild.id}, {"$set": {"message_id": msg.id}})
+        await interaction.followup.send("Updated reaction roles message!")
+
+    @Aoi.command(name="setup", description="Setup reaction roles for your server.")
+    @Aoi.describe(
+        channel="The channel to send the reaction roles message in.",
+        role="The role to give when a user reacts to the message.",
+        emoji="The emoji to react with."
+    )
+    @Aoi.checks.has_permissions(manage_guild=True)
+    async def setup(self, interaction: discord.Interaction, channel: discord.TextChannel, role: discord.Role, emoji: str):
+        await interaction.response.defer(ephemeral=True, thinking=True)
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
-            data = {"_id": interaction.guild.id,
-                    "message_id": None, "roles": []}
-            await self.db.insert_one(data)
-        data["roles"].append({"role": role.id, "emoji": emoji})
-        await self.db.update_one({"_id": interaction.guild.id}, {"$set": {"roles": data["roles"]}})
-        await interaction.response.send_message(
-            f"Successfully added {role.mention} with {emoji} to reaction roles.\n"
-            "Should I update the embed? Or do you want to use the `/reactionrole channel` command later?",
-            ephemeral=True,
-            view=UpdateEmbed(self.bot, data)
-        )
+            emoji = emojis.encode(emoji)
 
-    @Aoi.command(name="remove", description="Remove a reaction role")
-    @Aoi.describe(role="The role to remove")
-    @commands.has_permissions(manage_guild=True)
+            e = discord.Embed(colour=discord.Colour.teal())
+            e.set_author(name="Reaction Roles",
+                         icon_url=interaction.guild.icon)
+            e.description = f"React to this message to get a role!\n{emoji} - {role.mention}\n"
+
+            msg = await channel.send(embed=e)
+            await msg.add_reaction(emoji)
+
+            await self.db.insert_one(
+                {"_id": interaction.guild.id, "message_id": msg.id,
+                 "channel_id": channel.id, "roles": [{"role": role.id, "emoji": emoji}]})
+            await interaction.followup.send("Setup reaction roles!")
+        else:
+            await interaction.followup.send("Reaction roles are already setup for this server!")
+
+    @Aoi.command(name="add", description="Add a reaction role to the list.")
+    @Aoi.describe(
+        role="The role to give when the user reacts.",
+        emoji="The emoji to react with."
+    )
+    @Aoi.checks.has_permissions(manage_guild=True)
+    @is_setup()
+    async def add(self, interaction: discord.Interaction, role: discord.Role, emoji: str):
+        data = await self.db.find_one({"_id": interaction.guild.id})
+        if data is None:
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+        emoji = emojis.encode(emoji)
+
+        await self.db.update_one({"_id": interaction.guild.id}, {"$push": {"roles": {"role": role.id, "emoji": emoji}}})
+        await interaction.response.send_message(f"Added {role.mention} to the reaction roles list!\n"
+                                                "Please run the update command to update the message!", ephemeral=True)
+
+    @Aoi.command(name="remove", description="Remove a reaction role from the list.")
+    @is_setup()
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def remove(self, interaction: discord.Interaction, role: discord.Role):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
-            return await interaction.response.send_message("There are no reaction roles setup for this guild.", ephemeral=True)
-        data["roles"] = [rr for rr in data["roles"] if rr["role"] != role.id]
-        await self.db.update_one({"_id": interaction.guild.id}, {"$set": {"roles": data["roles"]}})
-        await interaction.response.send_message(
-            f"Successfully removed {role.mention} from reaction roles.\n"
-            "Should I update the embed? Or do you want to use the `/reactionrole channel` command later?",
-            ephemeral=True,
-            view=UpdateEmbed(self.bot, (await self.db.find_one({"_id": interaction.guild.id})))
-        )
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+
+        await self.db.update_one({"_id": interaction.guild.id}, {"$pull": {"roles": {"role": role.id}}})
+        await interaction.response.send_message(f"Removed {role.mention} from the reaction roles list!\n"
+                                                "Please run the update command to update the message!", ephemeral=True)
+
+    @Aoi.command(name="disable", description="Disable reaction roles for your server.")
+    @Aoi.checks.has_permissions(manage_guild=True)
+    @is_setup()
+    async def disable(self, interaction: discord.Interaction):
+        data = await self.db.find_one({"_id": interaction.guild.id})
+        if data is None:
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+
+        message = await interaction.channel.fetch_message(data["message_id"])
+        if message is None:
+            return await interaction.response.send_message(
+                "Reaction roles are not setup for this guild.",
+                ephemeral=True
+            )
+        else:
+            await message.delete()
+
+        await self.db.delete_one({"_id": interaction.guild.id})
+        await interaction.response.send_message("Disabled reaction roles!", ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):

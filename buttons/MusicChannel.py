@@ -23,6 +23,8 @@ class DefaultButtons(discord.ui.View):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as error:
+                self.bot.logger.error(
+                    f"[MusicChannel] : {error}")
                 self.bot.richConsole.print(
                     f"[bold red][MusicChannel][/] Error while creating player: {error}")
                 if isinstance(error, lavalink.errors.NodeError):
@@ -69,6 +71,8 @@ class DefaultButtons(discord.ui.View):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as e:
+                self.bot.logger.error(
+                    f"[MusicChannel] Error while creating player: {e}")
                 self.bot.richConsole.print(
                     f"[bold red][MusicChannel][/] Error while creating player: {e}")
                 if isinstance(e, lavalink.errors.NodeError):
@@ -103,6 +107,8 @@ class DefaultButtons(discord.ui.View):
                 await player.play()
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(
+            f"[MusicChannel Default Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"
@@ -233,6 +239,8 @@ class PlayingButtons(discord.ui.View):
         await interaction.guild.voice_client.disconnect(force=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(
+            f"[MusicChannel Playing Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

@@ -28,6 +28,8 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
+            self.bot.logger.error(
+                f"[{interaction.command.name}] Error: {e}")
             self.bot.richConsole.print(
                 f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
             return await interaction.response.send_message(content=f"Error: {e}")
@@ -43,6 +45,8 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
+            self.bot.logger.error(
+                f"[{interaction.command.name}] Error: {e}")
             self.bot.richConsole.print(
                 f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
             return await interaction.response.send_message(content=f"Error: {e}")
@@ -58,6 +62,8 @@ class Crypto(commands.GroupCog, description="Crypto related commands."):
                         content=f"**{x['symbol']}** is currrently sitting at **${x['quote']['USD']['price']}**"
                     )
         except Exception as e:
+            self.bot.logger.error(
+                f"[{interaction.command.name}] Error: {e}")
             self.bot.richConsole.print(
                 f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
             return await interaction.response.send_message(content=f"Error: {e}")

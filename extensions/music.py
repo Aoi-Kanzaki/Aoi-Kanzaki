@@ -111,6 +111,8 @@ class Music(commands.Cog):
                 player = self.bot.lavalink.player_manager.create(
                     interaction.guild.id, endpoint="us")
             except Exception as error:
+                self.bot.logger.error(
+                    f"[Music] Error creating player: {error}")
                 self.bot.richConsole.print(
                     f"[bold red][Music][/] Error while creating player: {error}")
                 if isinstance(error, lavalink.errors.NodeError):
@@ -452,11 +454,15 @@ class Music(commands.Cog):
 
     @lavalink.listener(lavalink.events.NodeConnectedEvent)
     async def on_node_connect(self, event: lavalink.events.NodeConnectedEvent):
+        self.bot.logger.info(
+            f"[Music] Connected to Lavalink node {event.node.name}")
         self.bot.richConsole.print(
             f"[bold green][Music][/] Connected to node {event.node.name}")
 
     @lavalink.listener(lavalink.events.NodeDisconnectedEvent)
     async def on_node_disconnect(self, event: lavalink.events.NodeDisconnectedEvent):
+        self.bot.logger.info(
+            f"[Music] Disconnected from node {event.node.name} with code {event.code}. Reason: {event.reason}")
         self.bot.richConsole.print(
             f"[bold red][Music][/] Disconnected from node {event.node.name} with code {event.code}. Reason: {event.reason}")
 
@@ -588,6 +594,7 @@ class Music(commands.Cog):
                 else:
                     return True
         except Exception as e:
+            self.bot.logger.error(f"[Music] Error during ensure_voice: {e}")
             self.bot.richConsole.print(
                 f"[bold red][Music][/] Error during ensure_voice: {e}")
 

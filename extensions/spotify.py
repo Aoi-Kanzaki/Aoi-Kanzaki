@@ -134,6 +134,8 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                         player = self.bot.lavalink.player_manager.create(
                             interaction.guild.id, endpoint="us")
                     except Exception as e:
+                        self.bot.logger.error(
+                            f"[Music] Failed to create player in {interaction.guild.name}: {e}")
                         self.bot.richConsole.print(
                             f"[bold red][Music][/] Failed to create player in {interaction.guild.name}: {e}")
                         if isinstance(e, lavalink.errors.NodeError):
@@ -185,6 +187,8 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                 try:
                     await self.bot.get_cog('Music')._play(interaction, playlist)
                 except Exception as e:
+                    self.bot.logger.error(
+                        f"[Spotify] Failed to play playlist in {interaction.guild.name}: {e}")
                     self.bot.richConsole.print(
                         f"[bold red][Spotify][/] Failed to play users playlist in {interaction.guild.name}: {e}")
             else:

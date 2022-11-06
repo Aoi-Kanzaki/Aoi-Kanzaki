@@ -98,6 +98,7 @@ class TrackStartEventButtons(discord.ui.View):
         await interaction.response.send_message(content="⏹️ Stopped music and cleared queue.", ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[TrackStart Event Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

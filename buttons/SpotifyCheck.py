@@ -20,6 +20,7 @@ class Disconnect_Check(discord.ui.View):
             content="Great, your account will stay connected!", view=None, embed=None)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[Disconnect Check Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

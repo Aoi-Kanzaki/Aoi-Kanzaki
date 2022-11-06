@@ -46,9 +46,10 @@ class ModMailButtons(discord.ui.View):
         e.set_thumbnail(self.bot.user.avatar)
         try:
             return await interaction.response.send_message(embed=e)
-        except:
+        except Exception as error:
             self.bot.richConsole.print(
                 f"[bold red][ModMail Close Button][/] Error: {error}")
+            self.bot.logger.error(f"[ModMail Close Button] Error: {error}")
 
 
 class EnsureClose(discord.ui.View):
@@ -92,6 +93,7 @@ class EnsureClose(discord.ui.View):
         self.stop()
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[ModMail Ensure Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

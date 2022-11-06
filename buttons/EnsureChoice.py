@@ -26,6 +26,7 @@ class EnsureChoiceButtons(discord.ui.View):
             content="Great, the song will stay!", view=None, embed=None)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[Ensure Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"
@@ -34,6 +35,7 @@ class EnsureChoiceButtons(discord.ui.View):
         e.set_thumbnail(self.bot.user.avatar)
         try:
             return await interaction.response.send_message(embed=e)
-        except:
+        except Exception as error:
             self.bot.richConsole.print(
                 f"[bold red][Favorites Ensure Buttons][/] Error: {error}")
+            self.bot.logger.error(f"[Ensure Buttons] Error: {error}")

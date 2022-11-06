@@ -89,7 +89,7 @@ class Fun(commands.Cog):
         e.set_footer(
             text=f"Meme By: {memeAuthor} | Subreddit: {memeSub} | Post: {memeLink}")
         view = MemeButtons()
-        view.message = await interaction.channel.send(embed=e, view=view)
+        view.message = await interaction.response.send_message(embed=e, view=view)
 
     @phcomment.error
     @rps.error

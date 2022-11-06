@@ -54,6 +54,7 @@ class Suggest(discord.ui.Modal):
                 ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[Suggestion Modal] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

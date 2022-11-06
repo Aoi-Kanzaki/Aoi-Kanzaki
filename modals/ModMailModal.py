@@ -79,6 +79,7 @@ class ModMailModal(discord.ui.Modal):
         )
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[ModMail Modal] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

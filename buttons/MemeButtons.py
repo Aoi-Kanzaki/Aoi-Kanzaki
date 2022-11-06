@@ -7,10 +7,6 @@ class MemeButtons(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=60)
 
-    async def on_timeout(self):
-        self.clear_items()
-        return await self.message.edit(view=self)
-
     @discord.ui.button(label="Next", style=discord.ButtonStyle.success)
     async def next(self, interaction: discord.Interaction, button: discord.ui.Button):
         memeApi = urllib.request.urlopen(
@@ -32,6 +28,7 @@ class MemeButtons(discord.ui.View):
         await interaction.message.delete()
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[Meme Buttons] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

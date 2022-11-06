@@ -47,6 +47,8 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
                     view=view
                 )
             except Exception as e:
+                self.bot.logger.error(
+                    f"[{interaction.command.name}] Error: {e}")
                 self.bot.richConsole.print(
                     f"[bold red][{interaction.command.name}][/] ERR: {str(e)}")
 

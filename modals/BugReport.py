@@ -37,6 +37,7 @@ class BugReport(discord.ui.Modal):
         await interaction.response.send_message(f'Thanks for your submitting your bug!', ephemeral=True)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        self.bot.logger.error(f"[Bug Report Modal] Error: {error}")
         e = discord.Embed(
             colour=discord.Colour.red(),
             title="An error has occurred!"

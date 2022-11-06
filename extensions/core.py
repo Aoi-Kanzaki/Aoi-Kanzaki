@@ -65,6 +65,7 @@ class Core(commands.Cog):
                 content=f"📡 I have succesfully synced {len(synced)} commands!"
             )
         except Exception as e:
+            self.bot.logger.error(f"Failed to sync commands: {e}")
             self.bot.richConsole.print(
                 f"[bold red][Aoi][/] Error syncing commands: {e}")
             em = discord.Embed(colour=discord.Colour.red(),
