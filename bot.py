@@ -12,14 +12,14 @@ from rich.console import Console as RichConsole
 with open("config.json", "r") as config:
     _config = json.load(config)
 
-date = datetime.date.today().strftime("%m-%d-%y")
-rotateHandler = logging.handlers.TimedRotatingFileHandler(
-    f"logs/{date}.log", when="midnight", encoding="utf-8")
+today = datetime.date.today()
+date = today.strftime("%m-%d-%y")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    datefmt="%m/%d/%Y %I:%M:%S %p",
-    handlers=[rotateHandler]
+    datefmt="%d/%m/%Y %I:%M:%S %p",
+    filemode="w",
+    filename=f"logs/{date}.log"
 )
 
 
