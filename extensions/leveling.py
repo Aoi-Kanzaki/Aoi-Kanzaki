@@ -19,6 +19,8 @@ class Leveling(commands.Cog):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if not data:
             return await interaction.followup.send("This server doesn't have leveling setup!")
+        if data['enabled'] == False:
+            return await interaction.followup.send("This server doesn't have leveling enabled!")
         user = [e for e in data["users"] if e["_id"] == member.id]
         try:
             user = user[0]
@@ -45,6 +47,10 @@ class Leveling(commands.Cog):
         if not data:
             return await interaction.followup.send(
                 "This server doesn't have leveling setup!", ephemeral=True
+            )
+        if data['enabled'] == False:
+            return await interaction.followup.send(
+                "This server doesn't have leveling enabled!", ephemeral=True
             )
         users = sorted(data["users"], key=lambda x: x["xp"], reverse=True)
         table = prettytable.PrettyTable(align='r')
