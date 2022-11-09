@@ -24,13 +24,13 @@ class BugReport(discord.ui.Modal):
         self.add_item(self.replicate)
 
     async def on_submit(self, interaction: discord.Interaction):
-        e = discord.Embed(
-            title=f"Bug Report from {interaction.user.name}"
-        )
+        e = discord.Embed(colour=discord.Colour.teal())
+        e.set_author(
+            name=f"Bug Report from {interaction.user}", icon_url=interaction.user.avatar)
         e.add_field(name="Bug:", value=self.bug.value, inline=False)
         e.add_field(name="How to Replicate:",
                     value=self.replicate.value, inline=False)
-
+        e.set_footer(text=f"User ID: {interaction.user.id}")
         for devID in interaction.client.config['slashCommands']['devIDS']:
             dev = await self.bot.fetch_user(devID)
             await dev.send(embed=e)

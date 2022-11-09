@@ -140,13 +140,23 @@ class Favorites(commands.GroupCog, description="All fav songs related commands."
     @fav_remove.error
     @fav_show.error
     async def send_error(self, interaction: discord.Interaction, error):
-        e = discord.Embed(title="An Error has Occurred!",
-                          colour=discord.Colour.red())
-        e.add_field(name="Error:", value=error)
-        try:
-            await interaction.response.send_message(embed=e)
-        except:
-            await interaction.followup.send(embed=e)
+        self.bot.logger.error(f"[Favorites] Error: {error}")
+        if isinstance(error, commands.MissingPermissions):
+            return await interaction.response.send_message("You do not have the required permissions to use this command!", ephemeral=True)
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await interaction.response.send_message("You are missing a required argument!", ephemeral=True)
+        if isinstance(error, commands.BadArgument):
+            return await interaction.response.send_message("You provided an invalid argument!", ephemeral=True)
+        if isinstance(error, commands.CommandInvokeError):
+            return await interaction.response.send_message("An error occurred while running this command!", ephemeral=True)
+        else:
+            e = discord.Embed(title="An Error has Occurred!",
+                              colour=discord.Colour.red())
+            e.add_field(name="Error:", value=error)
+            try:
+                await interaction.response.send_message(embed=e)
+            except:
+                await interaction.followup.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

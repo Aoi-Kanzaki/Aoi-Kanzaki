@@ -136,6 +136,30 @@ class ReactionRoles(commands.GroupCog, description="Reaction roles for your serv
         await self.db.delete_one({"_id": interaction.guild.id})
         await interaction.response.send_message("Disabled reaction roles!", ephemeral=True)
 
+    @disable.error
+    @remove.error
+    @add.error
+    @setup.error
+    @update.error
+    async def error(self, interaction: discord.Interaction, error):
+        self.bot.logger.error(f"[ReactionRoles] Error: {error}")
+        if isinstance(error, commands.MissingPermissions):
+            return await interaction.response.send_message("You do not have the required permissions to use this command!", ephemeral=True)
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await interaction.response.send_message("You are missing a required argument!", ephemeral=True)
+        if isinstance(error, commands.BadArgument):
+            return await interaction.response.send_message("You provided an invalid argument!", ephemeral=True)
+        if isinstance(error, commands.CommandInvokeError):
+            return await interaction.response.send_message("An error occurred while running this command!", ephemeral=True)
+        else:
+            e = discord.Embed(title="An Error has Occurred!",
+                              colour=discord.Colour.red())
+            e.add_field(name="Error:", value=error)
+            try:
+                await interaction.response.send_message(embed=e)
+            except:
+                await interaction.followup.send(embed=e)
+
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.member.bot:

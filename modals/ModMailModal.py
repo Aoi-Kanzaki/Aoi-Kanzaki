@@ -11,7 +11,7 @@ class ModMailModal(discord.ui.Modal):
         self.db = self.bot.db.modmail
 
         self.label = discord.ui.TextInput(
-            label="Label:",
+            label="Reason:",
             placeholder="What's your issue?",
             required=True,
             max_length=100
@@ -19,7 +19,7 @@ class ModMailModal(discord.ui.Modal):
         self.add_item(self.label)
 
         self.description = discord.ui.TextInput(
-            label="Description:",
+            label="Notes:",
             placeholder="Explain your issue in detail...",
             required=True,
             max_length=1800
@@ -43,11 +43,12 @@ class ModMailModal(discord.ui.Modal):
 
         e = discord.Embed(
             colour=discord.Colour.teal(),
-            title=f"ModMail from {interaction.user.name}"
         )
-        e.add_field(name="Label:",
+        e.set_author(
+            name=f"ModMail from {interaction.user}", icon_url=interaction.user.avatar)
+        e.add_field(name="Reason:",
                     value=self.label.value, inline=False)
-        e.add_field(name="Description:",
+        e.add_field(name="Notes:",
                     value=self.description.value, inline=False)
         e.set_thumbnail(url=interaction.user.avatar.url)
         e.set_footer(text=f"User ID: {interaction.user.id}")

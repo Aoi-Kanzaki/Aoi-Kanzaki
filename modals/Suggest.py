@@ -24,14 +24,17 @@ class Suggest(discord.ui.Modal):
         self.add_item(self.explanation)
 
     async def on_submit(self, interaction: discord.Interaction):
+        self.bot.logger.info(
+            f"[Suggestion Modal] {interaction.user} has submitted a suggestion.")
         e = discord.Embed(
-            colour=discord.Colour.teal(),
-            title=f"Suggestion from {interaction.user.name}"
+            colour=discord.Colour.teal()
         )
-        e.add_field(name="Feature name:",
-                    value=self.feature.value, inline=False)
-        e.add_field(name="Description:",
+        e.add_field(name="Feature", value=self.feature.value, inline=False)
+        e.add_field(name="Explanation",
                     value=self.explanation.value, inline=False)
+        e.set_author(
+            name=f"Suggestion from {interaction.user}", icon_url=interaction.user.avatar)
+        e.set_footer(text=f"User ID: {interaction.user.id}")
 
         guild = await self.bot.fetch_guild(678226695190347797)
         channel = await guild.fetch_channel(1036098613220229130)
