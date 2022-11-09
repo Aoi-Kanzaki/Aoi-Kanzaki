@@ -14,12 +14,11 @@ class Leveling(commands.Cog):
 
     @Aoi.command(name="rank", description="Check your rank.")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
+        await interaction.response.defer()
         member = member or interaction.user
         data = await self.db.find_one({"_id": interaction.guild.id})
         if not data:
-            return await interaction.response.send_message(
-                "This server doesn't have leveling setup!", ephemeral=True
-            )
+            return await interaction.followup.send("This server doesn't have leveling setup!")
         user = [e for e in data["users"] if e["_id"] == member.id]
         try:
             user = user[0]
@@ -37,14 +36,14 @@ class Leveling(commands.Cog):
             description=f"Level: {user['level']}\nXP: {user['xp']}/{user['xpCap']}"
         )
         e.set_thumbnail(url=member.avatar.url)
-        await interaction.response.send_message(embed=e)
+        await interaction.followup.send(embed=e)
 
     @Aoi.command(name="leaderboard", description="Check the server leaderboard.")
     async def leaderboard(self, interaction: discord.Interaction):
         await interaction.response.defer()
         data = await self.db.find_one({"_id": interaction.guild.id})
         if not data:
-            return await interaction.response.send_message(
+            return await interaction.followup.send(
                 "This server doesn't have leveling setup!", ephemeral=True
             )
         users = sorted(data["users"], key=lambda x: x["xp"], reverse=True)
