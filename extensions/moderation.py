@@ -26,7 +26,10 @@ class Moderation(commands.Cog):
             e = discord.Embed(colour=discord.Colour.teal())
             e.description = f"You have been banned from **{interaction.guild.name}!**\n"
             e.description += f"Reason: {reason}"
-            await member.send(embed=e)
+            try:
+                await member.send(embed=e)
+            except discord.Forbidden:
+                pass
             await interaction.guild.ban(user=member, reason=reason, delete_message_days=messages)
             return await interaction.response.send_message(
                 content=f"{member} has been banned from the guild!",
@@ -62,7 +65,10 @@ class Moderation(commands.Cog):
             e = discord.Embed(colour=discord.Colour.teal())
             e.description = f"You have been kicked from **{interaction.guild.name}!**\n"
             e.description += f"Reason: {reason}"
-            await member.send(embed=e)
+            try:
+                await member.send(embed=e)
+            except discord.Forbidden:
+                pass
             await interaction.guild.kick(user=member, reason=reason)
             return await interaction.response.send_message(
                 content=f"{member} has been kicked from the guild!",
