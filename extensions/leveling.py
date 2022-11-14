@@ -29,19 +29,14 @@ class Leveling(commands.Cog):
             filter = Editor("./utils/images/filter.png").resize((900, 300))
             background = Editor(
                 "./utils/images/leaderboard.png").resize(((900, 300)))
-            main = Editor(
-                "./utils/images/leaderboard.png").resize(((700, 300)))
-            background.paste(main, (0, 0))
             background.paste(filter, (0, 0))
             profile_picture = await load_image_async(str(member.avatar.url))
             profile = Editor(profile_picture).resize((150, 150)).circle_image()
             poppins = Font.poppins(size=40)
             poppins_small = Font.poppins(size=30)
-            card_right_shape = [(600, 0), (750, 300), (900, 300), (900, 0)]
-            background.polygon(card_right_shape, color="#FFFFFF")
-            background.rectangle((30, 220), width=650,
+            background.rectangle((200, 220), width=650,
                                  height=40, color="#0a0a0a", radius=20)
-            background.bar((30, 220), max_width=650, height=40, percentage=round(
+            background.bar((200, 220), max_width=650, height=40, percentage=round(
                 currentXp / nextLvl * 100), color="#FFFFFF", radius=20)
             background.text(
                 (200, 40), f"{member.name}#{member.discriminator}", font=poppins, color="#FFFFFF")
