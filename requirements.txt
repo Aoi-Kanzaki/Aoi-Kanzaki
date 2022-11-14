@@ -9,3 +9,4 @@ quart
 Quart_Discord
 requests_oauthlib
 prettytable
+humanfriendly

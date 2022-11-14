@@ -25,7 +25,6 @@ class Leveling(commands.Cog):
         try:
             user = [e for e in data["users"] if e["_id"] == member.id][0]
             nextLvl = user['level'] * user['level'] * 100
-            currentLvl = user['level']
             currentXp = user['xp']
             filter = Editor("./utils/images/filter.png").resize((900, 300))
             background = Editor(
@@ -50,7 +49,7 @@ class Leveling(commands.Cog):
                                  height=2, fill="#FFFFFF")
             background.paste(profile, (30, 30))
             background.text(
-                (200, 130), f"Level - {currentLvl} | XP - {currentXp}/{nextLvl}", font=poppins_small, color="#FFFFFF")
+                (200, 130), f"Level - {user['level']} | XP - {user['xp']}/{user['xpCap']}", font=poppins_small, color="#FFFFFF")
             background.paste(filter, (0, 0))
             file = discord.File(fp=background.image_bytes,
                                 filename="levelcard.png")

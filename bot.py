@@ -30,7 +30,7 @@ class Aoi(commands.AutoShardedBot):
         self._init = False
         self.config = _config
         self.session = None
-        self.version = "v3.2.2"
+        self.version = "v3.2.3"
         self.uptime = datetime.datetime.utcnow()
         self.richConsole = RichConsole()
         self.statusIndex = 0
