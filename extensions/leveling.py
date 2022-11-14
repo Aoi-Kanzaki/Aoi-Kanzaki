@@ -37,7 +37,7 @@ class Leveling(commands.Cog):
             background.rectangle((200, 220), width=650,
                                  height=40, color="#0a0a0a", radius=20)
             background.bar((200, 220), max_width=650, height=40, percentage=round(
-                currentXp / nextLvl * 100), color="#FFFFFF", radius=20)
+                user['xp'] / user['xpCap'] * 100), color="#FFFFFF", radius=20)
             background.text(
                 (200, 40), f"{member.name}#{member.discriminator}", font=poppins, color="#FFFFFF")
             background.rectangle((200, 100), width=350,
