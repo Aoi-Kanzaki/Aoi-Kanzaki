@@ -195,7 +195,7 @@ class Tags(commands.Cog):
     @tag_info.error
     @tag_search.error
     async def tag_error(self, interaction: discord.Interaction, error: Exception):
-        self.bot.logger.error(f"[Tag] Error: {error}")
+        self.bot.logger.error(f"[Tags] Error: {error}")
         if isinstance(error, commands.MissingPermissions):
             return await interaction.response.send_message("You do not have the required permissions to use this command!", ephemeral=True)
         if isinstance(error, commands.MissingRequiredArgument):

@@ -30,7 +30,7 @@ class Aoi(commands.AutoShardedBot):
         self._init = False
         self.config = _config
         self.session = None
-        self.version = "v3.2.5"
+        self.version = "v3.3.5"
         self.uptime = datetime.datetime.utcnow()
         self.richConsole = RichConsole()
         self.statusIndex = 0
@@ -77,8 +77,6 @@ class Aoi(commands.AutoShardedBot):
             ]
             self.logger.info(
                 f"Changing status to {statuses[self.statusIndex]['name']}")
-            self.richConsole.print(
-                f"[bold green][Status Loop][/] Switching to {statuses[self.statusIndex]['value']}")
             if statuses[self.statusIndex]['name'] in ("guilds", "users"):
                 await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
                     type=discord.ActivityType.watching, name=statuses[self.statusIndex]['value']

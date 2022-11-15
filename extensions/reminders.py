@@ -100,7 +100,7 @@ class Remind(commands.Cog):
     @reminders.error
     @remind_delete.error
     async def send_error(self, interaction: discord.Interaction, error):
-        self.bot.logger.error(f"[Spotify] Error: {error}")
+        self.bot.logger.error(f"[Reminders] Error: {error}")
         if isinstance(error, commands.MissingPermissions):
             return await interaction.response.send_message("You do not have the required permissions to use this command!", ephemeral=True)
         if isinstance(error, commands.MissingRequiredArgument):

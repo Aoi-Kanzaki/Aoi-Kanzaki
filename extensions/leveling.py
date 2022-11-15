@@ -24,8 +24,6 @@ class Leveling(commands.Cog):
             return await interaction.followup.send("Bots can't level up!")
         try:
             user = [e for e in data["users"] if e["_id"] == member.id][0]
-            nextLvl = user['level'] * user['level'] * 100
-            currentXp = user['xp']
             filter = Editor("./utils/images/filter.png").resize((900, 300))
             background = Editor(
                 "./utils/images/leaderboard.png").resize(((900, 300)))
