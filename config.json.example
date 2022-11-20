@@ -1,0 +1,38 @@
+{
+    "prefix": "",
+    "token": "",
+    "cryptoAPIkey": "",
+    "weatherApiKey": "",
+    "openAiKey": "",
+    "slashCommands": {
+        "mode": "global",
+        "guildID": "",
+        "devIDS": []
+    },
+    "lavalink": {
+        "host": "localhost",
+        "pass": "youshallnotpass",
+        "port": 2333,
+        "name": "Aoi",
+        "region": "na"
+    },
+    "database": {
+        "uri": "",
+        "collection": "Aoi",
+        "enabled": true
+    },
+    "spotify": {
+        "secret": "",
+        "id": "",
+        "base_url": "https://accounts.spotify.com/authorize",
+        "token_url": "https://accounts.spotify.com/api/token",
+        "redirect": "",
+        "scope": [
+            "playlist-read-collaborative",
+            "user-read-recently-played",
+            "playlist-read-private",
+            "user-library-read",
+            "user-top-read"
+        ]
+    }
+}
