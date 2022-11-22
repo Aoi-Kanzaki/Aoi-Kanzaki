@@ -36,7 +36,7 @@ Here you will find some things you will need.
 - [Lavalink.py](https://github.com/Devoxin/Lavalink.py)
 - [Lavlink.jar](https://github.com/freyacodes/Lavalink)
 - [Discord.py](https://github.com/Rapptz/discord.py/)
-- [Python3.6+](https://www.python.org/)
+- [Python3.9+](https://www.python.org/)
 - [MongoDb](https://docs.mongodb.com/)
 - [Java Oracle](https://www.oracle.com/java/)
 
@@ -46,7 +46,7 @@ Read to install and setup? No problem! That's what this part of the page is for.
 
 ### Installation
 
-1. Install python if you don't have it already. (Make sure to install version 3.6 or later)
+1. Install python if you don't have it already. (Make sure to install version 3.9 or later)
 
 2. Install java also if you don't have it
 
