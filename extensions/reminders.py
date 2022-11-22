@@ -23,6 +23,10 @@ class Remind(commands.Cog):
         self.check_reminders.start()
 
     @Aoi.command(name="remind", description="Remind yourself of something.")
+    @Aoi.describe(
+        time="The time to remind you.",
+        reminder="The content of the reminder."
+    )
     async def remind(self, interaction: discord.Interaction, time: str, *, reminder: str):
         """Remind yourself of something.
 
@@ -43,7 +47,6 @@ class Remind(commands.Cog):
     async def reminders(self, interaction: discord.Interaction):
         """List your reminders."""
         data = await self.db.find_one({"_id": interaction.user.id})
-        print(data)
         if data is None:
             return await interaction.response.send_message("You have no reminders set.")
 
@@ -57,6 +60,9 @@ class Remind(commands.Cog):
         await interaction.response.send_message(embed=embed)
 
     @Aoi.command(name="remind-delete", description="Delete a reminder.")
+    @Aoi.describe(
+        reminder="The reminder to delete."
+    )
     async def remind_delete(self, interaction: discord.Interaction, reminder: str):
         """Delete a reminder."""
         data = await self.db.find_one({"_id": interaction.user.id})

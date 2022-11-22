@@ -10,19 +10,18 @@ class Tags(commands.Cog):
 
     @Aoi.command(name="tag")
     @Aoi.describe(
-        tag_name="The tag you would like to get.",
+        name="The tag you would like to get.",
     )
-    async def tag(self, interaction: discord.Interaction, tag_name: str):
+    async def tag(self, interaction: discord.Interaction, name: str):
         """Get a tag."""
         data = await self.db.find_one({"_id": interaction.guild.id})
-        print(data)
         if data is None:
             return await interaction.response.send_message(
                 "This guild has no tags.",
                 ephemeral=True
             )
         for tag in data["tags"]:
-            if tag["name"] == tag_name:
+            if tag["name"] == name:
                 return await interaction.response.send_message(
                     tag["content"]
                 )
@@ -32,6 +31,10 @@ class Tags(commands.Cog):
         )
 
     @Aoi.command(name="tag-create", description="Create a tag.")
+    @Aoi.describe(
+        name="The name of the tag.",
+        content="The content of the tag."
+    )
     async def tag_create(self, interaction: discord.Interaction, name: str, content: str):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
@@ -50,6 +53,9 @@ class Tags(commands.Cog):
         await interaction.response.send_message("Created tag!", ephemeral=True)
 
     @Aoi.command(name="tag-delete", description="Delete a tag.")
+    @Aoi.describe(
+        name="The name of the tag."
+    )
     async def tag_delete(self, interaction: discord.Interaction, name: str):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
@@ -111,6 +117,10 @@ class Tags(commands.Cog):
         await interaction.response.send_message(embed=e)
 
     @Aoi.command(name="tag-edit", description="Edit a tag.")
+    @Aoi.describe(
+        name="The name of the tag.",
+        content="The new content of the tag."
+    )
     async def tag_edit(self, interaction: discord.Interaction, name: str, content: str):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
@@ -140,6 +150,9 @@ class Tags(commands.Cog):
         await interaction.response.send_message("Edited tag!", ephemeral=True)
 
     @Aoi.command(name="tag-info", description="Get info about a tag.")
+    @Aoi.describe(
+        name="The name of the tag."
+    )
     async def tag_info(self, interaction: discord.Interaction, name: str):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:
@@ -165,6 +178,9 @@ class Tags(commands.Cog):
         await interaction.response.send_message(embed=e)
 
     @Aoi.command(name="tag-search", description="Search for a tag.")
+    @Aoi.describe(
+        query="The query to search for."
+    )
     async def tag_search(self, interaction: discord.Interaction, *, query: str):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is None:

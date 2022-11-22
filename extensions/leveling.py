@@ -12,6 +12,7 @@ class Leveling(commands.Cog):
         self.db = bot.db.levels
 
     @Aoi.command(name="rank", description="Check your rank.")
+    @Aoi.describe(member="The user you would like to check the rank of.")
     async def rank(self, interaction: discord.Interaction, member: discord.Member = None):
         await interaction.response.defer()
         member = member or interaction.user
@@ -143,6 +144,7 @@ class Leveling(commands.Cog):
         return await interaction.followup.send(embed=e)
 
     @Leveling.command(name="toggle", description="Toggle leveling on or off.")
+    @Aoi.describe(toggle="Whether to enable or disable leveling.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def toggle(self, interaction: discord.Interaction, toggle: typing.Literal["enable", "disable"]):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -169,6 +171,7 @@ class Leveling(commands.Cog):
         await self.db.update_one({"_id": interaction.guild.id}, {"$set": data})
 
     @Leveling.command(name="ignore-channel", description="Ignore a channel for leveling.")
+    @Aoi.describe(channel="The channel to ignore.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def ignore_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -191,6 +194,7 @@ class Leveling(commands.Cog):
         await self.db.update_one({"_id": interaction.guild.id}, {"$set": data})
 
     @Leveling.command(name="channel", description="Set the leveling channel.")
+    @Aoi.describe(channel="The channel to set.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def channel(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -215,6 +219,7 @@ class Leveling(commands.Cog):
         await self.db.update_one({"_id": interaction.guild.id}, {"$set": data})
 
     @Leveling.command(name="add-role", description="Add a role to the leveling system.")
+    @Aoi.describe(level="The level to give the role at.", rolename="The role to give.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def add_role(self, interaction: discord.Interaction, rolename: str, level: int):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -237,6 +242,7 @@ class Leveling(commands.Cog):
         await self.db.update_one({"_id": interaction.guild.id}, {"$set": data})
 
     @Leveling.command(name="remove-role", description="Remove a role from the leveling system.")
+    @Aoi.describe(role="The role to remove.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def remove_role(self, interaction: discord.Interaction, role: discord.Role):
         data = await self.db.find_one({"_id": interaction.guild.id})

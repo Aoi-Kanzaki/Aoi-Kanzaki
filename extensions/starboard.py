@@ -11,6 +11,7 @@ class Starboard(commands.GroupCog, description="Starboard commands."):
         self.db = self.bot.db.starboard
 
     @Aoi.command(name="toggle", description="Toggle starboard on/off.")
+    @Aoi.describe(toggle="Whether to turn starboard on or off.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def toggle(self, interaction: discord.Interaction, toggle: typing.Literal["enable", "disable"]):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -46,6 +47,7 @@ class Starboard(commands.GroupCog, description="Starboard commands."):
                     return await interaction.response.send_message("Starboard has been disabled.", ephemeral=True)
 
     @Aoi.command(name="ignore-channel", description="Ignore a channel from the starboard.")
+    @Aoi.describe(channel="The channel to ignore.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def ignore_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -60,6 +62,7 @@ class Starboard(commands.GroupCog, description="Starboard commands."):
                 return await interaction.response.send_message(f"{channel.mention} has been ignored.", ephemeral=True)
 
     @Aoi.command(name="count", description="Set the starboard count.")
+    @Aoi.describe(count="The amount of stars required to post to the starboard.")
     @Aoi.checks.has_permissions(manage_guild=True)
     async def count(self, interaction: discord.Interaction, count: Aoi.Range[int, 1, 10]):
         data = await self.db.find_one({"_id": interaction.guild.id})

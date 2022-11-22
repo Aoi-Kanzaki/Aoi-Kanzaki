@@ -17,35 +17,18 @@ class Help(commands.Cog):
         ]
 
     async def command_auto(self, interaction: discord.Interaction, current: str):
-        choices = []
-        for command in self.bot.tree.get_commands():
-            if command.module == "extensions.contextmenus":
-                continue
-            else:
-                choices.append(Aoi.Choice(
-                    name=f"{command.name} - {command.description}", value=command.name))
-                try:
-                    for cmd in command.commands:
-                        choices.append(Aoi.Choice(
-                            name=f"{cmd.name} - {cmd.description}", value=cmd.name))
-                except AttributeError:
-                    pass
-        return choices[0:25]
-
-    # async def command_auto(self, interaction: discord.Interaction, current: str):
-    #     return [
-    #         Aoi.Choice(name=f"{command.name} - {command.description}",
-    #                    value=command.name)
-    #         for command in self.bot.tree.get_commands() if current.lower()
-    #         in command.name.lower() and command.module != "extensions.contextmenus"
-    #     ][0:25]
+        return [
+            Aoi.Choice(
+                name=f"{command.name} - {command.description}", value=command.name) for command in self.bot.tree.get_commands()
+            if current.lower() in command.name.lower() and command.module not in ('extensions.help', 'extensions.contextmenus')
+        ][0:10]
 
     @Aoi.command(name="help")
     @Aoi.autocomplete(module=module_auto, command=command_auto)
     @Aoi.describe(module="Select a module to list commands from.", command="Select a command to get help on.")
     async def help(self, interaction: discord.Interaction, module: str = None, command: str = None):
         """Get help on one of the bots commands or modules."""
-        ignore_cogs = ['Jishaku', 'ErrorHandler', 'ContextMenus', 'Help']
+        ignore_cogs = ['Jishaku', 'ContextMenus', 'Help']
         if not module and not command:
             e = discord.Embed(colour=discord.Colour.teal(),
                               description="\n".join([e for e in self.bot.cogs if e not in ignore_cogs]))
@@ -56,17 +39,20 @@ class Help(commands.Cog):
                 embed=e
             )
         if module and not command:
-            cog = self.bot.get_cog(module)
             cmds = ""
-            for cmd in cog.walk_app_commands():
-                params = ""
-                try:
-                    if cmd.parameters:
-                        for param in cmd.parameters:
-                            params += f"<{param.name}> "
-                    cmds += f"`{cmd.name} {params}` - {cmd.description}\n"
-                except AttributeError:
-                    cmds += f"`{cmd.name}` - {cmd.description}\n"
+            for cmd in await self.bot.tree.fetch_commands():
+                cmd2 = self.bot.tree.get_command(cmd.name)
+                if cmd2 is not None:
+                    if str(cmd2.module).split('.')[1] == module.lower():
+                        try:
+                            if cmd2.parameters != []:
+                                params = " ".join(
+                                    [f"<{param.name}>" for param in cmd2.parameters])
+                                cmds += f"{cmd.mention} `{params}` - {cmd2.description}\n"
+                            else:
+                                cmds += f"{cmd.mention} - {cmd2.description}\n"
+                        except AttributeError:
+                            cmds += f"{cmd.mention} - {cmd2.description}\n"
             e = discord.Embed(colour=discord.Colour.teal(), description=cmds)
             e.set_author(
                 name=f"Commands for {module}:", icon_url=self.bot.user.avatar)
@@ -96,7 +82,7 @@ class Help(commands.Cog):
                     pass
                 try:
                     e.add_field(name="Sub Commands:", value="\n".join(
-                        [f"`{cmd.name}` - {cmd.description}" for cmd in cmd.commands]))
+                        [f"</{cmd.parent.name} {cmd.name}:{self.bot.user.id}> - {cmd.description}" for cmd in cmd.commands]))
                 except AttributeError:
                     pass
                 return await interaction.response.send_message(embed=e)
