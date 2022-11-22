@@ -33,9 +33,9 @@ Aoi contains a ton of features, from music to leveling and more. (More will be a
 
 Here you will find some things you will need.
 
-- [Lavalink.py](https://github.com/JonnyBoy2000/Lavalink.py)
-- [Lavlink.jar](https://github.com/Frederikam/Lavalink)
-- [Discord.py Rewrite](https://github.com/Rapptz/discord.py/)
+- [Lavalink.py](https://github.com/Devoxin/Lavalink.py)
+- [Lavlink.jar](https://github.com/freyacodes/Lavalink)
+- [Discord.py](https://github.com/Rapptz/discord.py/)
 - [Python3.6+](https://www.python.org/)
 - [MongoDb](https://docs.mongodb.com/)
 - [Java Oracle](https://www.oracle.com/java/)
@@ -47,70 +47,52 @@ Read to install and setup? No problem! That's what this part of the page is for.
 ### Installation
 
 1. Install python if you don't have it already. (Make sure to install version 3.6 or later)
+
 2. Install java also if you don't have it
-3. Install and setup mongodb you can do so here.
 
-```
-Windows: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows/
-Linux: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
-Others: There is a list at the top of the page. (https://docs.mongodb.com/manual/tutorial/)
-```
+3. You will need a mongodb connection URI, so go ahead and get that ready and set up.
 
-4. You're going to need a Spotify api key for the music module.
+4. You're going to need a Spotify api key for the music module. You can get one at the link below.
+   https://developer.spotify.com/web-api/
 
-```
-You should be able to get one here. https://developer.spotify.com/web-api/
-```
-
-5. Clone the repo
-
-```sh
-git clone https://github.com/Aoi-Kanzaki/Aoi-Kanzaki.git
-```
+5. Clone the repo `git clone https://github.com/Aoi-Kanzaki/Aoi-Kanzaki.git`
 
 6. Move into the bots directory
 
-```sh
-cd Aoi-Kanzaki
-```
+7. Install requirements `python3 -m pip install -r requirements.txt`
 
-7. Install requirements
-
-```sh
-sudo python3 -m pip install -r requirements.txt
-```
-
-8. Rename `config.json.example` to `config.json` and set prefix as the prefix you want, and token as your bots token.
+8. Rename `config.json.example` to `config.json` and fill in the config settings.
 
 9. Create a lavalink folder and download the lavalink server. https://github.com/freyacodes/Lavalink/releases/download/3.6.2/Lavalink.jar
+   You will also need a `application.yml` for your lavalink server. You can get one here. https://github.com/freyacodes/Lavalink/blob/master/LavalinkServer/application.yml.example
 
-10. You will also need a `application.yml` for your lavalink server. You can get one here. https://github.com/freyacodes/Lavalink/blob/master/LavalinkServer/application.yml.example
+10. Start a screen session, press enter, and type the following command to startup the Lavalink server for music.
 
-11. Start a screen session, press enter, and type the following command to startup the Lavalink server for music.
+    ```sh
+    screen
+    (press enter)
+    sudo java -jar Lavalink.jar
+    ```
 
-```sh
-screen
-(press enter)
-sudo java -jar Lavalink.jar
-```
+    Disconnect from the screen session by pressing ctrl+A+D
 
-11. Disconnect from the screen session by pressing ctrl+A+D
-12. Now you should be able to run the bot! Just type the following command!
-
-```sh
-cd .. && python3 bot.py
-```
+11. Now you should be able to run the bot! Just type the following command!
+    `cd .. && python3 bot.py`
 
 ## Usage
 
 <p>
   Now how do I use the bot? Well it's simple.
   <br/>
-  Every command is a slash command so all you will need to do is type `/` and it will autocomeplete for you.
+  <br/>
+  Every command is a slash command so all you will need to do is type <b>/<b> and it will autocomeplete for you.
+  <br/>
   <br/>
   To get all of the bots commands use the following <b>/help</b>.
   <br/>
+  <br/>
   If you are wanting help on a specific module use the following <b>/help ModuleName</b>.
+  <br/>
   <br/>
   Also if you're wanting help on a specific command use the following <b>/help CommandName</b>.
 </p>
