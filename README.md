@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/JonnyBoy2000/Kira-Miki">
-    <img src="gh_banner.jpg" width="1000" height="200">
+    <img src="gh_banner.jpg" width="1000" height="400">
   </a>
   <p align="center">
     A multi purpose Discord bot. Made by Jonny with ❤!
