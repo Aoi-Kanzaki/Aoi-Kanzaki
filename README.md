@@ -85,7 +85,7 @@ Read to install and setup? No problem! That's what this part of the page is for.
   Now how do I use the bot? Well it's simple.
   <br/>
   <br/>
-  Every command is a slash command so all you will need to do is type <b>/<b> and it will autocomeplete for you.
+  Every command is a slash command so all you will need to do is type <b>/</b> and it will autocomeplete for you.
   <br/>
   <br/>
   To get all of the bots commands use the following <b>/help</b>.
@@ -114,7 +114,7 @@ Want to help out an contribute? Keep in mind that any contributions you make are
 <p>
   That's okay, you can head over to my patreon, or my paypal.
   <br/>
-  CashApp: `$jonnylokken0`
+  CashApp: <b>$jonnylokken0</b>
 </p>
 
 ## License
