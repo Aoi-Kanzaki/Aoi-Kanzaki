@@ -112,7 +112,7 @@ Want to help out an contribute? Keep in mind that any contributions you make are
 ### Not a developer but still want to help out?
 
 <p>
-  That's okay, you can head over to my patreon, or my paypal.
+  That's okay, you can head over to my cashapp.
   <br/>
   CashApp: <b>$jonnylokken0</b>
 </p>
