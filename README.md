@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/JonnyBoy2000/Kira-Miki">
+  <a href="https://github.com/Aoi-Kanzaki/Aoi-Kanzaki">
     <img src="gh_banner.jpg" width="1000" height="400">
   </a>
   <p align="center">
