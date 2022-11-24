@@ -227,7 +227,7 @@ class Core(commands.Cog):
     @Aoi.command(name="uptime")
     async def uptime(self, interaction: discord.Interaction):
         """Shows the uptime of the bot."""
-        uptime = uptime = self.get_bot_uptime()
+        uptime = self.get_bot_uptime()
         await interaction.response.send_message(
             content=uptime,
             ephemeral=True

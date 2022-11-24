@@ -34,6 +34,7 @@ class Aoi(commands.AutoShardedBot):
         self.uptime = datetime.datetime.utcnow()
         self.richConsole = RichConsole()
         self.statusIndex = 0
+        self.commandsRan = 0
         self.logger = logging.getLogger("Aoi Kanzaki")
         self.logger.info('Connecting to Discord...')
 
@@ -146,6 +147,7 @@ class Aoi(commands.AutoShardedBot):
 
     async def on_interaction(self, interaction):
         if interaction.type == discord.InteractionType.application_command:
+            self.commandsRan += 1
             self.richConsole.print(
                 f"[bold green][Aoi Command][/]  Command {interaction.data['name']} was used by {interaction.user} in {interaction.guild}")
             self.logger.info(
