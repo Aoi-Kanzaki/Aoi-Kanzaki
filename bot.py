@@ -76,8 +76,6 @@ class Aoi(commands.AutoShardedBot):
                     "value": f"music in {playing} guilds.."},
                 {"name": "users", "value": f"/help | {users} users.."}
             ]
-            self.logger.info(
-                f"Changing status to {statuses[self.statusIndex]['name']}")
             if statuses[self.statusIndex]['name'] in ("guilds", "users"):
                 await self.change_presence(status=discord.Status.dnd, activity=discord.Activity(
                     type=discord.ActivityType.watching, name=statuses[self.statusIndex]['value']

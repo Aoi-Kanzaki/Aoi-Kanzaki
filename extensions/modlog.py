@@ -386,8 +386,8 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                               timestamp=datetime.datetime.now(),
                               description="Guild channel has been created")
             e.set_author(name=channel.guild.name, icon_url=channel.guild.icon)
-            e.add_field(name="Name:", value=channel.mention)
-            e.add_field(name="ID:", value=channel.id)
+            e.add_field(
+                name="Name:", value=f"{channel.mention} ({channel.id})", inline=False)
             e.add_field(name="Channel Type:", value=channel.type)
             if channel.category != None:
                 e.add_field(name="Category:", value=channel.category)
@@ -404,8 +404,8 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
                               timestamp=datetime.datetime.now(),
                               description="Guild channel has been deleted")
             e.set_author(name=channel.guild.name, icon_url=channel.guild.icon)
-            e.add_field(name="Name:", value=channel.name)
-            e.add_field(name="ID:", value=channel.id)
+            e.add_field(
+                name="Name:", value=f"{channel.mention} ({channel.id})", inline=False)
             e.add_field(name="Channel Type:", value=channel.type)
             if channel.category != None:
                 e.add_field(name="Category:", value=channel.category)
