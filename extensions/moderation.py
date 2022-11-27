@@ -28,7 +28,7 @@ class Moderation(commands.Cog):
             e.description += f"Reason: {reason}"
             try:
                 await member.send(embed=e)
-            except discord.Forbidden:
+            except:
                 pass
             await interaction.guild.ban(user=member, reason=reason, delete_message_days=messages)
             return await interaction.response.send_message(
@@ -67,7 +67,7 @@ class Moderation(commands.Cog):
             e.description += f"Reason: {reason}"
             try:
                 await member.send(embed=e)
-            except discord.Forbidden:
+            except:
                 pass
             await interaction.guild.kick(user=member, reason=reason)
             return await interaction.response.send_message(

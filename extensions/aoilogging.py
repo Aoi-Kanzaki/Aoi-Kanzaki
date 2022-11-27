@@ -87,8 +87,10 @@ class AoiLogging(commands.Cog):
 
         channel = await self.bot.fetch_channel(1045203380517208114)
         msg = await channel.fetch_message(1045204532692533338)
-
-        return await msg.edit(content=None, embed=e)
+        try:
+            return await msg.edit(content=None, embed=e)
+        except discord.errors.Forbidden:
+            pass
 
     def get_bot_uptime(self, *, brief=False):
         now = datetime.datetime.utcnow()
