@@ -1,6 +1,7 @@
 import re
 import time
 import discord
+import aiohttp
 from discord.ext import commands
 
 url_rx = re.compile(r'https?:\/\/(?:www\.)?.+')
@@ -143,6 +144,10 @@ class ContextMenus(commands.Cog):
                     await interaction.response.send_message(embed=e)
                 except:
                     await interaction.followup.send(embed=e)
+                async with aiohttp.ClientSession() as session:
+                    webhook = discord.Webhook.from_url(
+                        url=self.bot.config['webhooks']['mainlogs'], session=session)
+                    await webhook.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

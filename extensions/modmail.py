@@ -1,5 +1,6 @@
 import discord
 import typing
+import aiohttp
 from discord.ext import commands
 from discord import app_commands as Aoi
 
@@ -54,6 +55,7 @@ class ModMail(commands.GroupCog, description="ModMail commands."):
 
     @Aoi.command(name="setup", description="Setup modmail for the server.")
     @Aoi.describe(toggle="Whether to enable or disable ModMail.")
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def setup(self, interaction: discord.Interaction, toggle: typing.Literal["enable", "disable"]):
         data = await self.db.find_one({"_id": interaction.guild.id})
         if data is not None:
@@ -109,6 +111,10 @@ class ModMail(commands.GroupCog, description="ModMail commands."):
                 await interaction.response.send_message(embed=e)
             except:
                 await interaction.followup.send(embed=e)
+            async with aiohttp.ClientSession() as session:
+                webhook = discord.Webhook.from_url(
+                    url=self.bot.config['webhooks']['mainlogs'], session=session)
+                await webhook.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

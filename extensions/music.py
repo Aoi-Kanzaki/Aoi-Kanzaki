@@ -2,6 +2,7 @@ import re
 import math
 import discord
 import lavalink
+import aiohttp
 import humanize
 import datetime
 import asyncio
@@ -435,6 +436,10 @@ class Music(commands.Cog):
                 await interaction.response.send_message(embed=e)
             except:
                 await interaction.followup.send(embed=e)
+            async with aiohttp.ClientSession() as session:
+                webhook = discord.Webhook.from_url(
+                    url=self.bot.config['webhooks']['mainlogs'], session=session)
+                await webhook.send(embed=e)
 
     @lavalink.listener(lavalink.events.QueueEndEvent)
     async def on_queue_end(self, event: lavalink.events.QueueEndEvent):

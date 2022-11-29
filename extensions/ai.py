@@ -117,6 +117,10 @@ class Ai(commands.GroupCog, description="All Artificial intelligence related com
                 await interaction.response.send_message(embed=e)
             except:
                 await interaction.followup.send(embed=e)
+            async with aiohttp.ClientSession() as session:
+                webhook = discord.Webhook.from_url(
+                    url=self.bot.config['webhooks']['mainlogs'], session=session)
+                await webhook.send(embed=e)
 
 
 async def setup(bot: commands.AutoShardedBot):

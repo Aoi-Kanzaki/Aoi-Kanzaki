@@ -1,4 +1,5 @@
 import discord
+import aiohttp
 from discord.ext import commands
 
 
@@ -69,3 +70,7 @@ class Suggest(discord.ui.Modal):
         except:
             self.bot.richConsole.print(
                 f"[bold red][Suggest Modal][/] Error: {error}")
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(
+                url=self.bot.config['webhooks']['mainlogs'], session=session)
+            await webhook.send(embed=e)

@@ -1,5 +1,6 @@
 import discord
 import datetime
+import aiohttp
 from discord.ext import commands
 from typing import Literal, Optional
 from discord import app_commands as Aoi
@@ -11,6 +12,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         self.db = self.bot.db.modlog
 
     @Aoi.command(name="settings")
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def setting(self, interaction: discord.Interaction,
                       setting: Literal['Messages', 'Channels', 'Guild Join-Leave', 'Voice Join-Leave', 'Roles', 'Guild', 'Members', 'Bans']):
         """Toggle on or off certain logs."""
@@ -37,6 +39,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         )
 
     @Aoi.command(name="toggle")
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def toggle(self, interaction: discord.Interaction, toggle: Literal['enable', 'disable']):
         """Enable or disable the modlog system."""
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -59,6 +62,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         return await interaction.response.send_message(f"I have {toggle}d the Mod-Log system.")
 
     @Aoi.command(name="channel")
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def channel(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel]):
         """Set the modlog channel."""
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -95,6 +99,7 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         )
 
     @Aoi.command(name="config")
+    @Aoi.checks.has_permissions(manage_guild=True)
     async def config(self, interaction: discord.Interaction):
         """Shows the config settings for the current guild."""
         data = await self.db.find_one({"_id": interaction.guild.id})
@@ -110,6 +115,33 @@ class ModLog(commands.GroupCog, description="All ModLog related commands."):
         e.add_field(name="Enabled Events:", value=(
             f"{events}" if data['events'] != [] else "No events enabled."), inline=False)
         return await interaction.response.send_message(embed=e)
+
+    @setting.error
+    @toggle.error
+    @channel.error
+    @config.error
+    async def send_error(self, interaction: discord.Interaction, error):
+        self.bot.logger.error(f"[Moderation] Error: {error}")
+        if isinstance(error, commands.MissingPermissions):
+            return await interaction.response.send_message("You do not have the required permissions to use this command!", ephemeral=True)
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await interaction.response.send_message("You are missing a required argument!", ephemeral=True)
+        if isinstance(error, commands.BadArgument):
+            return await interaction.response.send_message("You provided an invalid argument!", ephemeral=True)
+        if isinstance(error, commands.CommandInvokeError):
+            return await interaction.response.send_message("An error occurred while running this command!", ephemeral=True)
+        else:
+            e = discord.Embed(title="An Error has Occurred!",
+                              colour=discord.Colour.red())
+            e.add_field(name="Error:", value=error)
+            try:
+                await interaction.response.send_message(embed=e)
+            except:
+                await interaction.followup.send(embed=e)
+            async with aiohttp.ClientSession() as session:
+                webhook = discord.Webhook.from_url(
+                    url=self.bot.config['webhooks']['mainlogs'], session=session)
+                await webhook.send(embed=e)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
