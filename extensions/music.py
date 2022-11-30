@@ -441,6 +441,24 @@ class Music(commands.Cog):
                     url=self.bot.config['webhooks']['mainlogs'], session=session)
                 await webhook.send(embed=e)
 
+    @lavalink.listener(lavalink.events.WebSocketClosedEvent)
+    async def on_websocket_closed(self, event: lavalink.events.WebSocketClosedEvent):
+        if event.code == 4014:
+            data = await self.bot.db.musicChannel.find_one(
+                {"_id": event.player.guild_id})
+            if data:
+                if event.player.fetch('channel') == data['channel']:
+                    await self.edit_controller("queueEnd", event, data)
+                else:
+                    await self.delete_npMsg(event)
+            else:
+                await self.delete_npMsg(event)
+            event.player.queue.clear()
+            await event.player.stop()
+            guild = self.bot.get_guild(event.player.guild_id)
+            await guild.voice_client.disconnect(force=True)
+            await self.bot.lavalink.player_manager.destroy(event.player.guild_id)
+
     @lavalink.listener(lavalink.events.QueueEndEvent)
     async def on_queue_end(self, event: lavalink.events.QueueEndEvent):
         data = await self.bot.db.musicChannel.find_one(
