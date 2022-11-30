@@ -1,0 +1,276 @@
+:root {
+  --dark1: #0a0a0a;
+  --dark2: #1f1f1f;
+  --dark3: #101010;
+  --accent: rgb(4, 134, 151);
+  --purple: rgb(123, 31, 162);
+  --violet: rgb(103, 58, 183);
+  --pink: rgb(244, 143, 177);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Prompt", sans-serif;
+  color: white;
+  background: var(--dark2);
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.page-header {
+  background: var(--dark1);
+  padding: 0px 20px;
+  overflow: hidden;
+  border-bottom: 6px solid var(--dark1);
+}
+
+.page-logo {
+  max-width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.pull-left {
+  float: left;
+}
+
+.features {
+  display: flex;
+  width: 87.5vw;
+  flex-direction: column;
+  align-items: center;
+  margin: auto;
+  border-radius: 10px;
+  background-color: var(--dark1);
+}
+
+.features h1 {
+  font-size: 4rem;
+  margin: 19px 0;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  padding: 0 0 3rem 0;
+}
+
+.card {
+  padding: 0 25px;
+  margin: 10px;
+  background-color: var(--dark3);
+  height: 250px;
+  width: 450px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.6), 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.card h1 {
+  font-size: 2rem;
+  text-align: center;
+}
+
+.card p {
+  color: #999;
+  font-size: 20px;
+}
+
+.information {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.information .developer {
+  margin: 4rem 6%;
+  background-color: var(--dark1);
+  border-radius: 10px;
+}
+
+.information .developer img {
+  height: 10rem;
+  width: 100%;
+  object-fit: cover;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(10, 10, 10, 0.6), 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+}
+
+.information .developer h1 {
+  font-size: 2rem;
+}
+
+.information .developer .buttons {
+  margin: auto;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.information .developer button {
+  cursor: pointer;
+  animation: background-pan 3s linear infinite;
+  background: linear-gradient(
+    to right,
+    var(--purple),
+    var(--violet),
+    var(--pink),
+    var(--purple)
+  );
+  background-size: 200%;
+  white-space: nowrap;
+  border: none;
+  font-weight: 700 !important;
+  color: white;
+  height: 50px;
+  width: 200px;
+  margin: 10px;
+  transition: 100ms ease-in-out;
+  border-radius: 5px;
+}
+
+.information .developer button:hover {
+  transform: scale(1.1);
+}
+
+.information .developer .info {
+  padding: 3rem;
+}
+.footer {
+  display: flex;
+  justify-content: left;
+  background-color: var(--dark1);
+  margin-top: 4rem;
+}
+
+.footer p {
+  padding-left: 20px;
+}
+
+.welcome .welcome-text1 {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.welcome .welcome-text1 .main {
+  color: white;
+}
+.welcome .welcome-text1 .alt {
+  color: var(--accent);
+}
+
+.welcome p {
+  margin: 1rem 25rem 19px 25rem;
+  text-align: center;
+  font-size: 20px;
+}
+
+.welcome .buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-bottom: 4rem;
+}
+
+.welcome .buttons button {
+  cursor: pointer;
+  animation: background-pan 3s linear infinite;
+  background: linear-gradient(
+    to right,
+    var(--purple),
+    var(--violet),
+    var(--pink),
+    var(--purple)
+  );
+  background-size: 200%;
+  white-space: nowrap;
+  border: none;
+  font-weight: 700 !important;
+  color: white;
+  height: 50px;
+  width: 200px;
+  margin: 10px;
+  transition: 100ms ease-in-out;
+  border-radius: 5px;
+}
+
+.welcome .buttons button:hover {
+  transform: scale(1.1);
+}
+
+h1 > .magic {
+  display: inline-block;
+  position: relative;
+}
+
+h1 > .magic > .magic-star {
+  --size: clamp(20px, 1.5vw, 30px);
+
+  animation: scale 700ms ease forwards;
+  display: block;
+  height: var(--size);
+  left: var(--star-left);
+  position: absolute;
+  top: var(--star-top);
+  width: var(--size);
+}
+
+h1 > .magic > .magic-star > svg {
+  animation: rotate 1000ms linear infinite;
+  display: block;
+  opacity: 0.7;
+}
+
+h1 > .magic > .magic-star > svg > path {
+  fill: var(--violet);
+}
+
+h1 > .magic > .magic-text {
+  animation: background-pan 3s linear infinite;
+  background: linear-gradient(
+    to right,
+    var(--purple),
+    var(--violet),
+    var(--pink),
+    var(--purple)
+  );
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  white-space: nowrap;
+}
+
+@keyframes background-pan {
+  from {
+    background-position: 0% center;
+  }
+
+  to {
+    background-position: -200% center;
+  }
+}
+
+@keyframes scale {
+  from,
+  to {
+    transform: scale(0);
+  }
+
+  50% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
+}
