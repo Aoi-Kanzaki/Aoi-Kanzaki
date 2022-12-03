@@ -109,7 +109,7 @@ class Spotify(commands.GroupCog, description="All spotify related commands."):
                          icon_url=interaction.user.display_avatar)
             e.description = "Are you sure you want to disconnect your account?"
             return await interaction.followup.send(embed=e,
-                                                   view=Disconnect_Check(self.bot, interaction), ephemeral=True)
+                                                   view=Disconnect_Check(self.bot), ephemeral=True)
 
     @Aoi.command(name="liked")
     async def spotify_liked(self, interaction: discord.Interaction):

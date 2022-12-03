@@ -40,20 +40,25 @@ class Music(commands.Cog):
 
     async def query_auto(self, interaction: discord.Interaction, current: str):
         await asyncio.sleep(0.3)
-        if not url_rx.match(current) and not current.startswith(('spotify:', 'artist:')):
-            current = f'spsearch:{current}'
-        try:
-            results = await self.bot.lavalink.get_tracks(current, check_local=True)
-        except lavalink.errors.LoadError:
-            return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
-        if not results.tracks:
-            return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
+        print(current)
+        if url_rx.match(current):
+            return [Aoi.Choice(name=current, value=current)]
+        elif current.startswith(('artist:')):
+            return [Aoi.Choice(name=current, value=current)]
         else:
-            return [
-                Aoi.Choice(
-                    name=f"{track.author} - {track.title}", value=track.uri)
-                for track in results.tracks
-            ][0:5]
+            current = f'spsearch:{current}'
+            try:
+                results = await self.bot.lavalink.get_tracks(current, check_local=True)
+            except lavalink.errors.LoadError:
+                return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
+            if not results.tracks:
+                return [Aoi.Choice(name="Nothing found..", value="Nothing found..")]
+            else:
+                return [
+                    Aoi.Choice(
+                        name=f"{track.author} - {track.title}", value=track.uri)
+                    for track in results.tracks
+                ][0:5]
 
     @Aoi.command(name="play")
     @Aoi.describe(query="The song you want to play.")
@@ -69,7 +74,7 @@ class Music(commands.Cog):
                 interaction.guild.id)
             query = query.strip('<>')
             e = discord.Embed(color=discord.Colour.teal())
-            if not url_rx.match(query) and not query.startswith(('spotify:', 'artist:')):
+            if not url_rx.match(query) and not query.startswith(('artist:')):
                 query = f'spsearch:{query}'
             results = await self.bot.lavalink.get_tracks(query, check_local=True)
             if not results or not results.tracks:

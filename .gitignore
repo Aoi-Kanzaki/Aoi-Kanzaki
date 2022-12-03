@@ -2,3 +2,4 @@ logs
 __pycache__
 Lavalink
 config.json
+/website
