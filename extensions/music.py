@@ -40,7 +40,6 @@ class Music(commands.Cog):
 
     async def query_auto(self, interaction: discord.Interaction, current: str):
         await asyncio.sleep(0.3)
-        print(current)
         if url_rx.match(current):
             return [Aoi.Choice(name=current, value=current)]
         elif current.startswith(('artist:')):
@@ -70,41 +69,47 @@ class Music(commands.Cog):
     async def _play(self, interaction: discord.Interaction, query: str):
         inVoice = await self.ensure_voice(interaction)
         if inVoice:
-            player = self.bot.lavalink.player_manager.players.get(
-                interaction.guild.id)
-            query = query.strip('<>')
-            e = discord.Embed(color=discord.Colour.teal())
-            if not url_rx.match(query) and not query.startswith(('artist:')):
-                query = f'spsearch:{query}'
-            results = await self.bot.lavalink.get_tracks(query, check_local=True)
-            if not results or not results.tracks:
-                try:
-                    return await interaction.response.send_message('Nothing found.')
-                except:
-                    return await interaction.followup.send('Nothing found.')
-            if results.load_type == 'PLAYLIST_LOADED':
-                tracks = results.tracks
-                for track in tracks:
-                    player.add(requester=interaction.user.id, track=track)
-                e.title = "Playlist Enqueued!"
-                e.description = f"{results.playlist_info.name} with {len(tracks)} tracks."
-                try:
-                    await interaction.response.send_message(embed=e, ephemeral=True)
-                except:
-                    await interaction.followup.send(embed=e)
-            else:
-                track = results.tracks[0]
-                player.add(requester=interaction.user.id, track=track)
-                if player.queue:
-                    e.title = "Track Enqueued!"
-                    e.description = f"{track.title}\n{track.uri}"
+            try:
+                player = self.bot.lavalink.player_manager.players.get(
+                    interaction.guild.id)
+                query = query.strip('<>')
+                e = discord.Embed(color=discord.Colour.teal())
+                if not url_rx.match(query) and not query.startswith(('artist:')):
+                    query = f'spsearch:{query}'
+                results = await self.bot.lavalink.get_tracks(query, check_local=True)
+                if not results or not results.tracks:
+                    try:
+                        return await interaction.response.send_message('Nothing found.')
+                    except:
+                        return await interaction.followup.send('Nothing found.')
+                if results.load_type == 'PLAYLIST_LOADED':
+                    tracks = results.tracks
+                    for track in tracks:
+                        player.add(requester=interaction.user.id, track=track)
+                    e.title = "Playlist Enqueued!"
+                    e.description = f"{results.playlist_info.name} with {len(tracks)} tracks."
                     try:
                         await interaction.response.send_message(embed=e, ephemeral=True)
                     except:
                         await interaction.followup.send(embed=e)
-            player.store('channel', interaction.channel.id)
-            if not player.is_playing:
-                await player.play()
+                else:
+                    track = results.tracks[0]
+                    player.add(requester=interaction.user.id, track=track)
+                    if player.queue:
+                        e.title = "Track Enqueued!"
+                        e.description = f"{track.title}\n{track.uri}"
+                        try:
+                            await interaction.response.send_message(embed=e, ephemeral=True)
+                        except:
+                            await interaction.followup.send(embed=e)
+                player.store('channel', interaction.channel.id)
+                if not player.is_playing:
+                    await player.play()
+            except lavalink.errors.LoadError:
+                try:
+                    return await interaction.response.send_message('Spotify API did not return a valid response!')
+                except:
+                    return await interaction.followup.send('Spotify API did not return a valid response!')
 
     @Aoi.command(name="liked")
     async def liked(self, interaction: discord.Interaction):

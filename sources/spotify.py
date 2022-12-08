@@ -26,6 +26,8 @@ TITLE_SANITISE = re.compile(
 class SpotifyAudioTrack(DeferredAudioTrack):
     @classmethod
     def from_dict(cls, metadata, **kwargs):
+        if metadata is None:
+            raise LoadError('Spotify API did not return a valid response!')
         album = metadata.get('album', kwargs.get('album'))
         extra = {
             'isrc': metadata.get('external_ids', {}).get('isrc'),
